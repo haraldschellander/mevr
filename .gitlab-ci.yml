@@ -21,8 +21,8 @@ pages:
   image: $CI_REGISTRY_IMAGE:latest
   when: on_success
   script:
-  - R -e 'devtools::install_cran(c("pkgdown"), upgrade = "never")'
-  - R -e 'pkgdown::build_site(override = list(destination = "public/mevr"))'
+    - R -e 'devtools::install_cran(c("pkgdown"), upgrade = "never")'
+    - R -e 'pkgdown::build_site(override = list(destination = "public"))'
   artifacts:
     paths:
       - public
