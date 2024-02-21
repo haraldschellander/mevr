@@ -22,7 +22,7 @@ pages:
   when: on_success
   script:
   - R -e 'devtools::install_cran(c("pkgdown"), upgrade = "never")'
-  - R -e 'pkgdown::build_site(override = list(destination = "public"))'
+  - R -e 'pkgdown::build_site(override = list(destination = "public/mevr"))'
   artifacts:
     paths:
       - public
