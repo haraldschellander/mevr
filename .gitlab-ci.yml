@@ -1,0 +1,29 @@
+stages:
+  - build
+  - pkgdown
+
+build:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"$(printf "%s:%s" "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor
+      --cache=false
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}:latest"
+      --image-fs-extract-retry 10
+
+pages:
+  stage: pkgdown
+  image: $CI_REGISTRY_IMAGE:latest
+  when: on_success
+  script:
+    - R -e 'devtools::install_cran(c("pkgdown"), upgrade = "never")'
+    - R -e 'pkgdown::build_site(override = list(destination = "public"))'
+  artifacts:
+    paths:
+      - public
