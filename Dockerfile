@@ -11,10 +11,6 @@ RUN apt-get update -qq && \
     libproj-dev
 
 #  install R dependencies
-RUN R -e "devtools::install_cran('sf')"
-RUN R -e "devtools::install_gitlab(repo = 'kmayer/zamg.trend', \
-    host = 'vgitlab.zamg.ac.at', dependencies = TRUE)"
-
 RUN R -q -e "devtools::install_gitlab(repo = 'r-packages/mevr', \
              subdir = 'mevr', \
              host = 'https://gitlab.geosphere.at', \
