@@ -3,7 +3,7 @@ Version: 0.1-0
 Date: 2022-09-30
 Title: Functions for Fitting the Metastatistical Extreme Value Distribution MEVD
 Authors@R: c(
-    person("Harald", "Schellander", "harald.schellander@geosphere.at", role = c("aut", "cre"),
+    person("Harald", "Schellander", email = "harald.schellander@geosphere.at", role = c("aut", "cre"),
       comment = c(ORCID = "0000-0001-7661-287X", "Package creator and maintainer")
     ),
 		person("Alexander", "Lieb", role = c("ctb"),

@@ -1,10 +1,14 @@
 
 # mevr
 
-<!-- badges: start -->
-https://gitlab.geosphere.at/r-packages/mevr/badges/main/pipeline.svg
-<!-- badges: end -->
 
+<!-- badges: start -->
+
+https://gitlab.geosphere.at/r-packages/mevr/badges/main/pipeline.svg
+
+<!-- badges: end -->
+  
+  
 R-functions for Fitting the Metastatistical Extreme Value Distribution MEVD. 
 
 The MEVD assumes daily rainfall extremes being block maxima over a finite and stochastically variable number of “ordinary events” which are defined as samples from the underlying distribution ([Marani & Ignaccolo, 2015](https://doi:10.1016/j.advwatres.2015.03.001), [Zorzetto et al., 2016](https://doi:10.1002/2016GL069445)).
