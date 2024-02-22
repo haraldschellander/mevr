@@ -1,4 +1,5 @@
-FROM rocker/verse:latest
+#FROM rocker/verse:latest
+FROM rocker/r-ver:4.3.0
 
 # install system dependencies
 RUN apt-get update -qq && \
@@ -15,7 +16,7 @@ RUN R -q -e "devtools::install_gitlab(repo = 'r-packages/mevr', \
              host = 'https://gitlab.geosphere.at', \
              auth_token = 'glpat-2UsdDMAyTuXzYVFhiBeM', \
              upgrade = 'always', \
-             dependencies = FALSE)"
+             dependencies = TRUE)"
 
 
 # start with shell
