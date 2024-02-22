@@ -10,6 +10,7 @@ RUN apt-get update -qq && \
 
 #  install R dependencies
 #Run R -q -e "install.packages(c('bamlss', 'doParallel', 'EnvStats', 'foreach'))"
+RUN R -q -e "R.version.string" 
 Run R -q -e "install.packages(c('devtools', 'remotes'))"
 
 # install mevr package
