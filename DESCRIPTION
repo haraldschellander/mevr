@@ -2,10 +2,17 @@ Package: mevr
 Version: 0.1-0
 Date: 2022-09-30
 Title: Functions for Fitting the Metastatistical Extreme Value Distribution MEVD
-Authors@R: c(person("Harald", "Schellander", role = c("aut", "cre", "ctb"), email = "harald.schellander@zamg.ac.at"),
-			 person("Alexander", "Lieb", role = c("ctb")),
-			 person("Marc-Andre", "Falkensteiner", role = c("ctb")))
-Maintainer: Harald Schellander <harald.schellander@zamg.ac.at>
+Authors@R: c(
+    person("Harald", "Schellander", "harald.schellander@geosphere.at", role = c("aut", "cre"),
+      comment = c(ORCID = "0000-0001-7661-287X", "Package creator and maintainer")
+    ),
+		person("Alexander", "Lieb", role = c("ctb"),
+		  comment = "Coded first versions of MEVD and SMEV"
+		),
+		person("Marc-Andre", "Falkensteiner", role = c("ctb"),
+		  comment = "Developed the TMEV")
+		)
+Maintainer: Harald Schellander <harald.schellander@geosphere.at>
 Depends: R (>= 4.1), dplyr, rlang, bamlss, doParallel
 Encoding: UTF-8
 Imports: stats, graphics, EnvStats, mgcv, foreach
