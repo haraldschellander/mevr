@@ -9,9 +9,9 @@ RUN apt-get update -qq && \
     libudunits2-dev 
 
 #  install R dependencies
-#Run R -q -e "install.packages(c('bamlss', 'doParallel', 'EnvStats', 'foreach'))"
 RUN R -q -e "R.version.string" 
-Run R -q -e "install.packages(c('devtools', 'remotes'))"
+Run R -q -e "install.packages(c('devtools', 'remotes'), repos = 'cran.r-project.org')"
+Run R -q -e "install.packages(c('bamlss', 'doParallel', 'EnvStats', 'foreach'), repos = 'cran.r-project.org')"
 
 # install mevr package
 RUN R -q -e "devtools::install_gitlab(repo = 'r-packages/mevr', \
