@@ -1,5 +1,5 @@
-#FROM rocker/verse:latest
-FROM rocker/r-ver:4.3.0
+FROM rocker/verse:latest
+#FROM rocker/r-ver:4.3.0
 
 # install system dependencies
 RUN apt-get update -qq && \
