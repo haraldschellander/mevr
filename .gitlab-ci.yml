@@ -11,7 +11,7 @@ build:
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"$(printf "%s:%s" "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor
-      --cache=true
+      --cache=false
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
       --destination "${CI_REGISTRY_IMAGE}:latest"
@@ -23,7 +23,6 @@ pages:
   when: on_success
   script:
     #- pwd -> /builds/r-packages/mevr
-    - R -e 'library(mevr)'
     - R -e 'devtools::install_cran(c("pkgdown"), upgrade = "never")'
     - R -e 'pkgdown::build_site(pkg = ".", override = list(destination = "public"))'
   artifacts:
