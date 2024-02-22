@@ -8,14 +8,14 @@ RUN apt-get update -qq && \
     libudunits2-dev 
 
 #  install R dependencies
-Run R -q -e "install.packages(c('bamlss', 'doParallel', 'EnvStats', 'foreach'))"
+#Run R -q -e "install.packages(c('bamlss', 'doParallel', 'EnvStats', 'foreach'))"
 
 # install mevr package
 RUN R -q -e "devtools::install_gitlab(repo = 'r-packages/mevr', \
              host = 'https://gitlab.geosphere.at', \
              auth_token = 'glpat-2UsdDMAyTuXzYVFhiBeM', \
              upgrade = 'always', \
-             dependencies = TRUE)"
+             dependencies = FALSE)"
 
 
 # start with shell
