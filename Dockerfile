@@ -9,7 +9,7 @@ RUN apt-get update -qq && \
     libudunits2-dev 
 
 #  install R dependencies
-RUN R -q -e "R.version.string" 
+#RUN R -q -e "R.version.string" 
 Run R -q -e "install.packages(c('devtools', 'remotes'), repos = 'cran.r-project.org')"
 Run R -q -e "install.packages(c('bamlss', 'doParallel', 'EnvStats', 'foreach'), repos = 'cran.r-project.org')"
 

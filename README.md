@@ -9,10 +9,12 @@ The functions in this package can be used to fit the MEVD, its simplified siblin
 The R-package `mevr` was written during the development of the TMEV (Falkensteiner et al., 2023 <doi:10.1016/j.wace.2023.100601>).
 
 ## Installation
+Note that due to 2FA access to gitlab.geosphere.at you have to provide a personal access token to install the package.
 
 ``` r
 #install.packages("remotes")
-remotes::install_gitlab(repo = "r-packages/mevr", subdir = "mevr", host = "https://gitlab.geosphere.at")
+remotes::install_gitlab(repo = "r-packages/mevr", \
+                        host = "https://gitlab.geosphere.at", \
+                        auth_token = <access_token>)
 ```
-
 
