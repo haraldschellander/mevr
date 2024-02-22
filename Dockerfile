@@ -9,12 +9,13 @@ RUN apt-get update -qq && \
 
 #  install R dependencies
 RUN R -q -e "devtools::install_gitlab(repo = 'r-packages/mevr', \
-             subdir = 'mevr', \
              host = 'https://gitlab.geosphere.at', \
              auth_token = 'glpat-BmwsJ8M5yWYXQJsX798_', \
              upgrade = 'always', \
              dependencies = TRUE)"
 
+#subdir = 'mevr', \
+             
 
 
 # start with shell
