@@ -6,9 +6,6 @@ RUN apt-get update -qq && \
     libharfbuzz-dev \
     libfribidi-dev \
     libudunits2-dev 
-#    libgdal-dev \
-#    libgeos-dev \
-#    libproj-dev
 
 #  install R dependencies
 RUN R -q -e "devtools::install_gitlab(repo = 'r-packages/mevr', \
