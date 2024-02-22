@@ -22,7 +22,8 @@ pages:
   image: $CI_REGISTRY_IMAGE:latest
   when: on_success
   script:
-    - pwd
+    #- pwd -> /builds/r-packages/mevr
+    - R -e 'library(mevr)'
     - R -e 'devtools::install_cran(c("pkgdown"), upgrade = "never")'
     - R -e 'pkgdown::build_site(pkg = ".", override = list(destination = "public"))'
   artifacts:
