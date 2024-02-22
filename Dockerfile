@@ -10,6 +10,7 @@ RUN apt-get update -qq && \
 
 #  install R dependencies
 #Run R -q -e "install.packages(c('bamlss', 'doParallel', 'EnvStats', 'foreach'))"
+Run R -q -e "install.packages(c('devtools', 'remotes'))"
 
 # install mevr package
 RUN R -q -e "devtools::install_gitlab(repo = 'r-packages/mevr', \
