@@ -1,5 +1,5 @@
 
-# mevr
+# R-package mevr
 
 R-functions for Fitting the Metastatistical Extreme Value Distribution MEVD. 
 
