@@ -1205,7 +1205,7 @@ pp.weibull <- function(x){
 
 #' Plot graphs of MEVD, SMEV or TMEV fit
 #' 
-#' A return level plot, qq-plot, pp-plot nd a histogram wit the fitted density is produced
+#' A return level plot, qq-plot, pp-plot and a histogram with the fitted density is produced
 #'
 #' @param x An object of class\code{mevr}, whose \code{type} argument is one of MEVD, SMEV or TMEV
 #' @param q vector of return periods, \eqn{q > 1}.
