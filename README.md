@@ -11,18 +11,12 @@ The R-package `mevr` was written during the development of the TMEV ([Falkenstei
 
 
 ## Installation
-
-You can install the development version of mevr like so:
+The repo gitlab.geosphere.at is 2FA restricted. The most convenient way to install the package is therefore to set the environment variable `GITLAB_PAT` to a `personal access token`. This variable is automatically read by gitlab_install. Then you can install the development version of mevr like so:
 
 ``` r
 ##install.packages("remotes")
-remotes::install_gitlab(repo = "r-packages/mevr", \
-                        host = "https://gitlab.geosphere.at", \
-                        auth_token = <personal_access_token>)
+remotes::install_gitlab(repo = "r-packages/mevr", host = "https://gitlab.geosphere.at")
 ```
-
-Note that due to 2FA access to gitlab.geosphere.at you have to provide a `personal_access_token` to install the package.
-
 
 
 The documentation pages are available at [https://r-packages.gitlab.geosphere.at/mevr](https://r-packages.gitlab.geosphere.at/mevr)
