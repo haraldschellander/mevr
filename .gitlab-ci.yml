@@ -27,6 +27,7 @@ pages:
   when: on_success
   script:
     #- pwd -> /builds/r-packages/mevr
+    - R -e 'devtools::document()'
     - R -e 'devtools::install_cran(c("pkgdown"), upgrade = "never")'
     - R -e 'pkgdown::build_site(pkg = ".", override = list(destination = "public"))'
   artifacts:
