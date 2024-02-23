@@ -9,7 +9,11 @@ ftmev(
   threshold = 0,
   minyears = 10,
   day_year_interaction = FALSE,
-  verbose = FALSE
+  verbose = FALSE,
+  yday_ti_shape_k = 10,
+  yday_ti_scale_k = 10,
+  year_ti_shape_k = 10,
+  year_ti_scale_k = 10
 )
 }
 \arguments{
@@ -26,6 +30,14 @@ values corresponding to datums in the rows. No NA values are allowed.}
 interaction be used for the calculation of the temporal trend in seasonality?  (see details). Default is \code{FALSE}.}
 
 \item{verbose}{Logical. If \code{TRUE}, verbose output of the temporal fitting process is shown during runtime.}
+
+\item{yday_ti_shape_k}{A numeric that is used to set the dimension of the bases used to represent the smooth term ti() for yday in the formula for shape.}
+
+\item{yday_ti_scale_k}{A numeric that is used to set the dimension of the bases used to represent the smooth term ti() for yday in the formula for scale.}
+
+\item{year_ti_shape_k}{A numeric that is used to set the dimension of the bases used to represent the smooth term ti() for year in the formula for shape (only used when day_year_interaction == TRUE).}
+
+\item{year_ti_scale_k}{A numeric that is used to set the dimension of the bases used to represent the smooth term ti() for year in the formula for scale (only used when day_year_interaction == TRUE).}
 }
 \value{
 A list of class \code{mevr} with components:
@@ -75,7 +87,7 @@ For trend analysis, an additional interaction term can be added to the model for
 The following term models the relationship between the seasonality as day of the year 
 and the year itself with a combination of a thin plate and a cyclic cubic spline:
 
- \deqn{ti(year, yday, bs = c("tp", "cc"), d = c(1, 1), k = c(10, 10))}
+ \deqn{ti(year, yday, bs = c("tp", "cc"), d = c(1, 1), k = c(year_ti_k, yday_ti_k))}
 }
 \examples{
 data(dailyrainfall)

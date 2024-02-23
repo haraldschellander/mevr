@@ -27,7 +27,7 @@ probability plot (\code{tpe='pp'}) are shown.}
 See e.g. \link[base]{plot}.}
 }
 \description{
-A return level plot, qq-plot, pp-plot nd a histogram wit the fitted density is produced
+A return level plot, qq-plot, pp-plot and a histogram with the fitted density is produced
 }
 \examples{
 data(dailyrainfall)
