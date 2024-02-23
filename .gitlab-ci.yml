@@ -7,7 +7,7 @@ build:
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
-  before-script:
+  before_script:
     - echo "set GITLAB_PAT"
     - export GITLAB_PAT=$REMOTES_INSTALL_PAT
   script:
