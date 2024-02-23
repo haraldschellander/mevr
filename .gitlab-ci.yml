@@ -7,6 +7,9 @@ build:
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
+  before-script:
+    - echo "set GITLAB_PAT"
+    - export GITLAB_PAT=$REMOTES_INSTALL_PAT
   script:
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"$(printf "%s:%s" "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
@@ -15,6 +18,7 @@ build:
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
       --destination "${CI_REGISTRY_IMAGE}:latest"
+      --build-arg GITLAB_PAT
       --image-fs-extract-retry 10
 
 pages:

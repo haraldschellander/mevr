@@ -1,6 +1,8 @@
 FROM rocker/verse:latest
 #FROM rocker/r-ver:4.3.0
 
+ARG GITLAB_PAT
+
 # install system dependencies
 RUN apt-get update -qq && \
     apt-get -y --no-install-recommends install \
@@ -16,10 +18,9 @@ Run R -q -e "install.packages(c('bamlss', 'doParallel', 'EnvStats', 'foreach'), 
 # install mevr package
 RUN R -q -e "devtools::install_gitlab(repo = 'r-packages/mevr', \
              host = 'https://gitlab.geosphere.at', \
-             auth_token = 'glpat-2UsdDMAyTuXzYVFhiBeM', \
              upgrade = 'always', \
              dependencies = TRUE)"
-
+#             auth_token = 'glpat-2UsdDMAyTuXzYVFhiBeM', \
 
 # start with shell
 ENTRYPOINT [""]
