@@ -50,6 +50,7 @@ A list of class \code{mevr} with components:
 \item{threshold}{ The chosen threshold.}
 \item{x}{ The fitted \code{bamlss} object.}
 \item{type}{ The type of distribution ("TMEV").}
+\item{minyears}{ The minimum number of years used to fit the TMEV as provided.}
 }
 \description{
 Fit the temporal MEVD distribution TMEV to rainfall observations with a cyclic spline to account for seasonality.
@@ -104,7 +105,7 @@ with(pred_year, lines(year - 1970, c.pred.year, type = "b", pch = 20, col = "red
 \references{
 Marani, M. and Ignaccolo, M. (2015) 'A metastatistical approach to rainfall extremes', Advances in Water Resources. Elsevier Ltd, 79(Supplement C), pp. 121-126. doi: 10.1016/j.advwatres.2015.03.001.
 
-Falkensteiner, M., Schellander, H., Hell, T. (2023) 'A non-stationary approach to the Metastatistical Extreme Value Distribution', (to appear).
+Falkensteiner, M., Schellander, H., Hell, T. (2023) 'Accounting for seasonality in the metastatistical extreme value distribution', (Weather and Climate Extremes, 42, 2023, https://doi.org/10.1016/j.wace.2023.100601).
 }
 \seealso{
 \code{\link{fmev}}, \code{\link{fsmev}}

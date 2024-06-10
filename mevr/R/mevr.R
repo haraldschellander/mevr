@@ -1,6 +1,6 @@
 # package mevr
 
-# generate data for etsting purposes
+# generate data for testing purposes
 # 50 years of daily rainfall data
 # each year has 365 values
 # w <- 0.87
@@ -10,7 +10,7 @@
 # for(i in seq_along(years)){
 #   y <- years[i]
 #   dates <- seq(as.Date(paste0(y, "-01-01")), as.Date(paste0(y, "-12-31")), by = "1 day")
-#   vals <- rweibull(length(dates), shape = w, scale = c)
+#   vals <- stats::rweibull(length(dates), shape = w, scale = c)
 #   l[[i]]<- data.frame(dates, vals)
 # }
 # data <- do.call(rbind, l)
@@ -29,21 +29,17 @@
 
 
 #' @importFrom graphics abline hist legend lines par points title
-#' @importFrom stats aggregate cov na.omit quantile runif rweibull pweibull dweibull sd  uniroot
+#' @importFrom stats aggregate cov na.omit quantile runif rweibull pweibull dweibull sd  uniroot predict
 #' @importFrom EnvStats eweibull 
 #' @importFrom parallel detectCores makeCluster stopCluster 
-#' @importFrom bamlss bamlss weibull_bamlss opt_bfit samplestats results.bamlss.default 
+#' @importFrom foreach foreach %dopar% 
+#' @importFrom doParallel  registerDoParallel
+#' @importFrom bamlss bamlss weibull_bamlss opt_bfit samplestats results.bamlss.default bamlss.frame
 #' @importFrom mgcv s ti
 NULL
 
-
 #' @import dplyr 
-#' @import EnvStats 
 #' @import rlang
-#' @import bamlss
-#' @import mgcv
-#' @import foreach
-#' @import doParallel
 NULL
 
 
@@ -82,7 +78,6 @@ NULL
 NULL
 
 
-
 #' Fitting the simplified Metastatistical Extreme Value Distribution (SMEV)
 #' 
 #' Fit the SMEV distribution to rainfall observations with different estimation methods.
@@ -102,8 +97,8 @@ NULL
 #' bootstrap technique. Note that this very slow.
 #'
 #' @param data The data to which the SMEV should be fitted to. \code{data} must be a data.frame with two columns. 
-#' The first column must contain dates of class  \code{Date}, the second or last column must contain the rainfall 
-#' values corresponding to datums in the rows. No NA values are allowed.
+#' The first column must contain dates of class \code{Date}, the second or last column must contain the rainfall 
+#' values corresponding to datums in the rows. No NA or negative values are allowed.
 #' @param threshold A numeric that is used to define wet days as values > threshold. 
 #' \eqn{data <= threshold} is set to NA.  
 #' @param method Character string describing the method that is used to estimate the 
@@ -150,19 +145,21 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), sd = FALS
 
   if(!inherits(data, "data.frame"))
     stop("data must be of class 'data.frame'")
-    
-  method <- match.arg(method)
-
-  colnames(data) <- c("groupvar", "val")
-  d <- try(as.Date(data$groupvar, format="%Y"))
-  if("try-error" %in% class(d) || any(is.na(d))) {
-    stop("date column must be of format %Y-%m-%d")
-  }
   
-  if(any(data$val < 0))
+  colnames(data) <- c("groupvar", "val")
+  
+  if (!inherits(data$groupvar, "Date")) 
+    stop("date column must be of class 'Date'")
+  
+  if(length(which(data$val < 0)) > 0)
     stop("data must not contain values < 0")
   if(any(is.na(data$val)))
     stop("data must not contain NA")
+  
+  if (isTRUE(sd) & sd.method != "boot") 
+    stop("only method 'boot' is allowed for calculation of standard errors")
+  
+  method <- match.arg(method)
   
   # only wet days: remove data smaller than threshold
   data_pot <- data %>%
@@ -277,25 +274,24 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls")){
   # data must be in last/second column
   # col1 must hold the group variable
   # col2 must contain the data
-  # # col1 must be kind of date 
+  # col1 must be kind of date 
   
   if(!inherits(data, "data.frame"))
     stop("data must be of class 'data.frame'")
   
-  method <- match.arg(method)
-  # if(method != "pwm" & threshold > 0)
-  #   stop("Threshold can only be used for pwm")
-  
   colnames(data) <- c("groupvar", "val")
-  d <- try(as.Date(data$groupvar, format = "%Y"))
-  if("try-error" %in% class(d) || any(is.na(d))) {
-    stop("date column must be of format %Y-%m-%d")
-  }
   
-  if(any(data$val < 0))
+  if (!inherits(data$groupvar, "Date")) 
+    stop("date column must be of class 'Date'")
+  
+  if(length(which(data$val < 0)) > 0)
     stop("data must not contain values < 0")
   if(any(is.na(data$val)))
     stop("data must not contain NA")
+  
+  method <- match.arg(method)
+  if(method != "pwm" & threshold > 0)
+    stop("threshold can only be used for method 'pwm'")
   
   # only wet days: remove data smaller than threshold
   data_pot <- data %>%
@@ -390,10 +386,11 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls")){
 #' \item{threshold}{ The chosen threshold.}
 #' \item{x}{ The fitted \code{bamlss} object.}
 #' \item{type}{ The type of distribution ("TMEV").}
+#' \item{minyears}{ The minimum number of years used to fit the TMEV as provided.}
 #' 
 #' @export
 #' @references Marani, M. and Ignaccolo, M. (2015) 'A metastatistical approach to rainfall extremes', Advances in Water Resources. Elsevier Ltd, 79(Supplement C), pp. 121-126. doi: 10.1016/j.advwatres.2015.03.001.
-#' @references Falkensteiner, M., Schellander, H., Hell, T. (2023) 'A non-stationary approach to the Metastatistical Extreme Value Distribution', (to appear).
+#' @references Falkensteiner, M., Schellander, H., Hell, T. (2023) 'Accounting for seasonality in the metastatistical extreme value distribution', (Weather and Climate Extremes, 42, 2023, https://doi.org/10.1016/j.wace.2023.100601).
 #'
 #' @examples 
 #' data(dailyrainfall)
@@ -409,15 +406,21 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls")){
 #' @author Marc-Andre Falkensteiner, Harald Schellander
 #' 
 #' @seealso \code{\link{fmev}}, \code{\link{fsmev}}
-ftmev <- function(data, threshold = 0, minyears = 10, day_year_interaction = FALSE, verbose = FALSE, yday_ti_shape_k = 10, yday_ti_scale_k = 10, year_ti_shape_k = 10, year_ti_scale_k = 10){
+ftmev <- function(data, threshold = 0, minyears = 10, day_year_interaction = FALSE, verbose = FALSE, 
+                  yday_ti_shape_k = 10, yday_ti_scale_k = 10, year_ti_shape_k = 10, year_ti_scale_k = 10){
   if(!inherits(data, "data.frame"))
     stop("data must be of class 'data.frame'")
   
   colnames(data) <- c("groupvar", "val")
-  if(any(data$val < 0))
+  
+  if (!inherits(data$groupvar, "Date")) 
+    stop("date column must be of class 'Date'")
+  
+  if(length(which(data$val < 0)) > 0)
     stop("data must not contain values < 0")
   if(any(is.na(data$val)))
     stop("data must not contain NA")
+  
   
   # only wet days: remove data smaller than threshold
   data_pot <- data %>%
@@ -456,14 +459,14 @@ ftmev <- function(data, threshold = 0, minyears = 10, day_year_interaction = FAL
       stop("Only logical values are allowed for day_year_interaction") 
     }
   }
+  
   bamy <- bamlss(formula = fy, 
                  data = data_pot, 
                  family = weibull_bamlss(),
                  optimizer = opt_bfit,
                  samplestats = samplestats,
                  results = results.bamlss.default,
-                 sampler = FALSE, 
-                 x = FALSE,
+                 sampler = FALSE,
                  verbose = verbose)
   data_pot$c <- exp(bamy$fitted.values$lambda)
   data_pot$w <- exp(bamy$fitted.values$alpha)
@@ -478,9 +481,9 @@ ftmev <- function(data, threshold = 0, minyears = 10, day_year_interaction = FAL
   
   res <- list(c = data_pot$c, w = data_pot$w, n = n_vec, maxima = maxima, 
               data = data_pot, years = years, threshold = threshold, 
-              x = bamy, type = "TMEV")
+              x = bamy, type = "TMEV", minyears = minyears)
   
-  class(res) <-"mevr"
+  class(res) <- "mevr"
   return(res)
 }
 
@@ -544,7 +547,7 @@ fit.mev <- function(data, method){
 
 
 smev.boot <- function(data, method = c("pwm", "mle", "ls"), R = 502){
-  # orig enrico: 
+  # orig Enrico Zorzetto: 
   # '''non parametric bootstrap technique 
   # for computing confidence interval for a distribution
   # (when I do not know the asymptotic properties of the distr.)
@@ -813,6 +816,7 @@ qtmev <- function(p, data) {
 #' parametric bootstrap that simulates data from the fitted model, and then fits the chosen MEVD type to each simulated data set 
 #' to obtain a sample of parameters or return levels (very slow).
 #' @param R The number of bootstrap iterations.
+#' @param ncores Number of cores used for parallel computing of confidence intervals. Defaults to 2.
 #'
 #' @return A list with return levels, chosen return periods and, if applicable, 
 #' \code{alpha/2} and \code{1 - alpha/2} confidence intervals
@@ -825,7 +829,8 @@ qtmev <- function(p, data) {
 #' return.levels.mev(fit)
 #' plot(fit)
 #'  
-return.levels.mev <- function(x, return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200), ci = FALSE, alpha = 0.05, method = "boot", R = 502){
+return.levels.mev <- function(x, return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200), 
+                              ci = FALSE, alpha = 0.05, method = "boot", R = 502, ncores = 2L){
   if(!inherits(x, "mevr"))
     stop("x must be object of class 'mevr'")
   
@@ -843,9 +848,9 @@ return.levels.mev <- function(x, return.periods = c(2, 10, 20, 30, 50, 75, 100, 
     
     if(isTRUE(ci)) {
       if(length(w) == 1){
-        cis <- ci.smev(x, method = c("boot"), alpha = alpha, return.periods = return.periods, R = R)  
+        cis <- ci.smev(x, method = c("boot"), alpha = alpha, return.periods = return.periods, R = R, ncores = ncores)  
       } else {
-        cis <- ci.mev(x, method = c("boot"), alpha = alpha, return.periods = return.periods, R = R)  
+        cis <- ci.mev(x, method = c("boot"), alpha = alpha, return.periods = return.periods, R = R, ncores = ncores)  
       }
       res <- list(rl = rls, rp = return.periods, ci = cis)
     } else {
@@ -854,7 +859,7 @@ return.levels.mev <- function(x, return.periods = c(2, 10, 20, 30, 50, 75, 100, 
   } else {
     rls <- qtmev(1 - 1 / return.periods, x$data)
     if(isTRUE(ci)) {
-      cis <- ci.tmev(x, method = c("boot"), alpha = alpha, return.periods = return.periods, R = R)  
+      cis <- ci.tmev(x, x$minyears, method = c("boot"), alpha = alpha, return.periods = return.periods, R = R, ncores = ncores)  
       res <- list(rl = rls, rp = return.periods, ci = cis)
     } else {
       res <- list(rl = rls, rp = return.periods)  
@@ -867,7 +872,7 @@ return.levels.mev <- function(x, return.periods = c(2, 10, 20, 30, 50, 75, 100, 
 
 ci.mev <- function(x, method = c("boot"), alpha = 0.05, 
                    return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200), R = 502,
-                   ncores = 1, subsize = 20){
+                   ncores = 2L, subsize = 20){
   
   if(!inherits(x, "mevr"))
     stop("x must be object of class 'mevr'")
@@ -898,11 +903,7 @@ ci.mev <- function(x, method = c("boot"), alpha = 0.05,
         sample_dates <- seq(as.Date(paste0(years[sample_year], "-01-01")), as.Date(paste0(years[sample_year], "-12-31")), by = "1 day")
 
         sample_val <- rep(0, length(sample_dates))
-        #sample_year_val <- x$data %>%
-        #  dplyr::filter(format(.data$groupvar, "%Y") == years[sample_year]) %>%
-        #  pull(.data$val)
-        #  sample_val[1:sample_n] <- sample(sample_year_val, size = sample_n, replace = TRUE)
-        sample_year_val <- rweibull(n = sample_n, shape = w[sample_year], scale = c[sample_year])
+        sample_year_val <- stats::rweibull(n = sample_n, shape = w[sample_year], scale = c[sample_year])
         n_zero <- length(sample_dates) - sample_n
         sample_val <- sample(c(sample_year_val, rep(0, n_zero)), replace = TRUE)
         single_sample[[j]] <- tibble(
@@ -939,7 +940,15 @@ ci.mev <- function(x, method = c("boot"), alpha = 0.05,
     if (subsize > length(x$years)) {
       subsize <- floor(length(x$years) * 0.75)
     }
-    ncores <- detectCores() - floor(detectCores() / 2)
+    #ncores <- detectCores() - floor(detectCores() / 2)
+    # chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
+    # #if (nzchar(chk) && chk == "TRUE") {
+    # if (chk == "TRUE") {
+    #   ncores <- 2L # use 2 cores in CRAN
+    # } else {
+    #   ncores <- detectCores() - floor(detectCores() / 2) # use all cores in devtools::test()
+    # }
+    # ncores <- 2L
     runsWindows <- (Sys.info()['sysname'] == "Windows")
     if (runsWindows) {
       cl <- makeCluster(ncores, type = "PSOCK")
@@ -948,7 +957,7 @@ ci.mev <- function(x, method = c("boot"), alpha = 0.05,
       registerDoParallel(ncores)
     }
     
-    sam <- foreach(i = 1:R, .combine = cbind, .export = c("fmev", "fit.mev", "qmev", "pmev"), .packages = c("lubridate", "dplyr")) %dopar% {
+    sam <- foreach(i = 1:R, .combine = cbind, .export = c("fmev", "fit.mev", "qmev", "pmev"), .packages = c("dplyr")) %dopar% {
       sampleyears <- sample(x$years, size = subsize)
       nd <- x$data %>% 
         #filter(year(.data$groupvar) %in% sampleyears) %>% 
@@ -975,9 +984,9 @@ ci.mev <- function(x, method = c("boot"), alpha = 0.05,
 }
   
 
-ci.tmev <- function(x, method = c("boot"), alpha = 0.05, 
+ci.tmev <- function(x, minyears, method = c("boot"), alpha = 0.05, 
                     return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200), R = 100, 
-                    ncores = 1, subsize = 20){
+                    ncores = 2L, subsize = 20){
   
   if(!inherits(x, "mevr"))
     stop("x must be object of class 'mevr'")
@@ -989,7 +998,15 @@ ci.tmev <- function(x, method = c("boot"), alpha = 0.05,
     if (subsize > length(x$years)) {
       subsize <- floor(length(x$years) * 0.75)
     }
-    ncores <- detectCores() - floor(detectCores() / 2)
+    
+    # chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
+    # #if (nzchar(chk) && chk == "TRUE") {
+    # if (chk == "TRUE") {
+    #   ncores <- 2L # use 2 cores in CRAN
+    # } else {
+    #   ncores <- detectCores() - floor(detectCores() / 2) # use all cores in devtools::test()
+    # }
+    # ncores <- 2L
     runsWindows <- (Sys.info()['sysname'] == "Windows")
     if (runsWindows) {
       cl <- makeCluster(ncores, type = "PSOCK")
@@ -998,13 +1015,12 @@ ci.tmev <- function(x, method = c("boot"), alpha = 0.05,
       registerDoParallel(ncores)
     }
     
-    sam <- foreach(i = 1:R, .combine = cbind, .export = c("ftmev", "qtmev", "ptmev"), .packages = c("lubridate", "dplyr", "bamlss")) %dopar% {
+    sam <- foreach(i = 1:R, .combine = cbind, .export = c("ftmev", "qtmev", "ptmev"), .packages = c("dplyr", "bamlss")) %dopar% {
       sampleyears <- sample(x$years, size = subsize)
       nd <- x$data %>% 
-        #filter(year(.data$groupvar) %in% sampleyears) %>% 
         filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) %>% 
         dplyr::select(.data$groupvar, .data$val)
-      fitdf <- ftmev(nd)
+      fitdf <- ftmev(nd, minyears = minyears)
       qtmev(1 - 1 / return.periods, fitdf$data)
     }
     
@@ -1029,7 +1045,7 @@ ci.tmev <- function(x, method = c("boot"), alpha = 0.05,
   
 ci.smev <- function(x, method = c("boot"), alpha = 0.05, 
                     return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200), R = 502,
-                    ncores = 1, subsize = 20){
+                    ncores = 2L, subsize = 20){
   
   if(!inherits(x, "mevr"))
     stop("x must be object of class 'mevr'")
@@ -1048,7 +1064,7 @@ ci.smev <- function(x, method = c("boot"), alpha = 0.05,
     
     
     # draw R samples of length l with w and C
-    Z <- rweibull(n = l * R, shape = w, scale = c) 
+    Z <- stats::rweibull(n = l * R, shape = w, scale = c) 
     #Z <- rmev(l * R, w, c, n)
     Z <- matrix(Z, l, R)
     
@@ -1109,7 +1125,15 @@ ci.smev <- function(x, method = c("boot"), alpha = 0.05,
     if (subsize > length(x$years)) {
       subsize <- floor(length(x$years) * 0.75)
     }
-    ncores <- detectCores() - floor(detectCores() / 2)
+    # #ncores <- detectCores() - floor(detectCores() / 2)
+    # chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
+    # #if (nzchar(chk) && chk == "TRUE") {
+    # if (chk == "TRUE") {
+    #   ncores <- 2L # use 2 cores in CRAN
+    # } else {
+    #   ncores <- detectCores() - floor(detectCores() / 2) # use all cores in devtools::test()
+    # }
+    # ncores <- 2L
     runsWindows <- (Sys.info()['sysname'] == "Windows")
     if (runsWindows) {
       cl <- makeCluster(ncores, type = "PSOCK")
@@ -1118,10 +1142,9 @@ ci.smev <- function(x, method = c("boot"), alpha = 0.05,
       registerDoParallel(ncores)
     }
     
-    sam <- foreach(i = 1:R, .combine = cbind, .export = c("fsmev", "fit.mev", "qmev", "pmev"), .packages = c("lubridate", "dplyr")) %dopar% {
+    sam <- foreach(i = 1:R, .combine = cbind, .export = c("fsmev", "fit.mev", "qmev", "pmev"), .packages = c("dplyr")) %dopar% {
       sampleyears <- sample(x$years, size = subsize)
       nd <- x$data %>% 
-        #filter(year(.data$groupvar) %in% sampleyears) %>% 
         filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) %>% 
         dplyr::select(.data$groupvar, .data$val)
       fitdf <- fsmev(nd)
@@ -1259,9 +1282,9 @@ plot.mevr <- function(x, q = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
       } else if (tolower(x$type) == "mevd") {
         ci <- ci.mev(x, ...)
       } else if (tolower(x$type) == "tmev") {
-        ci <- ci.tmev(x, ...)
+        ci <- ci.tmev(x, x$minyear, ...)
       } else {
-        stop(paste0("confidence intervals are supported with type", x$type))
+        stop(paste0("confidence intervals are not supported with type", x$type))
       }
       plot(q, rls, type = "l", xlab = "Return Period [years]", ylab = "Return Level", ylim = c(0, max(rls) * 1.2), log = "x")
       points(obs.x, sort(obs.y))
@@ -1336,7 +1359,10 @@ plot.mevr <- function(x, q = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
 #' a wrapper to the corresponding function \code{predict.bamlss}
 #' 
 #' See also the details of \code{\link{ftmev}} for an explanation of the model terms used to fit the temporal trend 
-#' of the Weibull parameters.
+#' of the Weibull parameters. The basis dimensions yday_ti_shape_k, 
+#' yday_ti_scale_k, year_ti_shape_k, year_ti_scale_k are taken from 
+#' the fitting process. It is however possible to overwrite them in the call 
+#' to this function. 
 #' 
 #' @param object Object of class \code{mevr}, fitted with the TMEV. 
 #' @param newdata A data frame with the model covariates (year, yday) at which predictions are required. 
@@ -1362,15 +1388,15 @@ plot.mevr <- function(x, q = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
 #' @seealso \code{\link{ftmev}}, \code{\link{predict.bamlss}}
 predict.mevr <- function(object, newdata, term, ...){
   
-  if(!inherits(object, "mevr"))
-    stop("object must be object of class 'mevr'")
+  # if(!inherits(object, "mevr"))
+  #   stop("object must be object of class 'mevr'")
   
   if(tolower(object$type) != "tmev")
-    stop("object must be of type 'tmev'")
+    stop("fitted object must be of type 'tmev'")
   
   if (missing(newdata)) 
     newdata <- object$data %>% 
-      dplyr::select(.data$year, .data$yday)
+      dplyr::select("year", "yday")
   
   if(missing(term)){
     term <- "all"

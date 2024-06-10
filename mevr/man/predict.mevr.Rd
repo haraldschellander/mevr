@@ -28,7 +28,10 @@ a wrapper to the corresponding function \code{predict.bamlss}
 }
 \details{
 See also the details of \code{\link{ftmev}} for an explanation of the model terms used to fit the temporal trend 
-of the Weibull parameters.
+of the Weibull parameters. The basis dimensions yday_ti_shape_k, 
+yday_ti_scale_k, year_ti_shape_k, year_ti_scale_k are taken from 
+the fitting process. It is however possible to overwrite them in the call 
+to this function.
 }
 \examples{
 data(dailyrainfall)

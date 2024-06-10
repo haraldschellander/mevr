@@ -10,7 +10,8 @@ return.levels.mev(
   ci = FALSE,
   alpha = 0.05,
   method = "boot",
-  R = 502
+  R = 502,
+  ncores = 2L
 )
 }
 \arguments{
@@ -27,6 +28,8 @@ parametric bootstrap that simulates data from the fitted model, and then fits th
 to obtain a sample of parameters or return levels (very slow).}
 
 \item{R}{The number of bootstrap iterations.}
+
+\item{ncores}{Number of cores used for parallel computing of confidence intervals. Defaults to 2.}
 }
 \value{
 A list with return levels, chosen return periods and, if applicable, 

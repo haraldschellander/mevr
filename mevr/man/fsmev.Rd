@@ -15,8 +15,8 @@ fsmev(
 }
 \arguments{
 \item{data}{The data to which the SMEV should be fitted to. \code{data} must be a data.frame with two columns. 
-The first column must contain dates of class  \code{Date}, the second or last column must contain the rainfall 
-values corresponding to datums in the rows. No NA values are allowed.}
+The first column must contain dates of class \code{Date}, the second or last column must contain the rainfall 
+values corresponding to datums in the rows. No NA or negative values are allowed.}
 
 \item{threshold}{A numeric that is used to define wet days as values > threshold. 
 \eqn{data <= threshold} is set to NA.}
