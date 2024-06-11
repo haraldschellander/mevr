@@ -15,10 +15,7 @@
 # }
 # data <- do.call(rbind, l)
 # 
-# # padova
-# pado <- get(load("F:/eigene_dateien/ownCloud/diss/projects/tmev/padova/padova_precipitation.Rds"))
-# data <- pado %>% 
-#   na.omit()
+
 
 # load("../rain_aut.Rda")
 # dailyrainfall <- rain_aut[[1]]$data %>%
