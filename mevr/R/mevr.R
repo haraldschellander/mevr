@@ -1,30 +1,5 @@
 # package mevr
 
-# generate data for testing purposes
-# 50 years of daily rainfall data
-# each year has 365 values
-# w <- 0.87
-# c <- 75
-# l <- list()
-# years <- 1950:1970
-# for(i in seq_along(years)){
-#   y <- years[i]
-#   dates <- seq(as.Date(paste0(y, "-01-01")), as.Date(paste0(y, "-12-31")), by = "1 day")
-#   vals <- stats::rweibull(length(dates), shape = w, scale = c)
-#   l[[i]]<- data.frame(dates, vals)
-# }
-# data <- do.call(rbind, l)
-# 
-
-
-# load("../rain_aut.Rda")
-# dailyrainfall <- rain_aut[[1]]$data %>%
-#   filter(year < 1991) %>%
-#   mutate(dates = ymd(paste(year, month, day, sep = "-"))) %>% 
-#   dplyr::select(dates, val)
-# save(dailyrainfall, file = "tmev_package/mevr/data/dailyrainfall.RData")
-
-
 #' @importFrom graphics abline hist legend lines par points title
 #' @importFrom stats aggregate cov na.omit quantile runif rweibull pweibull dweibull sd  uniroot predict
 #' @importFrom EnvStats eweibull 
@@ -91,7 +66,10 @@ NULL
 #' \code{method = 'pwm'} is the default.
 #' 
 #' Confidence intervals of the SMEV distribution can be calculated using a non parametric 
-#' bootstrap technique. Note that this very slow.
+#' bootstrap technique. Note that this very slow. 
+#' 
+#' This function returns the parameters of the fitted SMEV distribution as well as some 
+#' additional fitting results and input parameters useful for further analysis. 
 #'
 #' @param data The data to which the SMEV should be fitted to. \code{data} must be a data.frame with two columns. 
 #' The first column must contain dates of class \code{Date}, the second or last column must contain the rainfall 
@@ -230,6 +208,9 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), sd = FALS
 #'The MEVD can also be used for sub-daily precipitation (Marra et al., 2019). 
 #'In that case n has to be adapted accordingly to the 'mean number of wet events' per year.
 #'
+#' This function returns the parameters of the fitted MEVD distribution as well as some 
+#' additional fitting results and input parameters useful for further analysis. 
+#'
 #' @param data The data to which the MEVD should be fitted to. \code{data} must be a data.frame with two columns. 
 #' The first column must contain dates of class  \code{Date}, the second or last column must contain the rainfall 
 #' values corresponding to datums in the rows. No NA values are allowed.
@@ -348,7 +329,14 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls")){
 #' The first effect models the long-term temporal trend of the parameter with a thin-plate spline. 
 #' The second effect models the superimposed seasonal fluctuations of the parameter 
 #' with the 'day of the year' with a cyclic cubic regression spline and 10 knots, 
-#' to ensure a smooth transition between December and January. 
+#' to ensure a smooth transition between December and January. The number of knots (k)
+#' in the above equation can be set separately for the year and yday effect as well as 
+#' separately for the shape and scale parameter of the Weibull distribution. This can be done
+#' by overwriting the parameters \code{yday_ti_shape_k}, \code{yday_ti_scale_k}, 
+#' \code{year_ti_shape_k}, \code{year_ti_scale_k} in the call to \code{ftmev}. Note that 
+#' these values depend on many factors, such as the structure of the data, the TMEV is fitted to.
+#' Please refer to the documentation of the packages \code{\link[bamlss]{bamlss}} and, 
+#' in particular \code{\link[mgcv]{mgcv}}.
 #' 
 #' For data series with lengths < 10 years, the first temporal effect is changed to 
 #' a simple linear time trend. 
@@ -358,6 +346,9 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls")){
 #' and the year itself with a combination of a thin plate and a cyclic cubic spline:
 #' 
 #'  \deqn{ti(year, yday, bs = c("tp", "cc"), d = c(1, 1), k = c(year_ti_k, yday_ti_k))}
+#'
+#' This function returns the parameters of the fitted TMEV distribution as well as some 
+#' additional fitting results and input parameters useful for further analysis. 
 #'
 #' @param data The data to which the TMEV should be fitted to. \code{data} must be a data.frame with two columns. 
 #' The first column must contain dates of class  \code{Date}, the second or last column must contain the rainfall 
@@ -815,8 +806,8 @@ qtmev <- function(p, data) {
 #' @param R The number of bootstrap iterations.
 #' @param ncores Number of cores used for parallel computing of confidence intervals. Defaults to 2.
 #'
-#' @return A list with return levels, chosen return periods and, if applicable, 
-#' \code{alpha/2} and \code{1 - alpha/2} confidence intervals
+#' @return A list with return levels, chosen return periods and, if \code{ci=TRUE}, 
+#' \code{alpha/2} and \code{1 - alpha/2} confidence intervals.
 #' @export
 #'
 #' @examples
@@ -1237,6 +1228,7 @@ pp.weibull <- function(x){
 #' See e.g. \link[base]{plot}.
 #'
 #' @method plot mevr
+#' @return No return value, only a plot is produced.
 #' @export
 #'
 #' @examples
@@ -1269,6 +1261,8 @@ plot.mevr <- function(x, q = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
   }
   
   if(type == "all"){
+    oldpar <- par(no.readonly = TRUE) 
+    on.exit(par(oldpar)) 
     par(mfrow = c(2, 2), oma = c(0, 0, 2, 0))
   }
   
@@ -1345,7 +1339,7 @@ plot.mevr <- function(x, q = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
     title_strg <- paste(x$type)
   }
   title(title_strg, outer = TRUE)
-  par(mfrow = c(1, 1))
+  #par(mfrow = c(1, 1))
 }
 
 
@@ -1358,8 +1352,7 @@ plot.mevr <- function(x, q = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
 #' See also the details of \code{\link{ftmev}} for an explanation of the model terms used to fit the temporal trend 
 #' of the Weibull parameters. The basis dimensions yday_ti_shape_k, 
 #' yday_ti_scale_k, year_ti_shape_k, year_ti_scale_k are taken from 
-#' the fitting process. It is however possible to overwrite them in the call 
-#' to this function. 
+#' the fitting process, i.e. the call to \code{\link{ftmev}}. 
 #' 
 #' @param object Object of class \code{mevr}, fitted with the TMEV. 
 #' @param newdata A data frame with the model covariates (year, yday) at which predictions are required. 

@@ -16,7 +16,7 @@ Maintainer: Harald Schellander <harald.schellander@geosphere.at>
 Depends: R (>= 4.1), dplyr, rlang
 Encoding: UTF-8
 Imports: graphics, stats, EnvStats, parallel, foreach, doParallel, bamlss, mgcv
-Description: Functions for fitting the metastatistical extreme value distribution MEVD (Marani and Ignaccolo, 2015, <doi:10.1016/j.advwatres.2015.03.001>) and its variants SMEV (Marra et al., 2019, <doi:10.1016/j.advwatres.2019.04.002>) and TMEV (Falkensteiner et al., 2023, <doi:10.1016/j.wace.2023.100601>) are provided. 
+Description: Functions for extreme value analysis with the metastatistical extreme value distribution MEVD (Marani and Ignaccolo, 2015, <doi:10.1016/j.advwatres.2015.03.001>) and some of its variants. In particular, analysis can be performed with the simplified metastatistical extreme value distribution SMEV (Marra et al., 2019, <doi:10.1016/j.advwatres.2019.04.002>) and the temporal metastatistical extreme value distribution TMEV (Falkensteiner et al., 2023, <doi:10.1016/j.wace.2023.100601>). Parameters can be estimated with probability weighted moments, maximum likelihood and least squares. Density, distribution function, quantile function and random generation for the MEVD, SMEV and TMEV are included. In addition, functions for the calculation of return levels including confidence intervals are provided. For a description of uses cases please see the provided references.
 License: GPL-3
 RoxygenNote: 7.2.3
 Suggests: 
