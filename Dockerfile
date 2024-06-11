@@ -13,7 +13,7 @@ RUN apt-get update -qq && \
 #  install R dependencies
 #RUN R -q -e "R.version.string" 
 Run R -q -e "install.packages(c('devtools', 'remotes'), repos = 'cran.r-project.org')"
-Run R -q -e "install.packages(c('bamlss', 'doParallel', 'EnvStats', 'foreach'), repos = 'cran.r-project.org')"
+Run R -q -e "install.packages(c('dplyr', 'rlang', 'EnvStats', 'parallel', 'foreach', 'doParallel', 'bamlss', 'mgcv'), repos = 'cran.r-project.org')"
 
 # install mevr package
 RUN R -q -e "devtools::install_gitlab(repo = 'r-packages/mevr', \
