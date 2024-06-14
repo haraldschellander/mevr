@@ -63,7 +63,10 @@ maximum likelihood for the estimation of the Weibull parameters w and C. Therefo
 \code{method = 'pwm'} is the default.
 
 Confidence intervals of the SMEV distribution can be calculated using a non parametric 
-bootstrap technique. Note that this very slow.
+bootstrap technique. Note that this very slow. 
+
+This function returns the parameters of the fitted SMEV distribution as well as some 
+additional fitting results and input parameters useful for further analysis.
 }
 \examples{
 data(dailyrainfall)

@@ -26,6 +26,9 @@ probability plot (\code{tpe='pp'}) are shown.}
 \item{...}{Further parameters may also be supplied as arguments. 
 See e.g. \link[base]{plot}.}
 }
+\value{
+No return value, only a plot is produced.
+}
 \description{
 A return level plot, qq-plot, pp-plot and a histogram with the fitted density is produced
 }

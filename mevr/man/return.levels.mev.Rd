@@ -32,8 +32,8 @@ to obtain a sample of parameters or return levels (very slow).}
 \item{ncores}{Number of cores used for parallel computing of confidence intervals. Defaults to 2.}
 }
 \value{
-A list with return levels, chosen return periods and, if applicable, 
-\code{alpha/2} and \code{1 - alpha/2} confidence intervals
+A list with return levels, chosen return periods and, if \code{ci=TRUE}, 
+\code{alpha/2} and \code{1 - alpha/2} confidence intervals.
 }
 \description{
 Calculate return levels for a MEVD, SMEV or TMEV extreme value distributions 

@@ -64,6 +64,9 @@ Therefore \code{method = 'pwm'} is the default.
 
 The MEVD can also be used for sub-daily precipitation (Marra et al., 2019). 
 In that case n has to be adapted accordingly to the 'mean number of wet events' per year.
+
+This function returns the parameters of the fitted MEVD distribution as well as some 
+additional fitting results and input parameters useful for further analysis.
 }
 \examples{
 data(dailyrainfall)

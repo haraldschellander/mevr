@@ -79,7 +79,14 @@ shape parameter with the function \code{\link[bamlss]{bamlss}} from package \cod
 The first effect models the long-term temporal trend of the parameter with a thin-plate spline. 
 The second effect models the superimposed seasonal fluctuations of the parameter 
 with the 'day of the year' with a cyclic cubic regression spline and 10 knots, 
-to ensure a smooth transition between December and January. 
+to ensure a smooth transition between December and January. The number of knots (k)
+in the above equation can be set separately for the year and yday effect as well as 
+separately for the shape and scale parameter of the Weibull distribution. This can be done
+by overwriting the parameters \code{yday_ti_shape_k}, \code{yday_ti_scale_k}, 
+\code{year_ti_shape_k}, \code{year_ti_scale_k} in the call to \code{ftmev}. Note that 
+these values depend on many factors, such as the structure of the data, the TMEV is fitted to.
+Please refer to the documentation of the packages \code{\link[bamlss]{bamlss}} and, 
+in particular \code{\link[mgcv]{mgcv}}.
 
 For data series with lengths < 10 years, the first temporal effect is changed to 
 a simple linear time trend. 
@@ -89,6 +96,9 @@ The following term models the relationship between the seasonality as day of the
 and the year itself with a combination of a thin plate and a cyclic cubic spline:
 
  \deqn{ti(year, yday, bs = c("tp", "cc"), d = c(1, 1), k = c(year_ti_k, yday_ti_k))}
+
+This function returns the parameters of the fitted TMEV distribution as well as some 
+additional fitting results and input parameters useful for further analysis.
 }
 \examples{
 data(dailyrainfall)
