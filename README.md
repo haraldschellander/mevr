@@ -11,6 +11,8 @@ The R-package `mevr` was written during the development of the TMEV ([Falkenstei
 
 
 ## Installation
-The easiest way to get mevr is to install it from CRAN:
+```r 
+# The easiest way to get mevr is to install it from CRAN:
 install.packages("mevr")
+```
 
