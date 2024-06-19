@@ -121,6 +121,9 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), sd = FALS
   if (!inherits(data$groupvar, "Date")) 
     stop("date column must be of class 'Date'")
   
+  if (!inherits(data$val, "numeric"))
+    stop("data values must be of class 'numeric'")
+  
   if (length(which(data$val < 0)) > 0)
     stop("data must not contain values < 0")
   
@@ -261,6 +264,9 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls")){
   
   if (!inherits(data$groupvar, "Date")) 
     stop("date column must be of class 'Date'")
+  
+  if (!inherits(data$val, "numeric"))
+    stop("data values must be of class 'numeric'")
   
   if(length(which(data$val < 0)) > 0)
     stop("data must not contain values < 0")
@@ -408,6 +414,9 @@ ftmev <- function(data, threshold = 0, minyears = 10, day_year_interaction = FAL
   
   if (!inherits(data$groupvar, "Date")) 
     stop("date column must be of class 'Date'")
+  
+  if (!inherits(data$val, "numeric"))
+    stop("data values must be of class 'numeric'")
   
   if(length(which(data$val < 0)) > 0)
     stop("data must not contain values < 0")
