@@ -13,7 +13,7 @@ pp.weibull(x)
 A numeric vector of Weibull plotting positions corresponding to the given maxima \code{x}
 }
 \description{
-Calculates the weibull plotting position for the given maxima
+Calculates the Weibull plotting position for the given maxima
 }
 \examples{
 data(dailyrainfall)

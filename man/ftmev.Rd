@@ -19,7 +19,7 @@ ftmev(
 \arguments{
 \item{data}{The data to which the TMEV should be fitted to. \code{data} must be a data.frame with two columns. 
 The first column must contain dates of class  \code{Date}, the second or last column must contain the rainfall 
-values corresponding to datums in the rows. No NA values are allowed.}
+values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning.}
 
 \item{threshold}{A numeric that is used to define wet days as values > threshold. 
 \eqn{data <= threshold} is set to NA.}
