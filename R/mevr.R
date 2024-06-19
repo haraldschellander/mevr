@@ -73,7 +73,7 @@ NULL
 #'
 #' @param data The data to which the SMEV should be fitted to. \code{data} must be a data.frame with two columns. 
 #' The first column must contain dates of class \code{Date}, the second or last column must contain the rainfall 
-#' values corresponding to datums in the rows. No NA or negative values are allowed.
+#' values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning. 
 #' @param threshold A numeric that is used to define wet days as values > threshold. 
 #' \eqn{data <= threshold} is set to NA.  
 #' @param method Character string describing the method that is used to estimate the 
@@ -112,11 +112,6 @@ NULL
 #' 
 #' @seealso \code{\link{fmev}}, \code{\link{ftmev}}
 fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), sd = FALSE, sd.method = "boot", R = 502){
-  # data must be data.frame for yearly parameters
-  # data must be in last/second column
-  # col1 must hold the group variable
-  # col2 must contain the data
-  # col1 must be kind of date 
 
   if(!inherits(data, "data.frame"))
     stop("data must be of class 'data.frame'")
@@ -126,10 +121,15 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), sd = FALS
   if (!inherits(data$groupvar, "Date")) 
     stop("date column must be of class 'Date'")
   
-  if(length(which(data$val < 0)) > 0)
+  if (length(which(data$val < 0)) > 0)
     stop("data must not contain values < 0")
-  if(any(is.na(data$val)))
-    stop("data must not contain NA")
+  
+  if (any(is.na(data$val))) {
+    n <- nrow(data)
+    data <- na.omit(data)
+    nn <- nrow(data)
+    warning(paste0("data contains ", n - nn, " NA values"))
+  }
   
   if (isTRUE(sd) & sd.method != "boot") 
     stop("only method 'boot' is allowed for calculation of standard errors")
@@ -137,25 +137,25 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), sd = FALS
   method <- match.arg(method)
   
   # only wet days: remove data smaller than threshold
-  data_pot <- data %>%
-    dplyr::filter(.data$val > threshold) %>%
+  data_pot <- data |>
+    dplyr::filter(.data$val > threshold) |>
     dplyr::mutate(nvar = format(.data$groupvar, "%Y"))
-  n_vec <- data_pot %>%
-    group_by(.data$nvar) %>%
-    count %>%
-    ungroup %>% 
+  n_vec <- data_pot |>
+    group_by(.data$nvar) |>
+    count() |>
+    ungroup() |> 
     pull(n)
   years <- as.numeric(unique(data_pot$nvar))
   data_pot$nvar <- NULL
-  theta <- data_pot %>%
-    group_modify(~ fit.mev(.x$val, method)) %>%
-    ungroup
+  theta <- data_pot |>
+    group_modify(~ fit.mev(.x$val, method)) |>
+    ungroup()
   theta$n <- mean(n_vec)
   
-  maxima <- data_pot %>%
-    dplyr::mutate(year = format(.data$groupvar, "%Y")) %>%
-    group_by(.data$year) %>%
-    summarise(max = max(.data$val, na.rm = TRUE)) %>%
+  maxima <- data_pot |>
+    dplyr::mutate(year = format(.data$groupvar, "%Y")) |>
+    group_by(.data$year) |>
+    summarise(max = max(.data$val, na.rm = TRUE)) |>
     pull(max) 
   
   params <- c("c" = theta$c, "w" = theta$w, "n" = theta$n)
@@ -213,7 +213,7 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), sd = FALS
 #'
 #' @param data The data to which the MEVD should be fitted to. \code{data} must be a data.frame with two columns. 
 #' The first column must contain dates of class  \code{Date}, the second or last column must contain the rainfall 
-#' values corresponding to datums in the rows. No NA values are allowed.
+#' values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning.
 #' @param threshold A numeric that is used to define wet days as values > threshold. 
 #' \eqn{data <= threshold} is set to NA.  
 #' @param method Character string describing the method that is used to estimate the 
@@ -264,32 +264,37 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls")){
   
   if(length(which(data$val < 0)) > 0)
     stop("data must not contain values < 0")
-  if(any(is.na(data$val)))
-    stop("data must not contain NA")
+  
+  if (any(is.na(data$val))) {
+    n <- nrow(data)
+    data <- na.omit(data)
+    nn <- nrow(data)
+    warning(paste0("data contains ", n - nn, " NA values"))
+  }
   
   method <- match.arg(method)
   if(method != "pwm" & threshold > 0)
     stop("threshold can only be used for method 'pwm'")
   
   # only wet days: remove data smaller than threshold
-  data_pot <- data %>%
-    dplyr::filter(.data$val > threshold) %>%
+  data_pot <- data |>
+    dplyr::filter(.data$val > threshold) |>
     dplyr::mutate(year = format(.data$groupvar, "%Y"))
-  n_vec <- data_pot %>%
-    group_by(.data$year) %>%
-    count %>%
-    ungroup %>% 
+  n_vec <- data_pot |>
+    group_by(.data$year) |>
+    count() |>
+    ungroup() |> 
     pull(n)
-  theta <- data_pot %>%
-    group_by(.data$year) %>%
-    group_modify(~ fit.mev(.x$val, method)) %>%
-    ungroup
+  theta <- data_pot |>
+    group_by(.data$year) |>
+    group_modify(~ fit.mev(.x$val, method)) |>
+    ungroup()
   theta$n <- n_vec
   
-  maxima <- data_pot %>%
-    dplyr::mutate(year = format(.data$groupvar, "%Y")) %>%
-    group_by(.data$year) %>%
-    summarise(max = max(.data$val, na.rm = TRUE)) %>%
+  maxima <- data_pot |>
+    dplyr::mutate(year = format(.data$groupvar, "%Y")) |>
+    group_by(.data$year) |>
+    summarise(max = max(.data$val, na.rm = TRUE)) |>
     pull(max) 
 
   params <- data.frame("c" = theta$c, "w" = theta$w, "n" = theta$n)
@@ -352,7 +357,7 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls")){
 #'
 #' @param data The data to which the TMEV should be fitted to. \code{data} must be a data.frame with two columns. 
 #' The first column must contain dates of class  \code{Date}, the second or last column must contain the rainfall 
-#' values corresponding to datums in the rows. No NA values are allowed.
+#' values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning.
 #' @param threshold A numeric that is used to define wet days as values > threshold. 
 #' \eqn{data <= threshold} is set to NA.  
 #' @param minyears Minimum number of available years for fitting a cyclic spline to the non-stationary data series (see details).
@@ -406,19 +411,23 @@ ftmev <- function(data, threshold = 0, minyears = 10, day_year_interaction = FAL
   
   if(length(which(data$val < 0)) > 0)
     stop("data must not contain values < 0")
-  if(any(is.na(data$val)))
-    stop("data must not contain NA")
   
+  if (any(is.na(data$val))) {
+    n <- nrow(data)
+    data <- na.omit(data)
+    nn <- nrow(data)
+    warning(paste0("data contains ", n - nn, " NA values"))
+  }
   
   # only wet days: remove data smaller than threshold
-  data_pot <- data %>%
-    dplyr::filter(.data$val > threshold) %>%
+  data_pot <- data |>
+    dplyr::filter(.data$val > threshold) |>
     dplyr::mutate(year = as.numeric(format(.data$groupvar, "%Y")),
                   yday = as.POSIXlt(.data$groupvar)$yday + 1)
-  n_vec <- data_pot %>%
-    group_by(.data$year) %>%
-    count %>%
-    ungroup %>% 
+  n_vec <- data_pot |>
+    group_by(.data$year)  |> 
+    count() |>
+    ungroup() |> 
     pull(n)
   nyears <- length(n_vec) 
   if (nyears < minyears){
@@ -459,10 +468,10 @@ ftmev <- function(data, threshold = 0, minyears = 10, day_year_interaction = FAL
   data_pot$c <- exp(bamy$fitted.values$lambda)
   data_pot$w <- exp(bamy$fitted.values$alpha)
   
-  maxima <- data_pot %>%
-    dplyr::mutate(year = format(.data$groupvar, "%Y")) %>%
-    group_by(.data$year) %>%
-    summarise(max = max(.data$val, na.rm = TRUE)) %>%
+  maxima <- data_pot |>
+    dplyr::mutate(year = format(.data$groupvar, "%Y")) |>
+    group_by(.data$year) |>
+    summarise(max = max(.data$val, na.rm = TRUE)) |>
     pull(max) 
   
   years <- unique(data_pot$year)
@@ -535,16 +544,6 @@ fit.mev <- function(data, method){
 
 
 smev.boot <- function(data, method = c("pwm", "mle", "ls"), R = 502){
-  # orig Enrico Zorzetto: 
-  # '''non parametric bootstrap technique 
-  # for computing confidence interval for a distribution
-  # (when I do not know the asymptotic properties of the distr.)
-  # return std and optional pdf of fitted parameters  
-  # and their covariance matrix varcov
-  # fit to a sample of a distribution using the fitting function fitfun
-  # with a number of parameters npar 
-  # ONLY FOR WEIBULL
-  # Ignore the first output parameter - N'''
   method <- match.arg(method)
   weisample <- data$val
   N <- length(weisample)
@@ -726,6 +725,13 @@ rlmev <- function(q, w, c, n){
 #' 
 #' 
 dtmev <- function(x, data) {
+  
+  if (length(x) > 1)
+    stop("x must be a single numeric")
+  
+  if (!inherits(data, "data.frame"))
+    stop("data must be of class 'data.frame'")
+  
   #data$px <- pweibull(x, shape = data$w.pred, scale = data$c.pred)
   #data$dx <- dweibull(x, shape = data$w.pred, scale = data$c.pred)
   data$px <- pweibull(x, shape = data$w, scale = data$c)
@@ -765,6 +771,10 @@ ptmev <- function(q, data) {
 #' @describeIn dtmev distribution quantile function
 #' @export
 qtmev <- function(p, data) {
+  
+  if (!inherits(data, "data.frame"))
+    stop("data must be of class 'data.frame'")
+  
   ret <- list()
   for(i in 1:length(p)){
     if (p[i] == 0) {
@@ -819,12 +829,11 @@ qtmev <- function(p, data) {
 #'  
 return.levels.mev <- function(x, return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200), 
                               ci = FALSE, alpha = 0.05, method = "boot", R = 502, ncores = 2L){
-  if(!inherits(x, "mevr"))
+  if (!inherits(x, "mevr"))
     stop("x must be object of class 'mevr'")
   
-  if(any(return.periods <= 1))
+  if (any(return.periods <= 1))
     stop("All return periods have to be > 1")
-  
   
   if (tolower(x$type) != "tmev") {
     w <- x$w
@@ -947,9 +956,9 @@ ci.mev <- function(x, method = c("boot"), alpha = 0.05,
     
     sam <- foreach(i = 1:R, .combine = cbind, .export = c("fmev", "fit.mev", "qmev", "pmev"), .packages = c("dplyr")) %dopar% {
       sampleyears <- sample(x$years, size = subsize)
-      nd <- x$data %>% 
-        #filter(year(.data$groupvar) %in% sampleyears) %>% 
-        filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) %>% 
+      nd <- x$data |> 
+        #filter(year(.data$groupvar) %in% sampleyears) |> 
+        filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) |> 
         dplyr::select(.data$groupvar, .data$val)
       fitdf <- fmev(nd)
       qmev(1 - 1 / return.periods, fitdf$w, fitdf$c, fitdf$n)
@@ -1005,8 +1014,8 @@ ci.tmev <- function(x, minyears, method = c("boot"), alpha = 0.05,
     
     sam <- foreach(i = 1:R, .combine = cbind, .export = c("ftmev", "qtmev", "ptmev"), .packages = c("dplyr", "bamlss")) %dopar% {
       sampleyears <- sample(x$years, size = subsize)
-      nd <- x$data %>% 
-        filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) %>% 
+      nd <- x$data |> 
+        filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) |> 
         dplyr::select(.data$groupvar, .data$val)
       fitdf <- ftmev(nd, minyears = minyears)
       qtmev(1 - 1 / return.periods, fitdf$data)
@@ -1132,8 +1141,8 @@ ci.smev <- function(x, method = c("boot"), alpha = 0.05,
     
     sam <- foreach(i = 1:R, .combine = cbind, .export = c("fsmev", "fit.mev", "qmev", "pmev"), .packages = c("dplyr")) %dopar% {
       sampleyears <- sample(x$years, size = subsize)
-      nd <- x$data %>% 
-        filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) %>% 
+      nd <- x$data |> 
+        filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) |> 
         dplyr::select(.data$groupvar, .data$val)
       fitdf <- fsmev(nd)
       qmev(1 - 1 / return.periods, fitdf$w, fitdf$c, fitdf$n)
@@ -1190,7 +1199,7 @@ ci.smev <- function(x, method = c("boot"), alpha = 0.05,
 
 #' Weibull plotting position
 #' 
-#' Calculates the weibull plotting position for the given maxima
+#' Calculates the Weibull plotting position for the given maxima
 #'
 #' @param x Numeric vector of block maxima 
 #'
@@ -1209,6 +1218,8 @@ pp.weibull <- function(x){
   n <- length(x)
   Fi <- (1:n) / (n + 1)
   wpp <- 1 / (1 - Fi)
+#  if (length(wpp) != length(x))
+#    stop("length of output differs from length of input")
   return(wpp)
 }
 
@@ -1385,7 +1396,7 @@ predict.mevr <- function(object, newdata, term, ...){
     stop("fitted object must be of type 'tmev'")
   
   if (missing(newdata)) 
-    newdata <- object$data %>% 
+    newdata <- object$data |> 
       dplyr::select("year", "yday")
   
   if(missing(term)){
@@ -1401,28 +1412,28 @@ predict.mevr <- function(object, newdata, term, ...){
     years <- unique(newdata$year)
     for(i in seq_along(years)){
       y <- years[i]
-      d <- newdata %>% 
+      d <- newdata |> 
         filter(.data$year == y)
       c.pred.year <- predict(bamfit, newdata = d, model = "lambda", type = "parameter", term = "year")
       w.pred.year <- predict(bamfit, newdata = d, model = "alpha", type = "parameter", term = "year")
       param_pred[[i]] <- cbind(year = y, c.pred.year, w.pred.year)
     }
-    param_pred <- do.call(rbind, param_pred) %>% 
-      unique() %>% 
+    param_pred <- do.call(rbind, param_pred) |> 
+      unique() |> 
       as.data.frame()
   } else if(term == "yday"){
     param_pred <- list()
     ydays <- unique(newdata$yday)
     for(i in seq_along(ydays)){
       dy <- ydays[i]
-      d <- newdata %>% 
+      d <- newdata |> 
         filter(.data$yday == dy)
       c.pred.yday <- predict(bamfit, newdata = d, model = "lambda", type = "parameter", term = "yday")
       w.pred.yday <- predict(bamfit, newdata = d, model = "alpha", type = "parameter", term = "yday")
       param_pred[[i]] <- cbind(yday = dy, c.pred.yday, w.pred.yday)
     }
-    param_pred <- do.call(rbind, param_pred) %>% 
-      unique() %>% 
+    param_pred <- do.call(rbind, param_pred) |> 
+      unique() |> 
       as.data.frame()
   } else if(term == "all"){
       c.pred <- predict(bamfit, newdata = newdata, model = "lambda", type = "parameter")
