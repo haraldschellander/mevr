@@ -15,9 +15,15 @@ test_that("ftmev", {
       expect_error(ftmev(data, threshold = 0), "data must not contain values < 0")
     })
     
-    it("should throw an error if data contains NA values", {
-      data <- data.frame(groupvar = c(as.Date(c("2024-01-01", "2025-01-01"))), val = c(10, NA))
-      expect_error(ftmev(data, threshold = 0), "data must not contain NA")
+    it("should throw a warning if data contains NA values", {
+      set.seed(123)
+      sample_dates <- seq.Date(from = as.Date("2000-01-01"), to = as.Date("2006-01-01"), by = "day")
+      sample_data <- data.frame(groupvar = sample_dates, val = sample(rnorm(length(sample_dates))))
+      sample_data$groupvar <- as.Date(sample_data$groupvar)
+      data <- sample_data %>%
+        filter(val >= 0 & !is.na(val))
+      data$val[1] <- NA
+      expect_warning(ftmev(data, minyears = 5), "data contains 1 NA values")
     })
     
     it("should throw an error if data has less years than expected", {

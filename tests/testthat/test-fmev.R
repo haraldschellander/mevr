@@ -15,9 +15,9 @@ test_that("fmev", {
       expect_error(fmev(data, threshold = 0), "data must not contain values < 0")
     })
     
-    it("should throw an error if data contains NA values", {
+    it("should throw a warning if data contains NA values", {
       data <- data.frame(groupvar = c(as.Date(c("2024-01-01", "2025-01-01"))), val = c(10, NA))
-      expect_error(fmev(data, threshold = 0), "data must not contain NA")
+      expect_warning(fmev(data), "data contains 1 NA values")
     })
     
     it ("should throw an error if method != 'pwm' and threshold > 0", {
