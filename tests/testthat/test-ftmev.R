@@ -2,17 +2,22 @@ test_that("ftmev", {
   describe("ftmev function", {
     
     it("should throw an error if data is not a data.frame", {
-      expect_error(ftmev(list(1, 2), threshold = 0), "data must be of class 'data.frame'")
+      expect_error(ftmev(list(1, 2)), "data must be of class 'data.frame'")
     })
     
     it("should throw an error if date column is not of class 'Date'", {
       data <- data.frame(groupvar = c("2024-01-01", "2025-01-01"), val = c(10, 20))
-      expect_error(ftmev(data, threshold = 0), "date column must be of class 'Date'")
+      expect_error(ftmev(data), "date column must be of class 'Date'")
+    })
+    
+    it("should throw an error if data values are not of class 'numeric'", {
+      data <- data.frame(groupvar = c(as.Date(c("2024-01-01", "2025-01-01"))), val = c(10, "20"))
+      expect_error(ftmev(data), "data values must be of class 'numeric'")
     })
     
     it("should throw an error if data contains negative values", {
       data <- data.frame(groupvar = c(as.Date(c("2024-01-01", "2025-01-01"))), val = c(-10, 20))
-      expect_error(ftmev(data, threshold = 0), "data must not contain values < 0")
+      expect_error(ftmev(data), "data must not contain values < 0")
     })
     
     it("should throw a warning if data contains NA values", {
