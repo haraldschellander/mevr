@@ -23,5 +23,5 @@ To install the development version from GitHub
 
 ```r
 # install.packages("pak")
-pak::pak("haraldschellander/mevr/mevr")
+pak::pak("haraldschellander/mevr")
 ```
