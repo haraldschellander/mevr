@@ -1,0 +1,15 @@
+mevr 1.0.1 (release date: 2024-06-19)
+=========================================
+     
+Changes: 
+
+* NA values are always removed. Functions fsmev, fmev and ftmev throw warnings 
+if the data contains any NA values. 
+* Some internal code improvements. 
+
+
+mevr 1.0.0 (release date: 2024-06-15)
+=========================================
+     
+* First release.
+
