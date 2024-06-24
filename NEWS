@@ -1,3 +1,13 @@
+mevr 1.1.1 (release date: 2024-06-21)
+=========================================
+     
+Changes: 
+
+* A Weibull tail test based on left-censoring the input data can be performed 
+prior to fitting a SMEV. This can drastly improve fitting results. 
+* Some internal code improvements. 
+
+
 mevr 1.0.1 (release date: 2024-06-19)
 =========================================
      
