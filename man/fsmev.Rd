@@ -8,6 +8,8 @@ fsmev(
   data,
   threshold = 0,
   method = c("pwm", "mle", "ls"),
+  censor = FALSE,
+  censor_opts = list(thresholds = seq(0.05, 0.95, 0.05), nrtrials = 5, R = 500),
   sd = FALSE,
   sd.method = "boot",
   R = 502
@@ -25,6 +27,13 @@ values corresponding to datums in the rows. No negative values are allowed. NA v
 Weibull parameters c and w. Possible options are probability weighted moments (\code{method='pwm'}), 
 maximum likelihood (\code{method='mle'}) or least squares (\code{method='ls'}). 
 The \code{default} is \code{pwm}. (see details).}
+
+\item{censor}{If \code{censor=TRUE}, the data series will be left-censored to assure that the observed maxima
+are samples from a weibull tail. Defaults to \code{censor=FALSE}.}
+
+\item{censor_opts}{A list with components \code{thresholds}, \code{nrtrials} and \code{R}. They give the range of quantiles 
+used as left-censoring threshold, the number of trials used to achieve a weibull fit to the left-censored sample, 
+and the number of sythetic samples used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.}
 
 \item{sd}{If \code{sd=TRUE}, confidence intervals of the SMEV distribution are calculated (see details).}
 
@@ -44,7 +53,8 @@ A list of class \code{mevr} with components:
 \item{data}{ \eqn{data >= threshold} used to fit the SMEV and additional components which may be useful for further analysis.}
 \item{years}{ Vector of years as YYYY.}
 \item{threshold}{ The chosen threshold.}
-\item{method}{ Method used to fit the MEVD.}
+\item{method}{ Method used to fit the MEVD. Note that \code{method} is set to \code{censored lsreg} when the data is left-censored
+and the weibull tail test is not rejected.}
 \item{type}{ The type of distribution ("SMEV")}
 }
 \description{
@@ -74,6 +84,28 @@ data(dailyrainfall)
 fit <- fsmev(dailyrainfall)
 fit
 plot(fit)
+
+# left censor data prior to fitting
+set.seed(123)
+sample_dates <- seq.Date(from = as.Date("2000-01-01"), to = as.Date("2020-12-31"), by = 1)
+sample_data <- data.frame(dates = sample_dates, val = sample(rnorm(length(sample_dates))))
+d <- sample_data |>
+  filter(val >= 0 & !is.na(val))
+
+fit <- fsmev(d)
+fit_c <- fsmev(d, 
+               censor = TRUE, 
+               censor_opts = list(thresholds = c(seq(0.5, 0.9, 0.1), 0.95),
+                                  nrtrials = 2,
+                                  R = 100))
+
+rp <- 2:100
+rl <- return.levels.mev(fit, return.periods = rp)
+rl_c <- return.levels.mev(fit_c, return.periods = rp)
+plot(sort(pp.weibull(fit$maxima)), sort(fit$maxima))
+lines(rl$rp, rl$rl)
+lines(rl_c$rp, rl_c$rl, col = "red")
+
 
 }
 \references{

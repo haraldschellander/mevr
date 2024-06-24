@@ -80,6 +80,11 @@ NULL
 #' Weibull parameters c and w. Possible options are probability weighted moments (\code{method='pwm'}), 
 #' maximum likelihood (\code{method='mle'}) or least squares (\code{method='ls'}). 
 #' The \code{default} is \code{pwm}. (see details).
+#' @param censor If \code{censor=TRUE}, the data series will be left-censored to assure that the observed maxima
+#' are samples from a weibull tail. Defaults to \code{censor=FALSE}.
+#' @param censor_opts A list with components \code{thresholds}, \code{nrtrials} and \code{R}. They give the range of quantiles 
+#' used as left-censoring threshold, the number of trials used to achieve a weibull fit to the left-censored sample, 
+#' and the number of sythetic samples used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.
 #' @param sd If \code{sd=TRUE}, confidence intervals of the SMEV distribution are calculated (see details). 
 #' @param sd.method Currently only a non parametric bootstrap technique can be used to calculate SMEV confidence intervals with \code{sd.method='boot'}. The default is \code{sd=FALSE}.
 #' @param R The number of samples drawn from the SMEV distribution to calculate the confidence intervals with \code{sd.method='boot'}
@@ -95,7 +100,8 @@ NULL
 #' \item{data}{ \eqn{data >= threshold} used to fit the SMEV and additional components which may be useful for further analysis.}
 #' \item{years}{ Vector of years as YYYY.}
 #' \item{threshold}{ The chosen threshold.}
-#' \item{method}{ Method used to fit the MEVD.}
+#' \item{method}{ Method used to fit the MEVD. Note that \code{method} is set to \code{censored lsreg} when the data is left-censored
+#' and the weibull tail test is not rejected.}
 #' \item{type}{ The type of distribution ("SMEV")}
 #' 
 #' @export
@@ -108,10 +114,33 @@ NULL
 #' fit
 #' plot(fit)
 #' 
+#' # left censor data prior to fitting
+#' set.seed(123)
+#' sample_dates <- seq.Date(from = as.Date("2000-01-01"), to = as.Date("2020-12-31"), by = 1)
+#' sample_data <- data.frame(dates = sample_dates, val = sample(rnorm(length(sample_dates))))
+#' d <- sample_data |>
+#'   filter(val >= 0 & !is.na(val))
+#' 
+#' fit <- fsmev(d)
+#' fit_c <- fsmev(d, 
+#'                censor = TRUE, 
+#'                censor_opts = list(thresholds = c(seq(0.5, 0.9, 0.1), 0.95),
+#'                                   nrtrials = 2,
+#'                                   R = 100))
+#' 
+#' rp <- 2:100
+#' rl <- return.levels.mev(fit, return.periods = rp)
+#' rl_c <- return.levels.mev(fit_c, return.periods = rp)
+#' plot(sort(pp.weibull(fit$maxima)), sort(fit$maxima))
+#' lines(rl$rp, rl$rl)
+#' lines(rl_c$rp, rl_c$rl, col = "red")
+#' 
+#'
 #' @author Harald Schellander, Alexander Lieb
 #' 
 #' @seealso \code{\link{fmev}}, \code{\link{ftmev}}
-fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), sd = FALSE, sd.method = "boot", R = 502){
+fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = FALSE, censor_opts = list(thresholds = seq(0.05, 0.95, 0.05), nrtrials = 5, R = 500),
+                  sd = FALSE, sd.method = "boot", R = 502){
 
   if(!inherits(data, "data.frame"))
     stop("data must be of class 'data.frame'")
@@ -137,6 +166,15 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), sd = FALS
   if (isTRUE(sd) & sd.method != "boot") 
     stop("only method 'boot' is allowed for calculation of standard errors")
   
+  if (censor & is.null(censor_opts$nrtrials))
+    stop("number of trials for censoring must be provided")
+  
+  if (censor & is.null(censor_opts$thresholds))
+    stop("thresholds for censoring must be provided")
+  
+  if (censor & is.null(censor_opts$R))
+    stop("number of samples for censoring must be provided")
+  
   method <- match.arg(method)
   
   # only wet days: remove data smaller than threshold
@@ -150,9 +188,33 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), sd = FALS
     pull(n)
   years <- as.numeric(unique(data_pot$nvar))
   data_pot$nvar <- NULL
-  theta <- data_pot |>
-    group_modify(~ fit.mev(.x$val, method)) |>
-    ungroup()
+  
+  if (censor) {
+
+    # try nrtrial times 
+    for (i in 1:censor_opts$nrtrials) {    
+      theta <- data_pot |>
+        group_modify(~ fit.mev.censor(data_pot, censor_opts$thresholds, censor_opts$R)) |>
+        ungroup()
+      if (!all(is.na(theta))) {
+        break
+      } 
+    }
+    
+    # if tail is not weibull, uncensored fit with SMEV
+    if (is.na(theta$w) & is.na(theta$c)) {
+      theta <- data_pot |>
+        group_modify(~ fit.mev(.x$val, method)) |>
+        ungroup()
+      warning("fitting uncensored SMEV")
+    } else {
+      method = "censored lsreg"  
+    }
+  } else {
+    theta <- data_pot |>
+      group_modify(~ fit.mev(.x$val, method)) |>
+      ungroup()
+  }
   theta$n <- mean(n_vec)
   
   maxima <- data_pot |>
@@ -291,10 +353,11 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls")){
     count() |>
     ungroup() |> 
     pull(n)
+  
   theta <- data_pot |>
-    group_by(.data$year) |>
-    group_modify(~ fit.mev(.x$val, method)) |>
-    ungroup()
+      group_by(.data$year) |>
+      group_modify(~ fit.mev(.x$val, method)) |>
+      ungroup()
   theta$n <- n_vec
   
   maxima <- data_pot |>
@@ -494,6 +557,17 @@ ftmev <- function(data, threshold = 0, minyears = 10, day_year_interaction = FAL
 }
 
 
+fit.mev.censor <- function(data, thresholds, R) {
+  #thresholds <- seq(0.05, 0.95, 0.05)
+  wbtest <- lapply(thresholds, function(x) {
+      weibull_tail_test(data, cens_quant = x, R = R)
+    })
+  wbtest <- do.call(rbind, wbtest)
+  cens_fit <- censored_weibull_fit(wbtest, thresholds)
+  return(data.frame(w = cens_fit$shape_cens, c = cens_fit$scale_cens))
+}
+
+
 fit.mev <- function(data, method){
   if(method == "pwm"){
     data <- sort(data)
@@ -531,7 +605,6 @@ fit.mev <- function(data, method){
     #else:
     #  return n,c_hat,w_hat
 
-    
   } else if (method == "ls"){
     xi <- sort(data)
     N <- length(xi)
@@ -547,7 +620,7 @@ fit.mev <- function(data, method){
     w <- yrstd / xrstd 
     c <- exp(xrbar - 1 / w * yrbar)
   }
-         
+   
   return(data.frame(w = w, c = c))
 }
 
