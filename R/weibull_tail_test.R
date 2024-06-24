@@ -61,9 +61,11 @@ censored_weibull_fit <- function(x, thresholds) {
 
 #' Weibull tail test
 #' 
-#' Based on Marra F, W Amponsah, SM Papalexiou, 2023. Non-asymptotic Weibull tails 
+#' This functions provides a way to test if observed rainfall maxima from a data series are 
+#' likely samples from a parent distribution with a Weibull tail. The concept and the 
+#' code is based on the paper Marra F, W Amponsah, SM Papalexiou, 2023. Non-asymptotic Weibull tails 
 #' explain the statistics of extreme daily precipitation. Adv. Water Resour., 173, 104388, 
-#' https://doi.org/10.1016/j.advwatres.2023.104388 and the corresponding Matlab code 
+#' https://doi.org/10.1016/j.advwatres.2023.104388. The also provide the corresponding Matlab code 
 #' (https://zenodo.org/records/7234708).
 #' 
 #' Null-Hyothesis: block maxima are samples from a parent distribution with
@@ -80,14 +82,14 @@ censored_weibull_fit <- function(x, thresholds) {
 #' @param R The number of synthetic samples. 
 #'
 #' @return A tibble with the test outcome and other useful results:
-#'   \code{is_rejected} outcome of the test (TRUE means that the assumption of
-#'   Weibull tails for the given left-censoring threshold is rejected).#'   
-#'   \code{p_out} fraction of block maxima outside of the Y = 1 - p_out confidence interval 
-#'   \code{p_hi} fraction of block maxima above the Y = 1 - p_out confidence interval 
-#'   \code{p_lo} fraction of block maxima below the Y = 1 - p_out confidence interval 
-#'   \code{scale} scale parameter of the Weibull distribution describing the non-censored samples
-#'   \code{shape} shape parameter of the Weibull distribution describing the non-censored samples
-#'   \code{quant} the quantile used as left-censoring threshold
+#'   \item{is_rejected}{ outcome of the test (TRUE means that the assumption of
+#'   Weibull tails for the given left-censoring threshold is rejected).}   
+#'   \item{p_out}{ fraction of block maxima outside of the Y = 1 - p_out confidence interval} 
+#'   \item{p_hi}{ fraction of block maxima above the Y = 1 - p_out confidence interval} 
+#'   \item{p_lo}{ fraction of block maxima below the Y = 1 - p_out confidence interval} 
+#'   \item{scale}{ scale parameter of the Weibull distribution describing the non-censored samples}
+#'   \item{shape}{ shape parameter of the Weibull distribution describing the non-censored samples}
+#'   \item{quant}{ the quantile used as left-censoring threshold}
 #' @export
 #'
 #' @examples
