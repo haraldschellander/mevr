@@ -65,7 +65,7 @@ censored_weibull_fit <- function(x, thresholds) {
 #' likely samples from a parent distribution with a Weibull tail. The concept and the 
 #' code is based on the paper Marra F, W Amponsah, SM Papalexiou, 2023. Non-asymptotic Weibull tails 
 #' explain the statistics of extreme daily precipitation. Adv. Water Resour., 173, 104388, 
-#' https://doi.org/10.1016/j.advwatres.2023.104388. The also provide the corresponding Matlab code 
+#' https://doi.org/10.1016/j.advwatres.2023.104388. They also provide the corresponding Matlab code 
 #' (https://zenodo.org/records/7234708).
 #' 
 #' Null-Hyothesis: block maxima are samples from a parent distribution with
