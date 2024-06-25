@@ -28,7 +28,7 @@ test_that("ftmev", {
       data <- sample_data %>%
         filter(val >= 0 & !is.na(val))
       data$val[1] <- NA
-      expect_warning(ftmev(data, minyears = 5), "data contains 1 NA values")
+      expect_warning(ftmev(data, minyears = 5), "data contains 1 NA values which are ignored.")
     })
     
     it("should throw an error if data has less years than expected", {
