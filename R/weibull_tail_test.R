@@ -75,7 +75,8 @@ censored_weibull_fit <- function(x, thresholds) {
 #'
 #' @param data A data.frame
 #' @param threshold A numeric that is used to define wet days as values > threshold. 
-#' @param mon The month with which the block starts. A block goes from month-YYYY-1 to month-YYYY.
+#' @param mon This month defines the block whose maxima 
+#' will be tested. The block goes from month-YYYY-1 to month-YYYY.
 #' @param cens_quant The quantile at which the tail test should be performed.
 #' @param p_test A numeric defining the 1 - p_test confidence band. This function 
 #' tests the ratio of observed block maxima below p_test and above 1 - p_test. See details.   
@@ -226,111 +227,3 @@ weibull_tail_test <- function(data, threshold = 0, mon = 1, cens_quant = 0.9,
        quant = cens_quant)
 }
 
-# 
-# #set.seed(123)
-# sample_dates <- seq.Date(from = as.Date("2000-01-01"), to = as.Date("2050-12-31"), by = 1)
-# sample_data <- data.frame(dates = sample_dates, val = sample(rnorm(length(sample_dates))))
-# #sample_data <- data.frame(dates = sample_dates, val = sample(rweibull(length(sample_dates), scale, shape)))
-# #sample_data <- data.frame(dates = sample_dates, val = sample(extRemes::revd(length(sample_dates), shape = -0.1, type = "GEV")))
-# #sample_data$dates <- as.Date(sample_data$dates)
-# d <- sample_data %>%
-#   filter(val >= 0 & !is.na(val))
-# 
-# # d <- dailyrainfall
-# # 
-# samples = d$val
-# block_labels = d$dates
-# eft_cens_prctile_thr = 0.7
-# p_test = 0.1
-# niter = 20
-# censorams = TRUE
-# 
-# res <- lapply(c(seq(0.1, 0.9, 0.1), 0.95, 0.98), function(x) {
-#   weibull_tail_test(d, cens_quant = x, p_test = 0.1, R = 500)
-# })
-# # res_m <- lapply(c(seq(0.1, 0.9, 0.1), 0.95, 0.98), function(x) {
-# #   wbl_tail_test_func(d$val, d$dates, x, 0.1, 500, TRUE)
-# # })
-# 
-# res1 <- do.call(rbind, res) |> 
-#   mutate(type = "R")
-# # res1m <- do.call(rbind, res_m) |> 
-# #   mutate(type = "matlab")
-# 
-# #rbind(res1, res1m) |> 
-#         #pivot_longer(cols = c("p_out")) |> 
-#  res1 |> 
-#    ggplot(aes(quant, p_out, color = type)) + 
-#   geom_line() +
-#   geom_abline(intercept = 0.1, slope = 0) +
-#   scale_y_continuous(limits = c(0, 1))
-# 
-# 
-# 
-
-# 
-# 
-# #d <- dailyrainfall
-# # sample_dates <- seq.Date(from = as.Date("2000-01-01"), to = as.Date("2050-12-31"), by = 1)
-# # sample_data <- data.frame(dates = sample_dates, val = sample(rnorm(length(sample_dates))))
-# # # sample_data <- data.frame(dates = sample_dates, val = sample(rweibull(length(sample_dates), scale, shape)))
-# # # #sample_data <- data.frame(dates = sample_dates, val = sample(extRemes::revd(length(sample_dates), shape = -0.1, type = "GEV")))
-# # # #sample_data$dates <- as.Date(sample_data$dates)
-# # d <- sample_data %>%
-# #    filter(val >= 0 & !is.na(val))
-# 
-# rr <- get(load("rain_aut.Rda"))
-# rm(rain_aut)
-# 
-# s <- sample.int(length(rr), 1)
-# print(s)
-# d <- rr[[s]][["data"]] |> 
-#   mutate(dates = ymd(paste0(year, "-", month, "-", day))) |> 
-#   dplyr::select(dates, val)
-# 
-# thresholds <- c(seq(0.1, 0.9, 0.1), 0.95)
-# p_test <- 0.1
-# res <- lapply(thresholds, function(x) {
-#     weibull_tail_test(d, cens_quant = x, p_test = p_test, R = 500)
-# })
-# res <- do.call(rbind, res)
-# 
-# # finds the optimal left-censoring thresholds
-# #i_thr <- which.max(res$is_rejected) + 1
-# i_thr <- max(which(res$is_rejected)) + 1
-# if (is.na(i_thr)) {
-#   i_thr <- 1
-# }
-# if (i_thr > length(thresholds)) {
-#   warning("the assumption of Weibull tail is rejected")
-#   i_thr <- NA
-#   optimal_thr <- 0.95
-# } else {
-#   optimal_thr <- res$thresh[i_thr]
-# }
-# 
-# # res |>
-# #      ggplot(aes(quant, p_out)) +
-# #     geom_line() +
-# #     geom_abline(intercept = 0.1, slope = 0) +
-# #     geom_vline(xintercept = res$quant[i_thr]) +
-# #     scale_y_continuous(limits = c(0, 1))
-# 
-# 
-# # fit <- fitdist(d$val, "weibull")
-# # plot(res$thresh, res$shape, type="l", col = rgb(0.7, 0.4, 0.7), lwd = 2, xlab="", ylab="", main="")
-# # lines(c(0, 1), rep(1, 2) * fit$estimate[1], col = "black", lwd = 1)
-# # legend("bottomright", legend = c("true shape parameter", "estimated shape parameter"), col = c("black", rgb(0.7, 0.4, 0.7)), lty = c(1, 1))
-# 
-# 
-# # 1. 
-# # test censored threshold
-# fit_uncensored <- fsmev(d)
-# rp <- c(2:100)
-# rl_uncensored <- return.levels.mev(fit_uncensored, return.periods = rp)$rl 
-# #rl_censored <- qmev(1-1/rp, res$shape[i_thr], res$scale[i_thr], mean(fit_uncensored$n))
-# rl_censored <- qmev(1-1/rp, res$shape[i_thr], res$scale[i_thr], fit_uncensored$n)
-# plot(rp, rl_uncensored, type = "l", log = "x", ylim = c(0, max(rl_censored, rl_uncensored)))
-# points(pp.weibull(fit_uncensored$maxima), sort(fit_uncensored$maxima))
-# lines(rp, rl_censored, type = "l", col = "red")
-# 

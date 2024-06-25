@@ -18,7 +18,8 @@ weibull_tail_test(
 
 \item{threshold}{A numeric that is used to define wet days as values > threshold.}
 
-\item{mon}{The month with which the block starts. A block goes from month-YYYY-1 to month-YYYY.}
+\item{mon}{This month defines the block whose maxima 
+will be tested. The block goes from month-YYYY-1 to month-YYYY.}
 
 \item{cens_quant}{The quantile at which the tail test should be performed.}
 

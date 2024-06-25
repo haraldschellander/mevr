@@ -28,8 +28,8 @@ test_that("fsmev", {
     it ("should throw an error if censoring options are missing", {
       data <- data.frame(groupvar = c(as.Date(c("2024-01-01", "2025-01-01"))), val = c(10, 20))
       expect_error(fsmev(data, censor = TRUE, censor_opts = list(nrtrials = 10)), "thresholds for censoring must be provided")
-      expect_error(fsmev(data, censor = TRUE, censor_opts = list(thresholds = 0.1)), "number of trials for censoring must be provided")
-      expect_error(fsmev(data, censor = TRUE, censor_opts = list(thresholds = 0.1, nrtrials = 10)), "number of samples for censoring must be provided")
+      expect_error(fsmev(data, censor = TRUE, censor_opts = list(thresholds = 0.1, mon = 1)), "number of trials for censoring must be provided")
+      expect_error(fsmev(data, censor = TRUE, censor_opts = list(thresholds = 0.1, nrtrials = 10, mon = 1)), "number of samples for censoring must be provided")
     })
     
     it("should correctly calculate SMEV parameters for valid input", {
@@ -135,7 +135,7 @@ test_that("fsmev", {
     
     it("should correctly calculate SMEV parameters for censored input", {
       data("dailyrainfall")
-      result <- fsmev(dailyrainfall, censor = TRUE, censor_opts = list(thresholds = c(0.1, 0.5, 0.9), nrtrials = 1, R = 100))
+      result <- fsmev(dailyrainfall, censor = TRUE, censor_opts = list(thresholds = c(0.1, 0.5, 0.9), mon = 1, nrtrials = 1, R = 100))
       expect_true("c" %in% names(result))
       expect_true("w" %in% names(result))
       expect_true("n" %in% names(result))

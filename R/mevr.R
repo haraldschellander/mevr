@@ -82,8 +82,8 @@ NULL
 #' The \code{default} is \code{pwm}. (see details).
 #' @param censor If \code{censor=TRUE}, the data series will be left-censored to assure that the observed maxima
 #' are samples from a weibull tail. Defaults to \code{censor=FALSE}.
-#' @param censor_opts A list with components \code{thresholds}, \code{nrtrials} and \code{R}. They give the range of quantiles 
-#' used as left-censoring threshold, the number of trials used to achieve a weibull fit to the left-censored sample, 
+#' @param censor_opts A list with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}. They give the range of quantiles 
+#' used as left-censoring threshold, the month with which the block starts, the number of trials used to achieve a weibull fit to the left-censored sample, 
 #' and the number of sythetic samples used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.
 #' @param sd If \code{sd=TRUE}, confidence intervals of the SMEV distribution are calculated (see details). 
 #' @param sd.method Currently only a non parametric bootstrap technique can be used to calculate SMEV confidence intervals with \code{sd.method='boot'}. The default is \code{sd=FALSE}.
@@ -125,6 +125,7 @@ NULL
 #' fit_c <- fsmev(d, 
 #'                censor = TRUE, 
 #'                censor_opts = list(thresholds = c(seq(0.5, 0.9, 0.1), 0.95),
+#'                                   mon = 1,
 #'                                   nrtrials = 2,
 #'                                   R = 100))
 #' 
@@ -139,7 +140,8 @@ NULL
 #' @author Harald Schellander, Alexander Lieb
 #' 
 #' @seealso \code{\link{fmev}}, \code{\link{ftmev}}
-fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = FALSE, censor_opts = list(thresholds = seq(0.05, 0.95, 0.05), nrtrials = 5, R = 500),
+fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), 
+                  censor = FALSE, censor_opts = list(thresholds = seq(0.05, 0.95, 0.05), mon = 1, nrtrials = 5, R = 500),
                   sd = FALSE, sd.method = "boot", R = 502){
 
   if(!inherits(data, "data.frame"))
@@ -166,11 +168,14 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
   if (isTRUE(sd) & sd.method != "boot") 
     stop("only method 'boot' is allowed for calculation of standard errors")
   
-  if (censor & is.null(censor_opts$nrtrials))
-    stop("number of trials for censoring must be provided")
-  
   if (censor & is.null(censor_opts$thresholds))
     stop("thresholds for censoring must be provided")
+  
+  if (censor & is.null(censor_opts$mon))
+    stop("mon for censoring must be provided")
+  
+  if (censor & is.null(censor_opts$nrtrials))
+    stop("number of trials for censoring must be provided")
   
   if (censor & is.null(censor_opts$R))
     stop("number of samples for censoring must be provided")
@@ -193,7 +198,7 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
     # try nrtrial times 
     for (i in 1:censor_opts$nrtrials) {    
       theta <- data_pot |>
-        group_modify(~ fit.mev.censor(data_pot, censor_opts$thresholds, censor_opts$R)) |>
+        group_modify(~ fit.mev.censor(data_pot, censor_opts$thresholds, censor_opts$mon, censor_opts$R)) |>
         ungroup()
       if (!all(is.na(theta))) {
         break
@@ -556,10 +561,10 @@ ftmev <- function(data, threshold = 0, minyears = 10, day_year_interaction = FAL
 }
 
 
-fit.mev.censor <- function(data, thresholds, R) {
+fit.mev.censor <- function(data, thresholds, mon, R) {
   #thresholds <- seq(0.05, 0.95, 0.05)
   wbtest <- lapply(thresholds, function(x) {
-      weibull_tail_test(data, cens_quant = x, R = R)
+      weibull_tail_test(data, mon = mon, cens_quant = x, R = R)
     })
   wbtest <- do.call(rbind, wbtest)
   cens_fit <- censored_weibull_fit(wbtest, thresholds)
