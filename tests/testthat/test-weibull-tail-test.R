@@ -22,7 +22,7 @@ test_that("weibull_tail_test", {
     
     it("should throw a warning if data contains NA values", {
       data <- data.frame(groupvar = c(as.Date(c("2024-01-01", "2025-01-01"))), val = c(10, NA))
-      expect_warning(fsmev(data), "data contains 1 NA values")
+      expect_warning(fsmev(data), "data contains 1 NA values which are ignored.")
     })
     
     it("should correctly perform a weibull tail test for valid input", {
