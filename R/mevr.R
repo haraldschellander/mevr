@@ -160,7 +160,7 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
     n <- nrow(data)
     data <- na.omit(data)
     nn <- nrow(data)
-    warning(paste0("data contains ", n - nn, " NA values"))
+    warning(paste0("data contains ", n - nn, " NA values which are ignored."))
   }
   
   if (isTRUE(sd) & sd.method != "boot") 
@@ -190,7 +190,6 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
   data_pot$nvar <- NULL
   
   if (censor) {
-
     # try nrtrial times 
     for (i in 1:censor_opts$nrtrials) {    
       theta <- data_pot |>
@@ -202,7 +201,7 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
     }
     
     # if tail is not weibull, uncensored fit with SMEV
-    if (is.na(theta$w) & is.na(theta$c)) {
+    if (all(is.na(theta$w)) & all(is.na(theta$c))) {
       theta <- data_pot |>
         group_modify(~ fit.mev(.x$val, method)) |>
         ungroup()
@@ -337,7 +336,7 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls")){
     n <- nrow(data)
     data <- na.omit(data)
     nn <- nrow(data)
-    warning(paste0("data contains ", n - nn, " NA values"))
+    warning(paste0("data contains ", n - nn, " NA values which are ignored."))
   }
   
   method <- match.arg(method)
@@ -488,7 +487,7 @@ ftmev <- function(data, threshold = 0, minyears = 10, day_year_interaction = FAL
     n <- nrow(data)
     data <- na.omit(data)
     nn <- nrow(data)
-    warning(paste0("data contains ", n - nn, " NA values"))
+    warning(paste0("data contains ", n - nn, " NA values which are ignored."))
   }
   
   # only wet days: remove data smaller than threshold
@@ -564,7 +563,7 @@ fit.mev.censor <- function(data, thresholds, R) {
     })
   wbtest <- do.call(rbind, wbtest)
   cens_fit <- censored_weibull_fit(wbtest, thresholds)
-  return(data.frame(w = cens_fit$shape_cens, c = cens_fit$scale_cens))
+  return(data.frame(w = cens_fit$shape, c = cens_fit$scale))
 }
 
 
