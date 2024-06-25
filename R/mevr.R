@@ -2,6 +2,7 @@
 
 #' @importFrom graphics abline hist legend lines par points title
 #' @importFrom stats aggregate cov na.omit quantile runif rweibull pweibull dweibull sd  uniroot predict
+#' @importFrom utils modifyList 
 #' @importFrom EnvStats eweibull 
 #' @importFrom parallel detectCores makeCluster stopCluster 
 #' @importFrom foreach foreach %dopar% 
@@ -82,9 +83,10 @@ NULL
 #' The \code{default} is \code{pwm}. (see details).
 #' @param censor If \code{censor=TRUE}, the data series will be left-censored to assure that the observed maxima
 #' are samples from a weibull tail. Defaults to \code{censor=FALSE}.
-#' @param censor_opts A list with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}. They give the range of quantiles 
-#' used as left-censoring threshold, the month with which the block starts, the number of trials used to achieve a weibull fit to the left-censored sample, 
-#' and the number of sythetic samples used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.
+#' @param censor_opts An empty list which can be populated with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}. 
+#' They give the range of quantiles used as left-censoring threshold, the month with which the block starts, 
+#' the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples 
+#' used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.
 #' @param sd If \code{sd=TRUE}, confidence intervals of the SMEV distribution are calculated (see details). 
 #' @param sd.method Currently only a non parametric bootstrap technique can be used to calculate SMEV confidence intervals with \code{sd.method='boot'}. The default is \code{sd=FALSE}.
 #' @param R The number of samples drawn from the SMEV distribution to calculate the confidence intervals with \code{sd.method='boot'}
@@ -140,10 +142,12 @@ NULL
 #' @author Harald Schellander, Alexander Lieb
 #' 
 #' @seealso \code{\link{fmev}}, \code{\link{ftmev}}
-fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), 
-                  censor = FALSE, censor_opts = list(thresholds = seq(0.05, 0.95, 0.05), mon = 1, nrtrials = 5, R = 500),
+fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = FALSE, censor_opts = list(),
                   sd = FALSE, sd.method = "boot", R = 502){
 
+  censor_opts_defaults <- list(thresholds = seq(0.05, 0.95, 0.05), mon = 1, nrtrials = 5, R = 500)
+  cens_opts <- utils::modifyList(censor_opts_defaults, censor_opts)
+  
   if(!inherits(data, "data.frame"))
     stop("data must be of class 'data.frame'")
   
@@ -168,18 +172,6 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"),
   if (isTRUE(sd) & sd.method != "boot") 
     stop("only method 'boot' is allowed for calculation of standard errors")
   
-  if (censor & is.null(censor_opts$thresholds))
-    stop("thresholds for censoring must be provided")
-  
-  if (censor & is.null(censor_opts$mon))
-    stop("mon for censoring must be provided")
-  
-  if (censor & is.null(censor_opts$nrtrials))
-    stop("number of trials for censoring must be provided")
-  
-  if (censor & is.null(censor_opts$R))
-    stop("number of samples for censoring must be provided")
-  
   method <- match.arg(method)
   
   # only wet days: remove data smaller than threshold
@@ -196,9 +188,9 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"),
   
   if (censor) {
     # try nrtrial times 
-    for (i in 1:censor_opts$nrtrials) {    
+    for (i in 1:cens_opts$nrtrials) {    
       theta <- data_pot |>
-        group_modify(~ fit.mev.censor(data_pot, censor_opts$thresholds, censor_opts$mon, censor_opts$R)) |>
+        group_modify(~ fit.mev.censor(data_pot, cens_opts$thresholds, cens_opts$mon, cens_opts$R)) |>
         ungroup()
       if (!all(is.na(theta))) {
         break
