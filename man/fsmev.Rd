@@ -9,7 +9,7 @@ fsmev(
   threshold = 0,
   method = c("pwm", "mle", "ls"),
   censor = FALSE,
-  censor_opts = list(thresholds = seq(0.05, 0.95, 0.05), mon = 1, nrtrials = 5, R = 500),
+  censor_opts = list(),
   sd = FALSE,
   sd.method = "boot",
   R = 502
@@ -31,9 +31,10 @@ The \code{default} is \code{pwm}. (see details).}
 \item{censor}{If \code{censor=TRUE}, the data series will be left-censored to assure that the observed maxima
 are samples from a weibull tail. Defaults to \code{censor=FALSE}.}
 
-\item{censor_opts}{A list with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}. They give the range of quantiles 
-used as left-censoring threshold, the month with which the block starts, the number of trials used to achieve a weibull fit to the left-censored sample, 
-and the number of sythetic samples used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.}
+\item{censor_opts}{An empty list which can be populated with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}. 
+They give the range of quantiles used as left-censoring threshold, the month with which the block starts, 
+the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples 
+used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.}
 
 \item{sd}{If \code{sd=TRUE}, confidence intervals of the SMEV distribution are calculated (see details).}
 
