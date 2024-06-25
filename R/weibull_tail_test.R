@@ -52,8 +52,8 @@ censored_weibull_fit <- function(x, thresholds) {
   }
   
   tibble(optimal_threshold = optimal_thr,
-         scale_cens = scale_cens,
-         shape_cens = shape_cens,
+         scale = scale_cens,
+         shape = shape_cens,
          quantile = thresholds[i_thr])
 }
 
@@ -120,7 +120,7 @@ censored_weibull_fit <- function(x, thresholds) {
 #' # plot return levels censored vs uncensored
 #' rp <- c(2:100)
 #' rl_uncensored <- return.levels.mev(fit_uncensored, return.periods = rp)$rl 
-#' rl_censored <- qmev(1 - 1/rp, cens$shape_cens, cens$scale_cens, fit_uncensored$n)
+#' rl_censored <- qmev(1 - 1/rp, cens$shape, cens$scale, fit_uncensored$n)
 #' plot(rp, rl_uncensored, type = "l", log = "x", ylim = c(0, max(rl_censored, rl_uncensored)), 
 #'      ylab = "return level", xlab = "return period (a)")
 #' points(pp.weibull(fit_uncensored$maxima), sort(fit_uncensored$maxima))
@@ -150,7 +150,7 @@ weibull_tail_test <- function(data, threshold = 0, mon = 1, cens_quant = 0.9,
     n <- nrow(data)
     data <- na.omit(data)
     nn <- nrow(data)
-    warning(paste0("data contains ", n - nn, " NA values"))
+    warning(paste0("data contains ", n - nn, " NA values which are ignored."))
   }
   
   # only wet days
@@ -223,8 +223,7 @@ weibull_tail_test <- function(data, threshold = 0, mon = 1, cens_quant = 0.9,
        scale = scale,
        shape = shape,
        thresh = thresh,
-       quant = cens_quant
-  )
+       quant = cens_quant)
 }
 
 # 
