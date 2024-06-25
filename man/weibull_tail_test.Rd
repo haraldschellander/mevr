@@ -43,7 +43,7 @@ This functions provides a way to test if observed rainfall maxima from a data se
 likely samples from a parent distribution with a Weibull tail. The concept and the 
 code is based on the paper Marra F, W Amponsah, SM Papalexiou, 2023. Non-asymptotic Weibull tails 
 explain the statistics of extreme daily precipitation. Adv. Water Resour., 173, 104388, 
-https://doi.org/10.1016/j.advwatres.2023.104388. The also provide the corresponding Matlab code 
+https://doi.org/10.1016/j.advwatres.2023.104388. They also provide the corresponding Matlab code 
 (https://zenodo.org/records/7234708).
 }
 \details{
@@ -80,7 +80,7 @@ cens$quantile
 # plot return levels censored vs uncensored
 rp <- c(2:100)
 rl_uncensored <- return.levels.mev(fit_uncensored, return.periods = rp)$rl 
-rl_censored <- qmev(1 - 1/rp, cens$shape_cens, cens$scale_cens, fit_uncensored$n)
+rl_censored <- qmev(1 - 1/rp, cens$shape, cens$scale, fit_uncensored$n)
 plot(rp, rl_uncensored, type = "l", log = "x", ylim = c(0, max(rl_censored, rl_uncensored)), 
      ylab = "return level", xlab = "return period (a)")
 points(pp.weibull(fit_uncensored$maxima), sort(fit_uncensored$maxima))
