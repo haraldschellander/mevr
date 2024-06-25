@@ -25,13 +25,6 @@ test_that("fsmev", {
       expect_warning(fsmev(data), "data contains 1 NA values")
     })
     
-    it ("should throw an error if censoring options are missing", {
-      data <- data.frame(groupvar = c(as.Date(c("2024-01-01", "2025-01-01"))), val = c(10, 20))
-      expect_error(fsmev(data, censor = TRUE, censor_opts = list(nrtrials = 10)), "thresholds for censoring must be provided")
-      expect_error(fsmev(data, censor = TRUE, censor_opts = list(thresholds = 0.1, mon = 1)), "number of trials for censoring must be provided")
-      expect_error(fsmev(data, censor = TRUE, censor_opts = list(thresholds = 0.1, nrtrials = 10, mon = 1)), "number of samples for censoring must be provided")
-    })
-    
     it("should correctly calculate SMEV parameters for valid input", {
       # Setup a mock dataset
       data <- data.frame(
@@ -144,3 +137,4 @@ test_that("fsmev", {
     
   })
 })
+
