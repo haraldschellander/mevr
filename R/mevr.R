@@ -104,7 +104,10 @@ NULL
 #' \item{threshold}{ The chosen threshold.}
 #' \item{method}{ Method used to fit the MEVD. Note that \code{method} is set to \code{censored lsreg} when the data is left-censored
 #' and the weibull tail test is not rejected.}
+#' \item{censor}{ \code{TRUE} when the data-series was left-censored and \code{FALSE} otherwise.}
 #' \item{type}{ The type of distribution ("SMEV")}
+#' \item{rejected}{ If \code{censor=TRUE}, \code{rejected=TRUE} when the Weibull tail assumption is rejected and \code{rejected=FALSE} otherwise. 
+#' If \code{censor=FALSE} this value is not returned.}
 #' 
 #' @export
 #'
@@ -210,6 +213,8 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
     } else {
       method = "censored lsreg"  
       rejected <- FALSE
+      opt_thresh <- theta$opt_thresh
+      opt_quant <- theta$opt_quant
     }
   } else {
     theta <- data_pot |>
@@ -260,6 +265,10 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
   
   if (censor) {
     res$rejected <- rejected
+  }
+  if (censor & isFALSE(res$rejected)) {
+    res$opt_thresh <- opt_thresh
+    res$opt_quant <- opt_quant
   }
   class(res) <- "mevr"
   return(res)
@@ -591,7 +600,11 @@ fit.mev.censor <- function(data, thresholds, mon, R) {
     })
   wbtest <- do.call(rbind, wbtest)
   cens_fit <- censored_weibull_fit(wbtest, thresholds)
-  return(data.frame(w = cens_fit$shape, c = cens_fit$scale))
+  return(data.frame(w = cens_fit$shape, 
+                    c = cens_fit$scale,
+                    opt_thresh = cens_fit$optimal_threshold,
+                    opt_quant = cens_fit$quantile
+                    ))
 }
 
 
