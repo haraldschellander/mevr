@@ -134,9 +134,12 @@ NULL
 #' rp <- 2:100
 #' rl <- return.levels.mev(fit, return.periods = rp)
 #' rl_c <- return.levels.mev(fit_c, return.periods = rp)
-#' plot(sort(pp.weibull(fit$maxima)), sort(fit$maxima))
+#' plot(sort(pp.weibull(fit$maxima)), sort(fit$maxima), 
+#'   xlab = "Return period (a)", ylab = "daily rain (mm)")
 #' lines(rl$rp, rl$rl)
 #' lines(rl_c$rp, rl_c$rl, col = "red")
+#' legend("bottomright", legend = c("std", "censored"), 
+#'   col = c("black", "red"), lty = c(1, 2), lwd = c(1, 1.5), bty = "n")
 #' 
 #'
 #' @author Harald Schellander, Alexander Lieb
@@ -206,7 +209,7 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
       rejected <- TRUE
     } else {
       method = "censored lsreg"  
-      rejected <- TRUE
+      rejected <- FALSE
     }
   } else {
     theta <- data_pot |>
