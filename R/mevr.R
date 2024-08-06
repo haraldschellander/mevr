@@ -193,8 +193,11 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
         group_modify(~ fit.mev.censor(data_pot, cens_opts$thresholds, cens_opts$mon, cens_opts$R)) |>
         ungroup()
       if (!all(is.na(theta))) {
+        rejected <- TRUE 
         break
-      } 
+      } else {
+        rejected <- FALSE
+      }
     }
     
     # if tail is not weibull, uncensored fit with SMEV
@@ -224,11 +227,37 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
   if(sd){
     if(sd.method == "boot"){
     err <- smev.boot(data_pot, method = method, R = R)
-    res <- list(c = theta$c, w = theta$w, n = theta$n, params = params, maxima = maxima, std = err$std, varcov = err$varcov, data = data_pot, years = years, threshold = threshold, method = method, type = "SMEV")
+    res <- list(c = theta$c, 
+                w = theta$w, 
+                n = theta$n, 
+                params = params, 
+                maxima = maxima, 
+                std = err$std, 
+                varcov = err$varcov, 
+                data = data_pot, 
+                years = years, 
+                threshold = threshold, 
+                method = method,
+                censor = censor,
+                type = "SMEV")
     }
   } else {
-    res <- list(c = theta$c, w = theta$w, n = theta$n, params = params, maxima = maxima, data = data_pot, years = years, threshold = threshold, method = method, type = "SMEV")
+    res <- list(c = theta$c, 
+                w = theta$w, 
+                n = theta$n, 
+                params = params,
+                maxima = maxima,
+                data = data_pot, 
+                years = years, 
+                threshold = threshold,
+                method = method,
+                censor = censor,
+                type = "SMEV")
     
+  }
+  
+  if (censor) {
+    res$rejected <- rejected
   }
   class(res) <- "mevr"
   return(res)
@@ -1464,7 +1493,7 @@ plot.mevr <- function(x, q = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
 #' f <- ftmev(data, minyears = 5)
 #' predict(f, term = "year")
 #' 
-#' @seealso \code{\link{ftmev}}, \code{\link{predict.bamlss}}
+#' @seealso \code{\link{ftmev}}, \code{\link[bamlss]{predict.bamlss}}
 predict.mevr <- function(object, newdata, term, ...){
   
   # if(!inherits(object, "mevr"))
@@ -1547,11 +1576,17 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...){
     stop("x must be object of class 'mevr'")
   
   cat("MEVD fitting\n\n")
-  cat(paste0("Type: ", x$type,"\n"))
-  if(tolower(x$type) != "tmev"){
-    cat(paste0("Estimator: ",x$method,"\n"))
+  cat(paste0("Type: ", x$type, "\n"))
+  if(tolower(x$type) != "tmev") {
+    cat(paste0("Estimator: ", x$method, "\n"))
   }
-
+  
+  if (tolower(x$type) == "smev") {
+    if (x$censor) {
+      cat(paste0("Weibull tail assumption rejected: ", x$rejected, "\n"))
+    }  
+  }
+  
   cat("\nParameters:")
   cat("\nScale C:\n")
   scale <- x$c
