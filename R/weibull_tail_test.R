@@ -77,7 +77,8 @@ censored_weibull_fit <- function(x, thresholds) {
 #' @param threshold A numeric that is used to define wet days as values > threshold. 
 #' @param mon This month defines the block whose maxima 
 #' will be tested. The block goes from month-YYYY-1 to month-YYYY.
-#' @param cens_quant The quantile at which the tail test should be performed.
+#' @param cens_quant The quantile at which the tail test should be performed. 
+#' Must be a single numeric.
 #' @param p_test A numeric defining the 1 - p_test confidence band. This function 
 #' tests the ratio of observed block maxima below p_test and above 1 - p_test. See details.   
 #' @param R The number of synthetic samples. 
@@ -152,6 +153,10 @@ weibull_tail_test <- function(data, threshold = 0, mon = 1, cens_quant = 0.9,
     data <- na.omit(data)
     nn <- nrow(data)
     warning(paste0("data contains ", n - nn, " NA values which are ignored."))
+  }
+  
+  if (length(cens_quant) > 1) {
+    stop("cens_quant must be a single numeric")
   }
   
   # only wet days

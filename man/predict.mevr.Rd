@@ -44,5 +44,5 @@ predict(f, term = "year")
 
 }
 \seealso{
-\code{\link{ftmev}}, \code{\link{predict.bamlss}}
+\code{\link{ftmev}}, \code{\link[bamlss]{predict.bamlss}}
 }
