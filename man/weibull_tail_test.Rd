@@ -21,7 +21,8 @@ weibull_tail_test(
 \item{mon}{This month defines the block whose maxima 
 will be tested. The block goes from month-YYYY-1 to month-YYYY.}
 
-\item{cens_quant}{The quantile at which the tail test should be performed.}
+\item{cens_quant}{The quantile at which the tail test should be performed. 
+Must be a single numeric.}
 
 \item{p_test}{A numeric defining the 1 - p_test confidence band. This function 
 tests the ratio of observed block maxima below p_test and above 1 - p_test. See details.}

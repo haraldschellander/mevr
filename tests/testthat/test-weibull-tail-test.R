@@ -25,6 +25,13 @@ test_that("weibull_tail_test", {
       expect_warning(fsmev(data), "data contains 1 NA values which are ignored.")
     })
     
+    it("should throw an error is cens_quant is not a single numeric", {
+      date_seq <- seq(as.Date("2024-01-01"), as.Date("2025-01-01"), by = "day")
+      val_seq <- rnorm(length(date_seq), 20, 5)
+      data <- data.frame(dates = date_seq, val = val_seq)
+      expect_error(weibull_tail_test(data, cens_quant = c(0.8, 0.9)), "cens_quant must be a single numeric")
+    })
+    
     it("should correctly perform a weibull tail test for valid input", {
       data("dailyrainfall")
       result <- weibull_tail_test(dailyrainfall, R = 100)
