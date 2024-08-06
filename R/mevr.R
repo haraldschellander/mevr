@@ -193,10 +193,7 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
         group_modify(~ fit.mev.censor(data_pot, cens_opts$thresholds, cens_opts$mon, cens_opts$R)) |>
         ungroup()
       if (!all(is.na(theta))) {
-        rejected <- TRUE 
         break
-      } else {
-        rejected <- FALSE
       }
     }
     
@@ -206,8 +203,10 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
         group_modify(~ fit.mev(.x$val, method)) |>
         ungroup()
       warning("fitting uncensored SMEV")
+      rejected <- TRUE
     } else {
       method = "censored lsreg"  
+      rejected <- TRUE
     }
   } else {
     theta <- data_pot |>
