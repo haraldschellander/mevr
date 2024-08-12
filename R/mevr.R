@@ -102,8 +102,7 @@ NULL
 #' \item{data}{ \eqn{data >= threshold} used to fit the SMEV and additional components which may be useful for further analysis.}
 #' \item{years}{ Vector of years as YYYY.}
 #' \item{threshold}{ The chosen threshold.}
-#' \item{method}{ Method used to fit the MEVD. Note that \code{method} is set to \code{censored lsreg} when the data is left-censored
-#' and the weibull tail test is not rejected.}
+#' \item{method}{ Method used to fit the MEVD. }
 #' \item{censor}{ \code{TRUE} when the data-series was left-censored and \code{FALSE} otherwise.}
 #' \item{type}{ The type of distribution ("SMEV")}
 #' \item{rejected}{ If \code{censor=TRUE}, \code{rejected=TRUE} when the Weibull tail assumption is rejected and \code{rejected=FALSE} otherwise. 
@@ -211,7 +210,7 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
       warning("fitting uncensored SMEV")
       rejected <- TRUE
     } else {
-      method = "censored lsreg"  
+      #method = "censored lsreg"  
       rejected <- FALSE
       opt_thresh <- theta$opt_thresh
       opt_quant <- theta$opt_quant
