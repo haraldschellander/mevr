@@ -3,7 +3,7 @@
 
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![CRAN status](https://www.r-pkg.org/badges/version/gevplus)](https://CRAN.R-project.org/package=gevplus)
+[![CRAN status](https://www.r-pkg.org/badges/version/mevr)](https://CRAN.R-project.org/package=mevr)
 <!-- badges: end -->
 
 R-functions for Fitting the Metastatistical Extreme Value Distribution MEVD. 
