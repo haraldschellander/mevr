@@ -54,9 +54,11 @@ A list of class \code{mevr} with components:
 \item{data}{ \eqn{data >= threshold} used to fit the SMEV and additional components which may be useful for further analysis.}
 \item{years}{ Vector of years as YYYY.}
 \item{threshold}{ The chosen threshold.}
-\item{method}{ Method used to fit the MEVD. Note that \code{method} is set to \code{censored lsreg} when the data is left-censored
-and the weibull tail test is not rejected.}
+\item{method}{ Method used to fit the MEVD. }
+\item{censor}{ \code{TRUE} when the data-series was left-censored and \code{FALSE} otherwise.}
 \item{type}{ The type of distribution ("SMEV")}
+\item{rejected}{ If \code{censor=TRUE}, \code{rejected=TRUE} when the Weibull tail assumption is rejected and \code{rejected=FALSE} otherwise. 
+If \code{censor=FALSE} this value is not returned.}
 }
 \description{
 Fit the SMEV distribution to rainfall observations with different estimation methods.
@@ -104,9 +106,12 @@ fit_c <- fsmev(d,
 rp <- 2:100
 rl <- return.levels.mev(fit, return.periods = rp)
 rl_c <- return.levels.mev(fit_c, return.periods = rp)
-plot(sort(pp.weibull(fit$maxima)), sort(fit$maxima))
+plot(sort(pp.weibull(fit$maxima)), sort(fit$maxima), 
+  xlab = "Return period (a)", ylab = "daily rain (mm)")
 lines(rl$rp, rl$rl)
 lines(rl_c$rp, rl_c$rl, col = "red")
+legend("bottomright", legend = c("std", "censored"), 
+  col = c("black", "red"), lty = c(1, 2), lwd = c(1, 1.5), bty = "n")
 
 
 }

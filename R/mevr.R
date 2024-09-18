@@ -9,6 +9,7 @@
 #' @importFrom doParallel  registerDoParallel
 #' @importFrom bamlss bamlss weibull_bamlss opt_bfit samplestats results.bamlss.default bamlss.frame
 #' @importFrom mgcv s ti
+#' @importFrom mmand dilate erode
 NULL
 
 #' @import dplyr 
@@ -1676,3 +1677,125 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...){
 #   return inv(M)
 # }
 
+
+# separation_in_min = 360 # dry minutes between ordinary events (storms) 
+# s.time_resolution = 10 or 1 zehnminuten /minuten
+# call event_separation_dry_spell(s,separation_in_min/s.time_resolution);
+
+
+
+#' Separates rainfall timeseries by dry time events
+#'
+#' Based on Marra...
+#'
+#' min_rain could also be calculated form the timeseries (see Marra, et al., 2020)
+#'
+#' @param d Data as tibble with observation date and values.
+#' @param separation_in_min Dry minutes between ordinary events (storms). 
+#' Defaults to 360 minutes, i.e. 6 hours (depends on local climate). 
+#' Values less than \code{min_rain} count as zero.
+#' @param time_resolution e.g. 10 minutes
+#' @param ignore_event_duration Events are ignored when their duration is shorter than 
+#' ignore_event_duration minutes. Defaults to 30 minutes.
+#' @param min_rain Rainfall below min_rain is ignored. 
+#'
+#' @return Returns a list with two components. The data series with an 
+#' additional column is_event useful in the next step of the event separation. 
+#' And a tibble with indices from, to defining the events in the input timeseries. 
+#' @export
+#'
+event_separation <- function(d, separation_in_min = 360, time_resolution = 10, ignore_event_duration = 30, min_rain = 0.1) {
+  
+  #separation_in_min = 360
+  #time_resolution = 10
+  # number of time steps in a dry spell, must be odd!
+  dry_spell <- separation_in_min / time_resolution 
+  dry_spell <- ifelse(dry_spell %% 2 == 0, dry_spell - 1, dry_spell)
+  
+  # Using morphology to define events with separation
+  #dil <- mmand::dilate(c(rep(0, dry_spell), as.numeric(s$rr > 0), rep(0, dry_spell)), rep(1, dry_spell))
+  dil <- mmand::dilate(c(rep(0, dry_spell), as.numeric(s$rr > min_rain), rep(0, dry_spell)), rep(1, dry_spell))
+  erd <- mmand::erode(dil, rep(1, dry_spell))
+  s$is_event <- erd[(dry_spell + 1):(length(s$rr) + dry_spell)]
+  
+  # Define 'from' and 'to' indices
+  from <- which(diff(c(0, s$is_event)) == 1)
+  to <- which(diff(c(s$is_event, 0)) == -1)
+  
+  # Removing events that end after the series or start before the series
+  # if (s$is_event[length(s$is_event)] == 1) {
+  #   from <- from[-length(from)]
+  # }
+  # if (s$is_event[1] == 1) {
+  #   to <- to[-1]
+  # }
+  
+  # Remove events that span more than 2 years
+  toremove <- which((year(s$v_date[to]) - year(s$v_date[from])) >= 2)
+  if (length(toremove) > 0) {
+    for (i in seq_along(toremove)) {
+      s$is_event[from[toremove[i]]:to[toremove[i]]] <- 0
+    }
+    from <- from[-toremove]
+    to <- to[-toremove]
+  }
+  
+  res <- list(
+    data = s,
+    fromto = tibble(from = from, to = to),
+    ts_res = time_resolution
+  )
+  
+  return(res)
+}
+
+
+
+
+#' Identifies ordinary rainfall events by calculating the maximum within rainfall events
+#' defined with \code{\link{event_separation}}
+#'
+#' @param data A list with tibbles of the input data where the events are defined,
+#' and indices of the single events. Usually the output of function \code{\link{event_separation}}.
+#' @param duration The duration in minutes for which maxima shall be calculated.
+#'
+#' @return Returns a tibble with individual rainfall events that can be 
+#' used as input for functions \code{\link{fsmev}}, \code{\link{fmev}}, \code{\link{ftmev}}. 
+#' @export
+#'
+identify_ordinary_events <- function(data, duration) {
+  
+  ##30min means 3 * ten minutes
+  ##60min means 6 * ten minutes
+  ## duration [min] = dur_steps [min] * ts_resolution minutes [min]
+  dur_steps <- duration / data$ts_res
+  res <- lapply(1:nrow(data$fromto), function(i) {
+    from <- data$fromto$from[i]
+    to <- data$fromto$to[i]
+    if (length(data$data$rr[from:to]) < dur_steps) {
+      #tibble(v_date = NA, val = NA)
+      NULL
+    } else {
+      #sums <- zoo::rollsum(data$data$rr[from:to], dur_steps, align = "right")
+      sums <- frollsum(data$data$rr[from:to],
+                       n = dur_steps,
+                       na.rm = TRUE,
+                       algo = "fast",
+                       align = "right",
+                       hasNA = TRUE)
+      if (length(which(is.na(sums))) > 2 / 3 * length(sums)) {
+        #tibble(v_date = NA, val = NA)
+        NULL
+      } else {
+        idx_max <- which(sums == max(sums, na.rm = TRUE))[1]
+        max_date <- data$data$v_date[from:to][idx_max] # + dur_steps - 1
+        tibble(v_date = max_date, val = sums[idx_max])
+        
+      }
+    }
+    
+  })
+  res <- res[lengths(res) != 0]
+  res <- do.call(rbind, res) 
+  res
+}
