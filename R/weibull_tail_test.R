@@ -47,8 +47,8 @@ censored_weibull_fit <- function(x, thresholds) {
     shape_cens <- NA
   } else {
     optimal_thr <- x$thresh[i_thr]
-    scale_cens = x$scale[i_thr]
-    shape_cens = x$shape[i_thr]
+    scale_cens <- x$scale[i_thr]
+    shape_cens <- x$shape[i_thr]
   }
   
   tibble(optimal_threshold = optimal_thr,
@@ -139,8 +139,8 @@ weibull_tail_test <- function(data, threshold = 0, mon = 1, cens_quant = 0.9,
   
   colnames(data) <- c("groupvar", "val")
   
-  if (!inherits(data$groupvar, "Date")) 
-    stop("date column must be of class 'Date'")
+  if (!inherits(data$groupvar, c("Date", "POSIXct"))) 
+    stop("date column must be of class 'Date' or POSIXct'")
   
   if (!inherits(data$val, "numeric"))
     stop("data values must be of class 'numeric'")
