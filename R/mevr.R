@@ -10,6 +10,7 @@
 #' @importFrom bamlss bamlss weibull_bamlss opt_bfit samplestats results.bamlss.default bamlss.frame
 #' @importFrom mgcv s ti
 #' @importFrom mmand dilate erode
+#' @importFrom data.table frollsum
 NULL
 
 #' @import dplyr 
@@ -1731,7 +1732,8 @@ event_separation <- function(d, separation_in_min = 360, time_resolution = 10, i
   # }
   
   # Remove events that span more than 2 years
-  toremove <- which((year(s$v_date[to]) - year(s$v_date[from])) >= 2)
+  #toremove <- which((year(s$v_date[to]) - year(s$v_date[from])) >= 2)
+  toremove <- which(as.numeric(format(s$v_date[to], "%Y")) - as.numeric(format(s$v_date[from], "%Y")) >= 2)
   if (length(toremove) > 0) {
     for (i in seq_along(toremove)) {
       s$is_event[from[toremove[i]]:to[toremove[i]]] <- 0
@@ -1777,7 +1779,7 @@ identify_ordinary_events <- function(data, duration) {
       NULL
     } else {
       #sums <- zoo::rollsum(data$data$rr[from:to], dur_steps, align = "right")
-      sums <- frollsum(data$data$rr[from:to],
+      sums <- data.table::frollsum()(data$data$rr[from:to],
                        n = dur_steps,
                        na.rm = TRUE,
                        algo = "fast",
