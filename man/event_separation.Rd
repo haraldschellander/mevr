@@ -5,7 +5,7 @@
 \title{Separates rainfall timeseries by dry time events}
 \usage{
 event_separation(
-  d,
+  data,
   separation_in_min = 360,
   time_resolution = 10,
   ignore_event_duration = 30,
@@ -13,7 +13,7 @@ event_separation(
 )
 }
 \arguments{
-\item{d}{Data as tibble with observation date and values.}
+\item{data}{Data as tibble with observation date and values.}
 
 \item{separation_in_min}{Dry minutes between ordinary events (storms). 
 Defaults to 360 minutes, i.e. 6 hours (depends on local climate). 
