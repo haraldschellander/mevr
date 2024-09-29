@@ -155,13 +155,19 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
   censor_opts_defaults <- list(thresholds = seq(0.05, 0.95, 0.05), mon = 1, nrtrials = 5, R = 500)
   cens_opts <- utils::modifyList(censor_opts_defaults, censor_opts)
   
-  if(!inherits(data, "data.frame"))
-    stop("data must be of class 'data.frame'")
-  
-  colnames(data) <- c("groupvar", "val")
-  
-  if (!inherits(data$groupvar, c("Date", "POSIXct"))) 
-    stop("date column must be of class 'Date' or 'POSIXct'")
+  if (!is.vector(data)) {
+    vec <- FALSE
+    if(!inherits(data, "data.frame"))
+      stop("data must be of class 'data.frame'")
+    
+    colnames(data) <- c("groupvar", "val")
+    
+    if (!inherits(data$groupvar, c("Date", "POSIXct"))) 
+      stop("date column must be of class 'Date' or 'POSIXct'")
+  } else {
+    vec <- TRUE
+    data = data.frame(val = data)
+  }
   
   if (!inherits(data$val, "numeric"))
     stop("data values must be of class 'numeric'")
@@ -183,14 +189,22 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
   
   # only wet days: remove data smaller than threshold
   data_pot <- data |>
-    dplyr::filter(.data$val > threshold) |>
-    dplyr::mutate(nvar = format(.data$groupvar, "%Y"))
-  n_vec <- data_pot |>
-    group_by(.data$nvar) |>
-    count() |>
-    ungroup() |> 
-    pull(n)
-  years <- as.numeric(unique(data_pot$nvar))
+    dplyr::filter(.data$val > threshold)
+  
+  if (!vec) {
+    data_pot <- data_pot |> 
+      dplyr::mutate(nvar = format(.data$groupvar, "%Y"))
+    n_vec <- data_pot |>
+      group_by(.data$nvar) |>
+      count() |>
+      ungroup() |> 
+      pull(n)
+    years <- as.numeric(unique(data_pot$nvar))
+  } else {
+    n_vec <- length(data_pot$val)
+    years <- NULL
+  }
+  
   data_pot$nvar <- NULL
   
   if (censor) {
@@ -224,13 +238,23 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
   }
   theta$n <- mean(n_vec)
   
-  maxima <- data_pot |>
-    dplyr::mutate(year = format(.data$groupvar, "%Y")) |>
-    group_by(.data$year) |>
-    summarise(max = max(.data$val, na.rm = TRUE)) |>
-    pull(max) 
+  if (!vec) {
+    maxima <- data_pot |>
+      dplyr::mutate(year = format(.data$groupvar, "%Y")) |>
+      group_by(.data$year) |>
+      summarise(max = max(.data$val, na.rm = TRUE)) |>
+      pull(max)
+  } else {
+    maxima <- NULL
+  }
   
   params <- c("c" = theta$c, "w" = theta$w, "n" = theta$n)
+  
+  if (vec) {
+    res_data <- data_pot$val
+  } else {
+    res_data <- data_pot
+  }
   
   if(sd){
     if(sd.method == "boot"){
@@ -242,7 +266,7 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
                 maxima = maxima, 
                 std = err$std, 
                 varcov = err$varcov, 
-                data = data_pot, 
+                data = res_data, 
                 years = years, 
                 threshold = threshold, 
                 method = method,
@@ -255,7 +279,7 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
                 n = theta$n, 
                 params = params,
                 maxima = maxima,
-                data = data_pot, 
+                data = res_data, 
                 years = years, 
                 threshold = threshold,
                 method = method,
