@@ -4,7 +4,13 @@
 \alias{fmev}
 \title{Fitting the Metastatistical Extreme Value Distribution (MEVD)}
 \usage{
-fmev(data, threshold = 0, method = c("pwm", "mle", "ls"))
+fmev(
+  data,
+  threshold = 0,
+  method = c("pwm", "mle", "ls"),
+  censor = FALSE,
+  censor_opts = list()
+)
 }
 \arguments{
 \item{data}{The data to which the MEVD should be fitted to. \code{data} must be a data.frame with two columns. 
@@ -18,6 +24,14 @@ values corresponding to datums in the rows. No negative values are allowed. NA v
 Weibull parameters c and w. Possible options are probability weighted moments (\code{method='pwm'}), 
 maximum likelihood (\code{method='mle'}) or least squares (\code{method='ls'}). 
 The \code{default} is \code{pwm}. (see details).}
+
+\item{censor}{If \code{censor=TRUE}, the data series will be left-censored to assure that the observed maxima
+are samples from a weibull tail. Defaults to \code{censor=FALSE}.}
+
+\item{censor_opts}{An empty list which can be populated with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}. 
+They give the range of quantiles used as left-censoring threshold, the month with which the block starts, 
+the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples 
+used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.}
 }
 \value{
 A list of class \code{mevr} with the fitted Weibull parameters and other helpful ingredients.

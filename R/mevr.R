@@ -160,8 +160,8 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
   
   colnames(data) <- c("groupvar", "val")
   
-  if (!inherits(data$groupvar, "Date")) 
-    stop("date column must be of class 'Date'")
+  if (!inherits(data$groupvar, c("Date", "POSIXct"))) 
+    stop("date column must be of class 'Date' or 'POSIXct'")
   
   if (!inherits(data$val, "numeric"))
     stop("data values must be of class 'numeric'")
@@ -322,6 +322,12 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
 #' Weibull parameters c and w. Possible options are probability weighted moments (\code{method='pwm'}), 
 #' maximum likelihood (\code{method='mle'}) or least squares (\code{method='ls'}). 
 #' The \code{default} is \code{pwm}. (see details).
+#' @param censor If \code{censor=TRUE}, the data series will be left-censored to assure that the observed maxima
+#' are samples from a weibull tail. Defaults to \code{censor=FALSE}.
+#' @param censor_opts An empty list which can be populated with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}. 
+#' They give the range of quantiles used as left-censoring threshold, the month with which the block starts, 
+#' the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples 
+#' used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}. 
 #'
 #' @return A list of class \code{mevr} with the fitted Weibull parameters and other helpful ingredients.
 #' \item{c}{ vector of Weibull scale parameters of the MEVD, each component refers to one year.}
@@ -349,7 +355,7 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
 #' @author Harald Schellander, Alexander Lieb
 #' 
 #' @seealso \code{\link{fsmev}}, \code{\link{ftmev}}
-fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls")){
+fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = FALSE, censor_opts = list()){
   # data must be data.frame for yearly parameters
   # data must be in last/second column
   # col1 must hold the group variable
@@ -361,8 +367,8 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls")){
   
   colnames(data) <- c("groupvar", "val")
   
-  if (!inherits(data$groupvar, "Date")) 
-    stop("date column must be of class 'Date'")
+  if (!inherits(data$groupvar, c("Date", "POSIXct"))) 
+    stop("date column must be of class 'Date' or 'POSIXct'")
   
   if (!inherits(data$val, "numeric"))
     stop("data values must be of class 'numeric'")
@@ -391,10 +397,43 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls")){
     ungroup() |> 
     pull(n)
   
-  theta <- data_pot |>
+  if (censor) {
+    # try nrtrial times 
+    for (i in 1:cens_opts$nrtrials) {    
+      theta <- data_pot |>
+        group_by(.data$year) |>
+        group_modify(~ fit.mev.censor(.x, cens_opts$thresholds, cens_opts$mon, cens_opts$R)) |>
+        ungroup()
+      if (!all(is.na(theta))) {
+        break
+      }
+    }
+    
+    # per year: 
+    # if tail is not weibull, uncensored fit with SMEV
+    theta_yrs <- list()
+    for (j in seq_along(unique(theta$year))) {
+      yr <- as.numeric(unique(theta$year)[j])
+      theta_yr <- theta |> 
+        filter(year == yr)
+      if (all(is.na(theta_yr$w) & is.na(theta_yr$c))) {
+        warning("fitting uncensored SMEV")
+        theta_tmp <- data_pot |>
+          filter(year == yr) |> 
+          group_modify(~ fit.mev(.x$val, method)) |>
+          ungroup()
+        theta_yrs[[j]] <- tibble(year = as.character(yr), theta_tmp, opt_thresh = NA, opt_quant = NA, rejected = TRUE)
+      } else {
+        theta_yrs[[j]] <- tibble(year = as.character(yr), w =  theta_yr$w, c =  theta_yr$c, opt_thresh = theta_yr$opt_thresh, opt_quant = theta_yr$opt_quant, rejected = FALSE)
+      }
+    }
+    theta <- do.call(rbind, theta_yrs)
+  } else {
+    theta <- data_pot |>
       group_by(.data$year) |>
       group_modify(~ fit.mev(.x$val, method)) |>
       ungroup()
+  }
   theta$n <- n_vec
   
   maxima <- data_pot |>
@@ -406,7 +445,23 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls")){
   params <- data.frame("c" = theta$c, "w" = theta$w, "n" = theta$n)
   years <- as.numeric(unique(data_pot$year))
   
-  res <- list(c = theta$c, w = theta$w, n = theta$n, params = params, maxima = maxima, data = data_pot, years = years, threshold = threshold, method = method, type = "MEVD")
+  res <- list(c = theta$c, 
+              w = theta$w,
+              n = theta$n, 
+              params = params, 
+              maxima = maxima, 
+              data = data_pot, 
+              years = years, 
+              threshold = threshold, 
+              method = method, 
+              censor = censor,
+              type = "MEVD")
+  
+  if (censor) {
+    res$rejected <- theta$rejected
+    res$opt_thresh <- theta$opt_thresh
+    res$opt_quant <- theta$opt_quant
+  }
   class(res) <- "mevr"
   return(res)
 }
@@ -512,8 +567,8 @@ ftmev <- function(data, threshold = 0, minyears = 10, day_year_interaction = FAL
   
   colnames(data) <- c("groupvar", "val")
   
-  if (!inherits(data$groupvar, "Date")) 
-    stop("date column must be of class 'Date'")
+  if (!inherits(data$groupvar, c("Date", "POSIXct"))) 
+    stop("date column must be of class 'Date' or 'POSIXct'")
   
   if (!inherits(data$val, "numeric"))
     stop("data values must be of class 'numeric'")
@@ -1599,8 +1654,13 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...){
   
   if (tolower(x$type) == "smev") {
     if (x$censor) {
-      cat(paste0("Weibull tail assumption rejected: ", x$rejected, "\n"))
+      #cat(paste0("Weibull tail assumption rejected: ", x$rejected, "\n"))
+      cat("probably a Weibull tail? ", ifelse(x$rejected, FALSE, TRUE) , "\n")
     }  
+  } else if (tolower(x$type) == "mevd") {
+    if (x$censor) {
+      tibble(year = x$years, "probably a Weibull tail" = ifelse(x$rejected, FALSE, TRUE))
+    }
   }
   
   cat("\nParameters:")
@@ -1612,9 +1672,9 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...){
   print.default(format(shape, digits = digits), print.gap = 2, quote = FALSE)
 
   if(length(x$w) == 1){
-    cat("\nMean number of wet days n:\n")
+    cat("\nMean number of wet events n:\n")
   } else {
-    cat("\nWet days n:\n")
+    cat("\nWet events n:\n")
   }
   n <- x$n
   print.default(format(n, digits = digits), print.gap = 2, quote = FALSE)
@@ -1691,7 +1751,7 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...){
 #'
 #' min_rain could also be calculated form the timeseries (see Marra, et al., 2020)
 #'
-#' @param d Data as tibble with observation date and values.
+#' @param data Data as tibble with observation date and values.
 #' @param separation_in_min Dry minutes between ordinary events (storms). 
 #' Defaults to 360 minutes, i.e. 6 hours (depends on local climate). 
 #' Values less than \code{min_rain} count as zero.
@@ -1705,7 +1765,7 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...){
 #' And a tibble with indices from, to defining the events in the input timeseries. 
 #' @export
 #'
-event_separation <- function(d, separation_in_min = 360, time_resolution = 10, ignore_event_duration = 30, min_rain = 0.1) {
+event_separation <- function(data, separation_in_min = 360, time_resolution = 10, ignore_event_duration = 30, min_rain = 0.1) {
   
   #separation_in_min = 360
   #time_resolution = 10
@@ -1715,13 +1775,13 @@ event_separation <- function(d, separation_in_min = 360, time_resolution = 10, i
   
   # Using morphology to define events with separation
   #dil <- mmand::dilate(c(rep(0, dry_spell), as.numeric(s$rr > 0), rep(0, dry_spell)), rep(1, dry_spell))
-  dil <- mmand::dilate(c(rep(0, dry_spell), as.numeric(s$rr > min_rain), rep(0, dry_spell)), rep(1, dry_spell))
+  dil <- mmand::dilate(c(rep(0, dry_spell), as.numeric(data$val > min_rain), rep(0, dry_spell)), rep(1, dry_spell))
   erd <- mmand::erode(dil, rep(1, dry_spell))
-  s$is_event <- erd[(dry_spell + 1):(length(s$rr) + dry_spell)]
+  data$is_event <- erd[(dry_spell + 1):(length(data$val) + dry_spell)]
   
   # Define 'from' and 'to' indices
-  from <- which(diff(c(0, s$is_event)) == 1)
-  to <- which(diff(c(s$is_event, 0)) == -1)
+  from <- which(diff(c(0, data$is_event)) == 1)
+  to <- which(diff(c(data$is_event, 0)) == -1)
   
   # Removing events that end after the series or start before the series
   # if (s$is_event[length(s$is_event)] == 1) {
@@ -1733,17 +1793,17 @@ event_separation <- function(d, separation_in_min = 360, time_resolution = 10, i
   
   # Remove events that span more than 2 years
   #toremove <- which((year(s$v_date[to]) - year(s$v_date[from])) >= 2)
-  toremove <- which(as.numeric(format(s$v_date[to], "%Y")) - as.numeric(format(s$v_date[from], "%Y")) >= 2)
+  toremove <- which(as.numeric(format(data$v_date[to], "%Y")) - as.numeric(format(data$v_date[from], "%Y")) >= 2)
   if (length(toremove) > 0) {
     for (i in seq_along(toremove)) {
-      s$is_event[from[toremove[i]]:to[toremove[i]]] <- 0
+      data$is_event[from[toremove[i]]:to[toremove[i]]] <- 0
     }
     from <- from[-toremove]
     to <- to[-toremove]
   }
   
   res <- list(
-    data = s,
+    data = data,
     fromto = tibble(from = from, to = to),
     ts_res = time_resolution
   )
@@ -1765,7 +1825,7 @@ event_separation <- function(d, separation_in_min = 360, time_resolution = 10, i
 #' used as input for functions \code{\link{fsmev}}, \code{\link{fmev}}, \code{\link{ftmev}}. 
 #' @export
 #'
-identify_ordinary_events <- function(data, duration) {
+ordinary_events <- function(data, duration) {
   
   ##30min means 3 * ten minutes
   ##60min means 6 * ten minutes
@@ -1774,12 +1834,12 @@ identify_ordinary_events <- function(data, duration) {
   res <- lapply(1:nrow(data$fromto), function(i) {
     from <- data$fromto$from[i]
     to <- data$fromto$to[i]
-    if (length(data$data$rr[from:to]) < dur_steps) {
+    if (length(data$data$val[from:to]) < dur_steps) {
       #tibble(v_date = NA, val = NA)
       NULL
     } else {
       #sums <- zoo::rollsum(data$data$rr[from:to], dur_steps, align = "right")
-      sums <- data.table::frollsum()(data$data$rr[from:to],
+      sums <- data.table::frollsum(data$data$val[from:to],
                        n = dur_steps,
                        na.rm = TRUE,
                        algo = "fast",
