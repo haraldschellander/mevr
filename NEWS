@@ -4,7 +4,7 @@ mevr 1.2.2 (release date: 2024-09-18)
 Changes: 
 
 * Two functions added for storm separation and definition of ordinary events.
-* Functions fmsev, fmev and ftmev can now be used for sub-daiyl rainfall durations.
+* Functions fmsev, fmev and ftmev can now be used for sub-daily rainfall durations.
 
 
 mevr 1.1.2 (release date: 2024-08-06)

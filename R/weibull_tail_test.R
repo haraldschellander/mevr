@@ -41,7 +41,8 @@ censored_weibull_fit <- function(x, thresholds, warn) {
   }
   
   if (i_thr > length(thresholds)) {
-    warning("the assumption of Weibull tail is rejected")
+    if (warn)
+      warning("the assumption of Weibull tail is rejected")
     i_thr <- NA
     optimal_thr <- 0.95
     scale_cens <- NA
