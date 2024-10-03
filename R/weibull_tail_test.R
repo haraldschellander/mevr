@@ -17,6 +17,7 @@ set_season <- function(datum, block_start) {
 #' \code{\link{weibull_tail_test}}. 
 #' @param thresholds A numeric or vector of quantiles which shal be tested 
 #' as optimal threshold for left-censoring.
+#' @param warn If \code{TRUE} which is the default, warnings about censoring are given.
 #'
 #' @return A tibble with the optimal threshold itself and 
 #' the Weibull scale and shape parameters obtained from the censored sample.
@@ -27,7 +28,7 @@ set_season <- function(datum, block_start) {
 #' wbtest <- weibull_tail_test(dailyrainfall)
 #' censored_weibull_fit(wbtest, 0.9)
 #' 
-censored_weibull_fit <- function(x, thresholds) {
+censored_weibull_fit <- function(x, thresholds, warn) {
   
   # no rejection of weibull tails at all quantiles
   if (length(which(x$is_rejected)) == 0) {
@@ -140,7 +141,7 @@ weibull_tail_test <- function(data, threshold = 0, mon = 1, cens_quant = 0.9,
   colnames(data) <- c("groupvar", "val")
   
   if (!inherits(data$groupvar, c("Date", "POSIXct"))) 
-    stop("date column must be of class 'Date' or POSIXct'")
+    stop("date column must be of class 'Date' or 'POSIXct'")
   
   if (!inherits(data$val, "numeric"))
     stop("data values must be of class 'numeric'")

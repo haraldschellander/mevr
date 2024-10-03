@@ -9,7 +9,8 @@ fmev(
   threshold = 0,
   method = c("pwm", "mle", "ls"),
   censor = FALSE,
-  censor_opts = list()
+  censor_opts = list(),
+  warn = TRUE
 )
 }
 \arguments{
@@ -32,6 +33,8 @@ are samples from a weibull tail. Defaults to \code{censor=FALSE}.}
 They give the range of quantiles used as left-censoring threshold, the month with which the block starts, 
 the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples 
 used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.}
+
+\item{warn}{If \code{TRUE} which is the default, warnings about censoring are given.}
 }
 \value{
 A list of class \code{mevr} with the fitted Weibull parameters and other helpful ingredients.

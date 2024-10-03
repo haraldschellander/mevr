@@ -7,7 +7,7 @@ test_that("weibull_tail_test", {
     
     it("should throw an error if date column is not of class 'Date'", {
       data <- data.frame(groupvar = c("2024-01-01", "2025-01-01"), val = c(10, 20))
-      expect_error(fsmev(data), "date column must be of class 'Date' or POSIXct'")
+      expect_error(fsmev(data), "date column must be of class 'Date' or 'POSIXct'")
     })
     
     it("should throw an error if data values are not of class 'numeric'", {

@@ -4,7 +4,7 @@
 \alias{censored_weibull_fit}
 \title{Fit Weibull distribution to censored data}
 \usage{
-censored_weibull_fit(x, thresholds)
+censored_weibull_fit(x, thresholds, warn)
 }
 \arguments{
 \item{x}{A tibble which is most commonly a result of function 
@@ -12,6 +12,8 @@ censored_weibull_fit(x, thresholds)
 
 \item{thresholds}{A numeric or vector of quantiles which shal be tested 
 as optimal threshold for left-censoring.}
+
+\item{warn}{If \code{TRUE} which is the default, warnings about censoring are given.}
 }
 \value{
 A tibble with the optimal threshold itself and 

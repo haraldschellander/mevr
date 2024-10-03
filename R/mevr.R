@@ -1,7 +1,7 @@
 # package mevr
 
 #' @importFrom graphics abline hist legend lines par points title
-#' @importFrom stats aggregate cov na.omit quantile runif rweibull pweibull dweibull sd  uniroot predict
+#' @importFrom stats aggregate cov na.omit quantile runif rweibull pweibull dweibull sd  uniroot predict density
 #' @importFrom utils modifyList 
 #' @importFrom EnvStats eweibull 
 #' @importFrom parallel detectCores makeCluster stopCluster 
@@ -89,6 +89,7 @@ NULL
 #' They give the range of quantiles used as left-censoring threshold, the month with which the block starts, 
 #' the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples 
 #' used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.
+#' @param warn If \code{TRUE} which is the default, warnings about censoring are given.
 #' @param sd If \code{sd=TRUE}, confidence intervals of the SMEV distribution are calculated (see details). 
 #' @param sd.method Currently only a non parametric bootstrap technique can be used to calculate SMEV confidence intervals with \code{sd.method='boot'}. The default is \code{sd=FALSE}.
 #' @param R The number of samples drawn from the SMEV distribution to calculate the confidence intervals with \code{sd.method='boot'}
@@ -150,24 +151,26 @@ NULL
 #' 
 #' @seealso \code{\link{fmev}}, \code{\link{ftmev}}
 fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = FALSE, censor_opts = list(),
-                  sd = FALSE, sd.method = "boot", R = 502){
+                  warn = TRUE, sd = FALSE, sd.method = "boot", R = 502){
 
   censor_opts_defaults <- list(thresholds = seq(0.05, 0.95, 0.05), mon = 1, nrtrials = 5, R = 500)
   cens_opts <- utils::modifyList(censor_opts_defaults, censor_opts)
   
+  orig_data <- data
+  
+  if (!inherits(data, c("data.frame", "numeric")))
+    stop("data must be of class 'data.frame' or 'numeric'")
+  
   if (!is.vector(data)) {
     vec <- FALSE
-    if(!inherits(data, "data.frame"))
-      stop("data must be of class 'data.frame'")
-    
     colnames(data) <- c("groupvar", "val")
-    
-    if (!inherits(data$groupvar, c("Date", "POSIXct"))) 
-      stop("date column must be of class 'Date' or 'POSIXct'")
   } else {
     vec <- TRUE
     data = data.frame(val = data)
   }
+  
+  if (!inherits(data$groupvar, c("Date", "POSIXct"))) 
+    stop("date column must be of class 'Date' or 'POSIXct'")
   
   if (!inherits(data$val, "numeric"))
     stop("data values must be of class 'numeric'")
@@ -201,7 +204,8 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
       pull(n)
     years <- as.numeric(unique(data_pot$nvar))
   } else {
-    n_vec <- length(data_pot$val)
+    #n_vec <- length(data_pot$val)
+    n_vec <- length(data_pot$val) / (length(data$val) / 365.25)
     years <- NULL
   }
   
@@ -211,7 +215,7 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
     # try nrtrial times 
     for (i in 1:cens_opts$nrtrials) {    
       theta <- data_pot |>
-        group_modify(~ fit.mev.censor(data_pot, cens_opts$thresholds, cens_opts$mon, cens_opts$R)) |>
+        group_modify(~ fit.mev.censor(data_pot, cens_opts$thresholds, cens_opts$mon, cens_opts$R, warn = warn)) |>
         ungroup()
       if (!all(is.na(theta))) {
         break
@@ -223,7 +227,8 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
       theta <- data_pot |>
         group_modify(~ fit.mev(.x$val, method)) |>
         ungroup()
-      warning("fitting uncensored SMEV")
+      if (warn)
+        warning("fitting uncensored SMEV")
       rejected <- TRUE
     } else {
       #method = "censored lsreg"  
@@ -267,6 +272,7 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
                 std = err$std, 
                 varcov = err$varcov, 
                 data = res_data, 
+                orig_data = orig_data,
                 years = years, 
                 threshold = threshold, 
                 method = method,
@@ -280,6 +286,7 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
                 params = params,
                 maxima = maxima,
                 data = res_data, 
+                orig_data = orig_data,
                 years = years, 
                 threshold = threshold,
                 method = method,
@@ -352,6 +359,7 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
 #' They give the range of quantiles used as left-censoring threshold, the month with which the block starts, 
 #' the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples 
 #' used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}. 
+#' @param warn If \code{TRUE} which is the default, warnings about censoring are given.
 #'
 #' @return A list of class \code{mevr} with the fitted Weibull parameters and other helpful ingredients.
 #' \item{c}{ vector of Weibull scale parameters of the MEVD, each component refers to one year.}
@@ -379,12 +387,15 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
 #' @author Harald Schellander, Alexander Lieb
 #' 
 #' @seealso \code{\link{fsmev}}, \code{\link{ftmev}}
-fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = FALSE, censor_opts = list()){
+fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = FALSE, censor_opts = list(), warn = TRUE){
   # data must be data.frame for yearly parameters
   # data must be in last/second column
   # col1 must hold the group variable
   # col2 must contain the data
   # col1 must be kind of date 
+  
+  censor_opts_defaults <- list(thresholds = seq(0.05, 0.95, 0.05), mon = 1, nrtrials = 5, R = 500)
+  cens_opts <- utils::modifyList(censor_opts_defaults, censor_opts)
   
   if(!inherits(data, "data.frame"))
     stop("data must be of class 'data.frame'")
@@ -426,7 +437,7 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = F
     for (i in 1:cens_opts$nrtrials) {    
       theta <- data_pot |>
         group_by(.data$year) |>
-        group_modify(~ fit.mev.censor(.x, cens_opts$thresholds, cens_opts$mon, cens_opts$R)) |>
+        group_modify(~ fit.mev.censor(.x, cens_opts$thresholds, cens_opts$mon, cens_opts$R, warn = warn)) |>
         ungroup()
       if (!all(is.na(theta))) {
         break
@@ -439,11 +450,11 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = F
     for (j in seq_along(unique(theta$year))) {
       yr <- as.numeric(unique(theta$year)[j])
       theta_yr <- theta |> 
-        filter(year == yr)
+        filter(.data$year == yr)
       if (all(is.na(theta_yr$w) & is.na(theta_yr$c))) {
         warning("fitting uncensored SMEV")
         theta_tmp <- data_pot |>
-          filter(year == yr) |> 
+          filter(.data$year == yr) |> 
           group_modify(~ fit.mev(.x$val, method)) |>
           ungroup()
         theta_yrs[[j]] <- tibble(year = as.character(yr), theta_tmp, opt_thresh = NA, opt_quant = NA, rejected = TRUE)
@@ -673,13 +684,13 @@ ftmev <- function(data, threshold = 0, minyears = 10, day_year_interaction = FAL
 }
 
 
-fit.mev.censor <- function(data, thresholds, mon, R) {
+fit.mev.censor <- function(data, thresholds, mon, R, warn) {
   #thresholds <- seq(0.05, 0.95, 0.05)
   wbtest <- lapply(thresholds, function(x) {
       weibull_tail_test(data, mon = mon, cens_quant = x, R = R)
     })
   wbtest <- do.call(rbind, wbtest)
-  cens_fit <- censored_weibull_fit(wbtest, thresholds)
+  cens_fit <- censored_weibull_fit(wbtest, thresholds, warn)
   return(data.frame(w = cens_fit$shape, 
                     c = cens_fit$scale,
                     opt_thresh = cens_fit$optimal_threshold,
@@ -1465,8 +1476,23 @@ plot.mevr <- function(x, q = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
   
   type <- match.arg(type)
   
-  obs.y <- x$maxima
-  obs.x <- pp.weibull(obs.y)
+  if (!is.vector(x$data)) {
+    if (!is.null(x$opt_thresh)) {
+      obs.y <- x$maxima[x$maxima > x$opt_thresh]
+    } else {
+      obs.y <- x$maxima  
+    }
+    obs.x <- pp.weibull(obs.y)
+  } else {
+    if (!is.null(x$opt_thresh)) {
+      obs.y <- x$data[x$data > x$opt_thresh]
+    } else {
+      obs.y <- x$data
+    }
+    lambda <- length(obs.y) / length(x$orig_data)  # Exceedance rate
+    obs.x <- 1 / (lambda * (1 - pmev(sort(obs.y), x$w, x$c, x$n)))
+  }
+  
   if (tolower(x$type) != "tmev"){
     rls <- rlmev(q, x$w, x$c, x$n)
   } else {
@@ -1502,20 +1528,61 @@ plot.mevr <- function(x, q = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
   
   if (is.element(type, c("all", "hist"))) {
     # density plot
-    h <- hist(obs.y, plot = FALSE)
-    dens.x <- seq(min(h$breaks), min(max(h$breaks)), length = 100)
+    N <- 512
+    yd <- density(obs.y, n = N)
+    xd <- seq(min(yd$x, na.rm = TRUE), max(yd$x, na.rm = TRUE), length.out = N)
     if (tolower(x$type) != "tmev"){
-      dens.y <- dmev(dens.x, x$w, x$c, x$n)
+      if (is.vector(x$data)) {
+        # #dens.y <- dmev(dens.x, x$w, x$c, lambda) # daily
+        # yd <- density(obs.y)
+        # dens.x <- seq(min(yd$x, na.rm = TRUE), max(yd$x, na.rm = TRUE), , 100)
+        # #yd2 <- devd(xd, loc = mu, scale = sig, shape = xi, threshold = u2, type = mod2)
+        # dens.y <- dmev(dens.x, x$w, x$c, x$n)
+        dens.y <- dmev(xd, x$w, x$c, x$n)
+      } else {
+        #dens.y <- dmev(dens.x, x$w, x$c, x$n)
+        dens.y <- dmev(xd, x$w, x$c, x$n)
+      }
     } else {
      dens.y <- c()
-     for (i in 1:length(dens.x)) {
-       dens.y <- c(dens.y, dtmev(dens.x[i], x$data))
+     # for (i in 1:length(dens.x)) {
+     #   dens.y <- c(dens.y, dtmev(dens.x[i], x$data))
+     # }
+     for (i in 1:length(xd)) {
+       dens.y <- c(dens.y, dtmev(xd[i], x$data))
      }
     }
-    hist(obs.y, prob = TRUE, main = "Observed yearly maxima", xlab = paste("N =", length(obs.y)))
-    lines(dens.x, dens.y, lty = 2, col = "blue", lwd = 1.5)
-    legend("topright", legend = c("Empirical", "Modeled"), 
-           col = c("black", "blue"), lty = c(1, 2), lwd = c(1, 1.5), bty = "n")
+    ylab <- ifelse(is.vector(x$data), "Observed", "Observed yearly maxima")
+    hist(obs.y, prob = TRUE, main = ylab, xlab = paste("N =", length(obs.y)))
+    lines(xd, yd$y, lty = 2, lwd = 1.5)
+    lines(xd, dens.y, lty = 2, col = "red", lwd = 1.5)
+    legend("topright", legend = c("Empirical", "Modeled"),
+           col = c("black", "red"), lty = c(1, 1), lwd = c(1.5, 1.5), bty = "n")
+    
+    # # density plot
+    # #h <- hist(obs.y, plot = FALSE)
+    # #dens.x <- seq(min(h$breaks), min(max(h$breaks)), length.out = 100)
+    # if (tolower(x$type) != "tmev"){
+    #   if (is.vector(x$data)) {
+    #      #dens.y <- dmev(dens.x, x$w, x$c, lambda) # daily
+    #      yd <- density(obs.y)
+    #      dens.x <- seq(min(yd$x, na.rm = TRUE), max(yd$x, na.rm = TRUE), , 100)
+    #      #yd2 <- devd(xd, loc = mu, scale = sig, shape = xi, threshold = u2, type = mod2)
+    #      dens.y <- dmev(dens.x, x$w, x$c, x$n)
+    #   } else {
+    #     dens.y <- dmev(dens.x, x$w, x$c, x$n)
+    #   }
+    # } else {
+    #  dens.y <- c()
+    #  for (i in 1:length(dens.x)) {
+    #    dens.y <- c(dens.y, dtmev(dens.x[i], x$data))
+    #  }
+    # }
+    # ylab <- ifelse(is.vector(x$data), "Observed", "Observed yearly maxima")
+    # hist(obs.y, prob = TRUE, main = ylab, xlab = paste("N =", length(obs.y)))  
+    # lines(dens.x, dens.y, lty = 2, col = "blue", lwd = 1.5)
+    # legend("topright", legend = c("Empirical", "Modeled"), 
+    #        col = c("black", "red"), lty = c(1, 1), lwd = c(1.5, 1.5), bty = "n")
   }
   
   
@@ -1791,6 +1858,8 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...){
 #'
 event_separation <- function(data, separation_in_min = 360, time_resolution = 10, ignore_event_duration = 30, min_rain = 0.1) {
   
+  colnames(data) <- c("groupvar", "val")
+  
   #separation_in_min = 360
   #time_resolution = 10
   # number of time steps in a dry spell, must be odd!
@@ -1817,7 +1886,7 @@ event_separation <- function(data, separation_in_min = 360, time_resolution = 10
   
   # Remove events that span more than 2 years
   #toremove <- which((year(s$v_date[to]) - year(s$v_date[from])) >= 2)
-  toremove <- which(as.numeric(format(data$v_date[to], "%Y")) - as.numeric(format(data$v_date[from], "%Y")) >= 2)
+  toremove <- which(as.numeric(format(data$groupvar[to], "%Y")) - as.numeric(format(data$groupvar[from], "%Y")) >= 2)
   if (length(toremove) > 0) {
     for (i in seq_along(toremove)) {
       data$is_event[from[toremove[i]]:to[toremove[i]]] <- 0
@@ -1874,7 +1943,7 @@ ordinary_events <- function(data, duration) {
         NULL
       } else {
         idx_max <- which(sums == max(sums, na.rm = TRUE))[1]
-        max_date <- data$data$v_date[from:to][idx_max] # + dur_steps - 1
+        max_date <- data$data$groupvar[from:to][idx_max] # + dur_steps - 1
         tibble(v_date = max_date, val = sums[idx_max])
         
       }

@@ -2,9 +2,9 @@ test_that("fsmev", {
   describe("fsmev function", {
     
     it("should throw an error if data is not a data.frame", {
-      expect_error(fsmev(list(1, 2)), "data must be of class 'data.frame'")
+      expect_error(fsmev(list(1, 2)), "data must be of class 'data.frame' or 'numeric'")
     })
-    
+   
     it("should throw an error if date column is not of class 'Date' or 'POSIXct'", {
       data <- data.frame(groupvar = c("2024-01-01", "2025-01-01"), val = c(10, 20))
       expect_error(fsmev(data), "date column must be of class 'Date' or 'POSIXct'")

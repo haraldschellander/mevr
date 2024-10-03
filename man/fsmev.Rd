@@ -10,6 +10,7 @@ fsmev(
   method = c("pwm", "mle", "ls"),
   censor = FALSE,
   censor_opts = list(),
+  warn = TRUE,
   sd = FALSE,
   sd.method = "boot",
   R = 502
@@ -35,6 +36,8 @@ are samples from a weibull tail. Defaults to \code{censor=FALSE}.}
 They give the range of quantiles used as left-censoring threshold, the month with which the block starts, 
 the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples 
 used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.}
+
+\item{warn}{If \code{TRUE} which is the default, warnings about censoring are given.}
 
 \item{sd}{If \code{sd=TRUE}, confidence intervals of the SMEV distribution are calculated (see details).}
 
