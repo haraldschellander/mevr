@@ -1910,40 +1910,44 @@ event_separation <- function(data, separation_in_min = 360, time_resolution = 10
 #' Identifies ordinary rainfall events by calculating the maximum within rainfall events
 #' defined with \code{\link{event_separation}}
 #'
-#' @param data A list with tibbles of the input data where the events are defined,
+#' @param x A list with tibbles of the input data where the events are defined,
 #' and indices of the single events. Usually the output of function \code{\link{event_separation}}.
 #' @param duration The duration in minutes for which maxima shall be calculated.
+#' @param na.rm Removes lines with NA values from \code{x} when \code{na.rm = TRUE}. 
 #'
 #' @return Returns a tibble with individual rainfall events that can be 
 #' used as input for functions \code{\link{fsmev}}, \code{\link{fmev}}, \code{\link{ftmev}}. 
 #' @export
 #'
-ordinary_events <- function(data, duration) {
+ordinary_events <- function(x, duration, na.rm = TRUE) {
+  
+  if (na.rm) {
+    data <- na.omit(x$data)
+  } else {
+    data <- x$data
+  }
   
   ##30min means 3 * ten minutes
   ##60min means 6 * ten minutes
   ## duration [min] = dur_steps [min] * ts_resolution minutes [min]
-  dur_steps <- duration / data$ts_res
-  res <- lapply(1:nrow(data$fromto), function(i) {
-    from <- data$fromto$from[i]
-    to <- data$fromto$to[i]
-    if (length(data$data$val[from:to]) < dur_steps) {
-      #tibble(v_date = NA, val = NA)
+  dur_steps <- duration / x$ts_res
+  res <- lapply(1:nrow(x$fromto), function(i) {
+    from <- x$fromto$from[i]
+    to <- x$fromto$to[i]
+    if (length(data$val[from:to]) < dur_steps) {
       NULL
     } else {
-      #sums <- zoo::rollsum(data$data$rr[from:to], dur_steps, align = "right")
-      sums <- data.table::frollsum(data$data$val[from:to],
+      sums <- data.table::frollsum(data$val[from:to],
                        n = dur_steps,
                        na.rm = TRUE,
                        algo = "fast",
                        align = "right",
                        hasNA = TRUE)
       if (length(which(is.na(sums))) > 2 / 3 * length(sums)) {
-        #tibble(v_date = NA, val = NA)
         NULL
       } else {
         idx_max <- which(sums == max(sums, na.rm = TRUE))[1]
-        max_date <- data$data$groupvar[from:to][idx_max] # + dur_steps - 1
+        max_date <- data$groupvar[from:to][idx_max] # + dur_steps - 1
         tibble(v_date = max_date, val = sums[idx_max])
         
       }
