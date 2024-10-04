@@ -1830,32 +1830,65 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...){
 # }
 
 
-# separation_in_min = 360 # dry minutes between ordinary events (storms) 
-# s.time_resolution = 10 or 1 zehnminuten /minuten
-# call event_separation_dry_spell(s,separation_in_min/s.time_resolution);
-
-
-
-#' Separates rainfall timeseries by dry time events
+#' Detect Rainfall Events with Specified Separation Time (Dry Time) and Minimum Rain Threshold
 #'
+#' The `event_separation` function identifies rainfall events in time-series 
+#' data based on a minimum rainfall threshold and a separation time between 
+#' events. It uses morphological operations to detect and separate events, 
+#' and it can ignore short events that do not meet a minimum duration criterion.
 #' Based on Marra...
+#' 
+#' #' @details
+#' The function works by first dilating the rainfall data using a structuring 
+#' element defined by the separation time, followed by erosion to remove noise. 
+#' It then detects events based on the separation time and the minimum rainfall
+#' threshold, returning the time intervals where events occurred.  
+#' Events that span more than two years or are shorter than 
+#' the `ignore_event_duration` are ignored.
 #'
-#' min_rain could also be calculated form the timeseries (see Marra, et al., 2020)
+#' @param data A data frame with two columns, observation date and values.
+#'   \itemize{
+#'     \item `groupvar`: A time variable (e.g., POSIXct or Date) indicating the timestamp of each observation.
+#'     \item `val`: A numeric vector containing the observed rainfall values.
+#'   }
+#' @param separation_in_min Numeric. The minimum dry period (in minutes) 
+#' that separates two distinct rainfall events. Default is 360 minutes (6 hours).
+#' Values less than \code{min_rain} count as zero. Note that this should 
+#' depend on local climatological conditions. 
+#' @param time_resolution Numeric. The time step resolution of the data 
+#' (in minutes). For example, if observations are recorded every 10 minutes, 
+#' `time_resolution` should be 10. Default is 10 minutes.
+#' @param ignore_event_duration Numeric. The minimum duration (in minutes) 
+#' of rainfall required for an event to be considered valid. 
+#' Events shorter than this will be ignored. Default is 30 minutes.
+#' @param min_rain Numeric. The minimum rainfall value (e.g., in mm) 
+#' required for a data point to be considered part of an event. Default is 0.1.
+#' 
+#' @return A list with the following elements:
+#'   \itemize{
+#'     \item `data`: A modified version of the input data with an additional 
+#'     column `is_event`, indicating whether each time step is part of 
+#'     a detected event (1 for event, 0 for no event). This is useful in the 
+#'     next step of the \code{\link{event_separation}}.
+#'     \item `fromto`: A tibble with two columns, `from` and `to`, 
+#'     representing the indices of the start (`from`) and end (`to`) 
+#'     of each detected rainfall event.
+#'     \item `ts_res`: The time resolution used in the function (in minutes).
+#'   }
 #'
-#' @param data Data as tibble with observation date and values.
-#' @param separation_in_min Dry minutes between ordinary events (storms). 
-#' Defaults to 360 minutes, i.e. 6 hours (depends on local climate). 
-#' Values less than \code{min_rain} count as zero.
-#' @param time_resolution e.g. 10 minutes
-#' @param ignore_event_duration Events are ignored when their duration is shorter than 
-#' ignore_event_duration minutes. Defaults to 30 minutes.
-#' @param min_rain Rainfall below min_rain is ignored. 
+#' @examples
+#' \dontrun{
+#' # Example data
+#' mock_data <- data.frame(
+#'   groupvar = seq.POSIXt(Sys.time(), by = "10 min", length.out = 100),
+#'   val = c(rep(0, 10), runif(20, 0, 1), rep(0, 70))
+#' )
 #'
-#' @return Returns a list with two components. The data series with an 
-#' additional column is_event useful in the next step of the event separation. 
-#' And a tibble with indices from, to defining the events in the input timeseries. 
+#' # Detect rainfall events with a separation of 6 hours and a minimum rain threshold of 0.1
+#' result <- event_separation(mock_data, separation_in_min = 360, time_resolution = 10, min_rain = 0.1)
+#' print(result$fromto)  # View detected events
+#' }
 #' @export
-#'
 event_separation <- function(data, separation_in_min = 360, time_resolution = 10, ignore_event_duration = 30, min_rain = 0.1) {
   
   colnames(data) <- c("groupvar", "val")
@@ -1895,6 +1928,12 @@ event_separation <- function(data, separation_in_min = 360, time_resolution = 10
     to <- to[-toremove]
   }
   
+  # Remove events shorter than ignore_event_duration
+  event_durations <- (to - from + 1) * time_resolution  # Duration in minutes
+  valid_events <- event_durations >= ignore_event_duration  # Filter events
+  from <- from[valid_events]
+  to <- to[valid_events]
+  
   res <- list(
     data = data,
     fromto = tibble(from = from, to = to),
@@ -1909,17 +1948,51 @@ event_separation <- function(data, separation_in_min = 360, time_resolution = 10
 
 #' Identifies ordinary rainfall events by calculating the maximum within rainfall events
 #' defined with \code{\link{event_separation}}
+#' 
+#' The `ordinary_events` function calculates the rolling sum of values in the 
+#' provided data over a specified duration and identifies the events with the 
+#' highest sum within the defined time intervals. It is useful for 
+#' detecting significant events based on aggregated values over time.
 #'
-#' @param x A list with tibbles of the input data where the events are defined,
-#' and indices of the single events. Usually the output of function \code{\link{event_separation}}.
-#' @param duration The duration in minutes for which maxima shall be calculated.
-#' @param na.rm Removes lines with NA values from \code{x} when \code{na.rm = TRUE}. 
+#' @param x A list containing at least the following elements (usually the 
+#' output of function \code{\link{event_separation}}):
+#'   \itemize{
+#'     \item `data`: A data frame or data table with at least two columns: 
+#'     `val` (the values to sum) and `groupvar` (timestamps or another 
+#'     grouping variable).
+#'     \item `ts_res`: The time resolution of the data in minutes (i.e., how 
+#'     many minutes each time step represents).
+#'     \item `fromto`: A data frame with two columns: `from` and `to`, 
+#'     representing the start and end indices of the time intervals to analyze.
+#'   }
+#' @param duration Numeric. The duration in minutes for which maxima shall be calculated.
+#' @param na.rm Logical. Removes lines with NA values from \code{x} when \code{na.rm = TRUE}. 
 #'
 #' @return Returns a tibble with individual rainfall events that can be 
 #' used as input for functions \code{\link{fsmev}}, \code{\link{fmev}}, \code{\link{ftmev}}. 
 #' @export
 #'
+#' @examples
+#' \dontrun{
+#' # Example usage
+#' x <- list(
+#'   data = data.frame(val = runif(100), 
+#'   groupvar = seq.POSIXt(Sys.time(), 
+#'                         by = "10 min", 
+#'                         length.out = 100)
+#'                         ),
+#'   ts_res = 10,
+#'   fromto = data.frame(from = c(1, 51), to = c(50, 100))
+#' )
+#' duration <- 30
+#' result <- ordinary_events(x, duration)
+#' print(result)
+#' }
 ordinary_events <- function(x, duration, na.rm = TRUE) {
+  
+  if (nrow(x$data) == 0) {
+    stop("data has no rows")
+  }
   
   if (na.rm) {
     data <- na.omit(x$data)
