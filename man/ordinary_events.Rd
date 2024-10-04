@@ -5,19 +5,49 @@
 \title{Identifies ordinary rainfall events by calculating the maximum within rainfall events
 defined with \code{\link{event_separation}}}
 \usage{
-ordinary_events(data, duration)
+ordinary_events(x, duration, na.rm = TRUE)
 }
 \arguments{
-\item{data}{A list with tibbles of the input data where the events are defined,
-and indices of the single events. Usually the output of function \code{\link{event_separation}}.}
+\item{x}{A list containing at least the following elements (usually the 
+output of function \code{\link{event_separation}}):
+  \itemize{
+    \item `data`: A data frame or data table with at least two columns: 
+    `val` (the values to sum) and `groupvar` (timestamps or another 
+    grouping variable).
+    \item `ts_res`: The time resolution of the data in minutes (i.e., how 
+    many minutes each time step represents).
+    \item `fromto`: A data frame with two columns: `from` and `to`, 
+    representing the start and end indices of the time intervals to analyze.
+  }}
 
-\item{duration}{The duration in minutes for which maxima shall be calculated.}
+\item{duration}{Numeric. The duration in minutes for which maxima shall be calculated.}
+
+\item{na.rm}{Logical. Removes lines with NA values from \code{x} when \code{na.rm = TRUE}.}
 }
 \value{
 Returns a tibble with individual rainfall events that can be 
 used as input for functions \code{\link{fsmev}}, \code{\link{fmev}}, \code{\link{ftmev}}.
 }
 \description{
-Identifies ordinary rainfall events by calculating the maximum within rainfall events
-defined with \code{\link{event_separation}}
+The `ordinary_events` function calculates the rolling sum of values in the 
+provided data over a specified duration and identifies the events with the 
+highest sum within the defined time intervals. It is useful for 
+detecting significant events based on aggregated values over time.
+}
+\examples{
+\dontrun{
+# Example usage
+x <- list(
+  data = data.frame(val = runif(100), 
+  groupvar = seq.POSIXt(Sys.time(), 
+                        by = "10 min", 
+                        length.out = 100)
+                        ),
+  ts_res = 10,
+  fromto = data.frame(from = c(1, 51), to = c(50, 100))
+)
+duration <- 30
+result <- ordinary_events(x, duration)
+print(result)
+}
 }
