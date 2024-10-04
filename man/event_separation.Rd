@@ -56,7 +56,6 @@ and it can ignore short events that do not meet a minimum duration criterion.
 Based on Marra...
 }
 \details{
-#' @details
 The function works by first dilating the rainfall data using a structuring 
 element defined by the separation time, followed by erosion to remove noise. 
 It then detects events based on the separation time and the minimum rainfall
