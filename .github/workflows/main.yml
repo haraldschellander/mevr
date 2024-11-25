@@ -3,6 +3,9 @@ on: [push]
 jobs:
   run:
     runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
     env:
       OS: ${{ matrix.os }}
       PYTHON: '3.10'
