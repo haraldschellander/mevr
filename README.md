@@ -2,8 +2,8 @@
 # mevr
 
 <!-- badges: start -->
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-![Dev vesrion](https://img.shields.io/github/v/tag/haraldschellander/mevr)
+<!-- [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental) -->
+![(https://img.shields.io/github/v/tag/haraldschellander/mevr)](https://img.shields.io/github/v/tag/haraldschellander/mevr?include_prereleases)
 [![CRAN status](https://www.r-pkg.org/badges/version/mevr)](https://CRAN.R-project.org/package=mevr)
 <!-- badges: end -->
 
