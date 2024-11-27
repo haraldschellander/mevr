@@ -3,9 +3,9 @@
 
 <!-- badges: start -->
 <!-- [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental) -->
-![(https://img.shields.io/github/v/tag/haraldschellander/mevr)](https://img.shields.io/github/v/tag/haraldschellander/mevr?include_prereleases)
-![Coverage](https://img.shields.io/codecov/c/github/haraldschellander/mevr)
 [![CRAN status](https://www.r-pkg.org/badges/version/mevr)](https://CRAN.R-project.org/package=mevr)
+![(https://img.shields.io/github/v/tag/haraldschellander/mevr)](https://img.shields.io/github/v/tag/haraldschellander/mevr?include_prereleases)
+[![Coverage](https://img.shields.io/codecov/c/github/haraldschellander/mevr)](https://app.codecov.io/gh/haraldschellander/mevr)
 <!-- badges: end -->
 
 R-functions for Fitting the Metastatistical Extreme Value Distribution MEVD. 
