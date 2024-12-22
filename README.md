@@ -6,6 +6,7 @@
 [![CRAN status](https://www.r-pkg.org/badges/version/mevr)](https://CRAN.R-project.org/package=mevr)
 ![(https://img.shields.io/github/v/tag/haraldschellander/mevr)](https://img.shields.io/github/v/tag/haraldschellander/mevr?include_prereleases)
 [![Coverage](https://img.shields.io/codecov/c/github/haraldschellander/mevr)](https://app.codecov.io/gh/haraldschellander/mevr)
+![CRAN downloads](https://cranlogs.r-pkg.org/badges/grand-total/mevr?color=brightgreen)
 <!-- badges: end -->
 
 R-functions for Fitting the Metastatistical Extreme Value Distribution MEVD. 
