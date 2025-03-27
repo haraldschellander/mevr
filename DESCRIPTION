@@ -1,6 +1,6 @@
 Package: mevr
 Version: 1.2.3
-Date: 2024-10-04
+Date: 2025-03-27
 Title: Fitting the Metastatistical Extreme Value Distribution MEVD
 Authors@R: c(
     person("Harald", "Schellander", email = "harald.schellander@geosphere.at", role = c("aut", "cre"),

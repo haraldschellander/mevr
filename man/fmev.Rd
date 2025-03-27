@@ -14,24 +14,24 @@ fmev(
 )
 }
 \arguments{
-\item{data}{The data to which the MEVD should be fitted to. \code{data} must be a data.frame with two columns. 
-The first column must contain dates of class  \code{Date}, the second or last column must contain the rainfall 
+\item{data}{The data to which the MEVD should be fitted to. \code{data} must be a data.frame with two columns.
+The first column must contain dates of class  \code{Date}, the second or last column must contain the rainfall
 values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning.}
 
-\item{threshold}{A numeric that is used to define wet days as values > threshold. 
+\item{threshold}{A numeric that is used to define wet days as values > threshold.
 \eqn{data <= threshold} is set to NA.}
 
-\item{method}{Character string describing the method that is used to estimate the 
-Weibull parameters c and w. Possible options are probability weighted moments (\code{method='pwm'}), 
-maximum likelihood (\code{method='mle'}) or least squares (\code{method='ls'}). 
+\item{method}{Character string describing the method that is used to estimate the
+Weibull parameters c and w. Possible options are probability weighted moments (\code{method='pwm'}),
+maximum likelihood (\code{method='mle'}) or least squares (\code{method='ls'}).
 The \code{default} is \code{pwm}. (see details).}
 
 \item{censor}{If \code{censor=TRUE}, the data series will be left-censored to assure that the observed maxima
 are samples from a weibull tail. Defaults to \code{censor=FALSE}.}
 
-\item{censor_opts}{An empty list which can be populated with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}. 
-They give the range of quantiles used as left-censoring threshold, the month with which the block starts, 
-the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples 
+\item{censor_opts}{An empty list which can be populated with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}.
+They give the range of quantiles used as left-censoring threshold, the month with which the block starts,
+the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples
 used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.}
 
 \item{warn}{If \code{TRUE} which is the default, warnings about censoring are given.}
@@ -53,36 +53,36 @@ A list of class \code{mevr} with the fitted Weibull parameters and other helpful
 Fit the MEVD distribution to rainfall observations with different estimation methods.
 }
 \details{
-With the aim of weakening the requirement of an asymptotic assumption for the GEV distribution, 
-a metastatistical approach was proposed by Marani and Ignaccolo (2015). The MEVD is defined 
-in terms of the distribution of the statistical parameters describing "ordinary" daily rainfall 
-occurrence and intensity. The MEVD accounts for the random process of event occurrence in each 
-block and the possibly changing probability distribution of event magnitudes across different blocks, 
-by recognizing the number of events in each block, n, and the values of the shape and scale 
-parameters w and C of the parent Weibull distribution to be realisations of stochastic variables. 
+With the aim of weakening the requirement of an asymptotic assumption for the GEV distribution,
+a metastatistical approach was proposed by Marani and Ignaccolo (2015). The MEVD is defined
+in terms of the distribution of the statistical parameters describing "ordinary" daily rainfall
+occurrence and intensity. The MEVD accounts for the random process of event occurrence in each
+block and the possibly changing probability distribution of event magnitudes across different blocks,
+by recognizing the number of events in each block, n, and the values of the shape and scale
+parameters w and C of the parent Weibull distribution to be realisations of stochastic variables.
 The MEVD can then be written as
 
 \deqn{F = \frac{1}{T} \sum_{j=1}^T \prod_{k \in A_j} \left( 1-e^{-\left(\frac{x}{C(j,k)}\right)^{w(j,k)}} \right)}
 
-for \eqn{w > 0} and \eqn{C > 0}. With T fully recorded years, yearly C and w can be estimated 
-by fitting a Weibull distribution to the values x of this year, and n is the number of ordinary 
-events per year, i.e. all rainfall events larger than a threshold. 
+for \eqn{w > 0} and \eqn{C > 0}. With T fully recorded years, yearly C and w can be estimated
+by fitting a Weibull distribution to the values x of this year, and n is the number of ordinary
+events per year, i.e. all rainfall events larger than a threshold.
 
-If the probability distribution of daily rainfall is assumed to be time-invariant, the MEVD can be simplified to 
+If the probability distribution of daily rainfall is assumed to be time-invariant, the MEVD can be simplified to
 
 \deqn{F = [1 - exp(-x/C)^w]^n}
 
-with single values for the shape and scale parameters w and C. n is then the mean number of wet 
+with single values for the shape and scale parameters w and C. n is then the mean number of wet
 days at this location (Marra et al., 2019; Schellander et al., 2019).
 
-As is shown e.g. Schellander et al., 2019, probability weighted moments should be preferred 
-over maximum likelihood for the estimation of the Weibull parameters w and C. 
+As is shown e.g. Schellander et al., 2019, probability weighted moments should be preferred
+over maximum likelihood for the estimation of the Weibull parameters w and C.
 Therefore \code{method = 'pwm'} is the default.
 
-The MEVD can also be used for sub-daily precipitation (Marra et al., 2019). 
+The MEVD can also be used for sub-daily precipitation (Marra et al., 2019).
 In that case n has to be adapted accordingly to the 'mean number of wet events' per year.
 
-This function returns the parameters of the fitted MEVD distribution as well as some 
+This function returns the parameters of the fitted MEVD distribution as well as some
 additional fitting results and input parameters useful for further analysis.
 }
 \examples{

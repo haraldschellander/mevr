@@ -8,15 +8,15 @@ defined with \code{\link{event_separation}}}
 ordinary_events(x, duration, na.rm = TRUE)
 }
 \arguments{
-\item{x}{A list containing at least the following elements (usually the 
+\item{x}{A list containing at least the following elements (usually the
 output of function \code{\link{event_separation}}):
   \itemize{
-    \item `data`: A data frame or data table with at least two columns: 
-    `val` (the values to sum) and `groupvar` (timestamps or another 
+    \item `data`: A data frame or data table with at least two columns:
+    `val` (the values to sum) and `groupvar` (timestamps or another
     grouping variable).
-    \item `ts_res`: The time resolution of the data in minutes (i.e., how 
+    \item `ts_res`: The time resolution of the data in minutes (i.e., how
     many minutes each time step represents).
-    \item `fromto`: A data frame with two columns: `from` and `to`, 
+    \item `fromto`: A data frame with two columns: `from` and `to`,
     representing the start and end indices of the time intervals to analyze.
   }}
 
@@ -25,22 +25,22 @@ output of function \code{\link{event_separation}}):
 \item{na.rm}{Logical. Removes lines with NA values from \code{x} when \code{na.rm = TRUE}.}
 }
 \value{
-Returns a tibble with individual rainfall events that can be 
+Returns a tibble with individual rainfall events that can be
 used as input for functions \code{\link{fsmev}}, \code{\link{fmev}}, \code{\link{ftmev}}.
 }
 \description{
-The `ordinary_events` function calculates the rolling sum of values in the 
-provided data over a specified duration and identifies the events with the 
-highest sum within the defined time intervals. It is useful for 
+This function calculates the rolling sum of values in the
+provided data over a specified duration and identifies the events with the
+highest sum within the defined time intervals. It is useful for
 detecting significant events based on aggregated values over time.
 }
 \examples{
 \dontrun{
 # Example usage
 x <- list(
-  data = data.frame(val = runif(100), 
-  groupvar = seq.POSIXt(Sys.time(), 
-                        by = "10 min", 
+  data = data.frame(val = runif(100),
+  groupvar = seq.POSIXt(Sys.time(),
+                        by = "10 min",
                         length.out = 100)
                         ),
   ts_res = 10,

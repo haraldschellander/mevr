@@ -6,7 +6,7 @@
 \usage{
 event_separation(
   data,
-  separation_in_min = 360,
+  separation_period = 360,
   time_resolution = 10,
   ignore_event_duration = 30,
   min_rain = 0.1
@@ -16,51 +16,52 @@ event_separation(
 \item{data}{A data frame with two columns, observation date and values.
 \itemize{
   \item `groupvar`: A time variable (e.g., POSIXct or Date) indicating the timestamp of each observation.
-  \item `val`: A numeric vector containing the observed rainfall values.
+  \item `val`: A numeric of the observed rainfall values.
 }}
 
-\item{separation_in_min}{Numeric. The minimum dry period (in minutes) 
+\item{separation_period}{Numeric. The minimum dry period (in minutes)
 that separates two distinct rainfall events. Default is 360 minutes (6 hours).
-Values less than \code{min_rain} count as zero. Note that this should 
+Values less than \code{min_rain} count as zero. Note that this should
 depend on local climatological conditions.}
 
-\item{time_resolution}{Numeric. The time step resolution of the data 
-(in minutes). For example, if observations are recorded every 10 minutes, 
+\item{time_resolution}{Numeric. The time step resolution of the data
+(in minutes). For example, if observations are recorded every 10 minutes,
 `time_resolution` should be 10. Default is 10 minutes.}
 
-\item{ignore_event_duration}{Numeric. The minimum duration (in minutes) 
-of rainfall required for an event to be considered valid. 
+\item{ignore_event_duration}{Numeric. The minimum duration (in minutes)
+of rainfall required for an event to be considered valid.
 Events shorter than this will be ignored. Default is 30 minutes.}
 
-\item{min_rain}{Numeric. The minimum rainfall value (e.g., in mm) 
+\item{min_rain}{Numeric. The minimum rainfall value (e.g., in mm)
 required for a data point to be considered part of an event. Default is 0.1.}
 }
 \value{
 A list with the following elements:
   \itemize{
-    \item `data`: A modified version of the input data with an additional 
-    column `is_event`, indicating whether each time step is part of 
-    a detected event (1 for event, 0 for no event). This is useful in the 
-    next step of the \code{\link{event_separation}}.
-    \item `fromto`: A tibble with two columns, `from` and `to`, 
-    representing the indices of the start (`from`) and end (`to`) 
+    \item `data`: A modified version of the input data with an additional
+    column `is_event`, indicating whether each time step is part of
+    a detected event (1 for event, 0 for no event). This is useful in the
+    next step \code{\link{ordinary_events}}.
+    \item `fromto`: A tibble with two columns, `from` and `to`,
+    representing the indices of the start (`from`) and end (`to`)
     of each detected rainfall event.
     \item `ts_res`: The time resolution used in the function (in minutes).
   }
 }
 \description{
-The `event_separation` function identifies rainfall events in time-series 
-data based on a minimum rainfall threshold and a separation time between 
-events. It uses morphological operations to detect and separate events, 
+This function identifies rainfall events in time-series
+data based on a minimum rainfall threshold and a separation time between
+events. It uses morphological operations to detect and separate events,
 and it can ignore short events that do not meet a minimum duration criterion.
-Based on Marra...
+Based on Marra et al. 2024: "Predicting Extreme Sub-Hourly Precipitation Intensification Based on Temperature Shifts“.
+Hydrology and Earth System Sciences 28, Nr. 2: 375–89. https://doi.org/10.5194/hess-28-375-2024.
 }
 \details{
-The function works by first dilating the rainfall data using a structuring 
-element defined by the separation time, followed by erosion to remove noise. 
+The function works by first dilating the rainfall data using a structuring
+element defined by the separation time, followed by erosion to remove noise.
 It then detects events based on the separation time and the minimum rainfall
-threshold, returning the time intervals where events occurred.  
-Events that span more than two years or are shorter than 
+threshold, returning the time intervals where events occurred.
+Events that span more than two years or are shorter than
 the `ignore_event_duration` are ignored.
 }
 \examples{
@@ -72,7 +73,7 @@ mock_data <- data.frame(
 )
 
 # Detect rainfall events with a separation of 6 hours and a minimum rain threshold of 0.1
-result <- event_separation(mock_data, separation_in_min = 360, time_resolution = 10, min_rain = 0.1)
+result <- event_separation(mock_data, separation_period = 360, time_resolution = 10, min_rain = 0.1)
 print(result$fromto)  # View detected events
 }
 }

@@ -15,13 +15,13 @@ qtmev(p, data)
 \arguments{
 \item{x, q}{Numeric vector or single value of probabilities for \code{dtmev}.}
 
-\item{data}{A data frame with at least columns \code{c}, \code{w} and \code{year}. 
+\item{data}{A data frame with at least columns \code{c}, \code{w} and \code{year}.
 Can be taken from the output of the fitted TMEV object, i.e. \code{x$data} (see \code{\link{ftmev}}).}
 
 \item{p}{Numeric vector or single value of probabilities for \code{qtmev}.}
 }
 \value{
-\code{dtmev} gives the density function, \code{ptmev} gives the distribution function, 
+\code{dtmev} gives the density function, \code{ptmev} gives the distribution function,
 and \code{qtmev} gives the quantile function of the TMEV.
 }
 \description{

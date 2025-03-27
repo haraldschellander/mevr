@@ -2,10 +2,10 @@
 
 #' @importFrom graphics abline hist legend lines par points title
 #' @importFrom stats aggregate cov na.omit quantile runif rweibull pweibull dweibull sd  uniroot predict density
-#' @importFrom utils modifyList 
-#' @importFrom EnvStats eweibull 
-#' @importFrom parallel detectCores makeCluster stopCluster 
-#' @importFrom foreach foreach %dopar% 
+#' @importFrom utils modifyList
+#' @importFrom EnvStats eweibull
+#' @importFrom parallel detectCores makeCluster stopCluster
+#' @importFrom foreach foreach %dopar%
 #' @importFrom doParallel  registerDoParallel
 #' @importFrom bamlss bamlss weibull_bamlss opt_bfit samplestats results.bamlss.default bamlss.frame
 #' @importFrom mgcv s ti
@@ -13,39 +13,39 @@
 #' @importFrom data.table frollsum
 NULL
 
-#' @import dplyr 
+#' @import dplyr
 #' @import rlang
 NULL
 
 
 #' Daily rainfall data
-#' 
-#' A dataset containing daily rainfall 
+#'
+#' A dataset containing daily rainfall
 #' intended to be used with the package \code{mevr}
-#' 
+#'
 #' @docType data
 #' @keywords datasets
 #' @name dailyrainfall
 #' @usage data(dailyrainfall)
-#' 
-#' @format The dataset contains real world daily rainfall observations from a station 
-#' in the northern Alps. The series contains values from 1971 to 1985 and are assumed to be 
-#' Weibull distributed. This data series is intended to be used as is as input data 
-#' for the package \code{mevr} to fit the metastatistical extreme value 
+#'
+#' @format The dataset contains real world daily rainfall observations from a station
+#' in the northern Alps. The series contains values from 1971 to 1985 and are assumed to be
+#' Weibull distributed. This data series is intended to be used as is as input data
+#' for the package \code{mevr} to fit the metastatistical extreme value
 #' distribution and its variants with different estimation methods.
-#' 
+#'
 #' The dataset is a dataframe with two columns, dates and val:
-#'  
+#'
 #' \describe{
 #' \item{dates}{ Days of class \code{Date} in the format YYYY-MM-DD}
-#' \item{val}{ Rainfall observations corresponding to the date in the row. 
+#' \item{val}{ Rainfall observations corresponding to the date in the row.
 #' The value is the 24 hour sum from the morning hours of day-1 to the morning hours of day. }
 #' }
-#' 
-#' @examples 
+#'
+#' @examples
 #' ## Load example data
 #' data(dailyrainfall)
-#' 
+#'
 #' ## explore dataset
 #' head(dailyrainfall)
 #' hist(dailyrainfall$val)
@@ -54,43 +54,43 @@ NULL
 
 
 #' Fitting the simplified Metastatistical Extreme Value Distribution (SMEV)
-#' 
+#'
 #' Fit the SMEV distribution to rainfall observations with different estimation methods.
 #'
-#' The SMEV was introduced by (Marra et al., 2019) as a simplified version of the MEVD 
-#' (Marani and Ignaccolo, 2015) with the assumption of a stationary parent Weibull distribution 
-#' as 
+#' The SMEV was introduced by (Marra et al., 2019) as a simplified version of the MEVD
+#' (Marani and Ignaccolo, 2015) with the assumption of a stationary parent Weibull distribution
+#' as
 #' \deqn{F = [1 - exp(-x/C)^w]^n}
-#' for \eqn{w > 0} and \eqn{C > 0} being the Weibull shape and scale parameter and 
-#' \eqn{n > 0} being the mean number of wet days over all years. 
-#' Wet days are defined as rainfall events > threshold. As it was shown by 
-#' e.g. Schellander et al., 2019, probability weighted moments should be preferred over 
-#' maximum likelihood for the estimation of the Weibull parameters w and C. Therefore 
+#' for \eqn{w > 0} and \eqn{C > 0} being the Weibull shape and scale parameter and
+#' \eqn{n > 0} being the mean number of wet days over all years.
+#' Wet days are defined as rainfall events > threshold. As it was shown by
+#' e.g. Schellander et al., 2019, probability weighted moments should be preferred over
+#' maximum likelihood for the estimation of the Weibull parameters w and C. Therefore
 #' \code{method = 'pwm'} is the default.
-#' 
-#' Confidence intervals of the SMEV distribution can be calculated using a non parametric 
-#' bootstrap technique. Note that this very slow. 
-#' 
-#' This function returns the parameters of the fitted SMEV distribution as well as some 
-#' additional fitting results and input parameters useful for further analysis. 
 #'
-#' @param data The data to which the SMEV should be fitted to. \code{data} must be a data.frame with two columns. 
-#' The first column must contain dates of class \code{Date}, the second or last column must contain the rainfall 
-#' values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning. 
-#' @param threshold A numeric that is used to define wet days as values > threshold. 
-#' \eqn{data <= threshold} is set to NA.  
-#' @param method Character string describing the method that is used to estimate the 
-#' Weibull parameters c and w. Possible options are probability weighted moments (\code{method='pwm'}), 
-#' maximum likelihood (\code{method='mle'}) or least squares (\code{method='ls'}). 
+#' Confidence intervals of the SMEV distribution can be calculated using a non parametric
+#' bootstrap technique. Note that this very slow.
+#'
+#' This function returns the parameters of the fitted SMEV distribution as well as some
+#' additional fitting results and input parameters useful for further analysis.
+#'
+#' @param data The data to which the SMEV should be fitted to. \code{data} must be a data.frame with two columns.
+#' The first column must contain dates of class \code{Date}, the second or last column must contain the rainfall
+#' values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning.
+#' @param threshold A numeric that is used to define wet days as values > threshold.
+#' \eqn{data <= threshold} is set to NA.
+#' @param method Character string describing the method that is used to estimate the
+#' Weibull parameters c and w. Possible options are probability weighted moments (\code{method='pwm'}),
+#' maximum likelihood (\code{method='mle'}) or least squares (\code{method='ls'}).
 #' The \code{default} is \code{pwm}. (see details).
 #' @param censor If \code{censor=TRUE}, the data series will be left-censored to assure that the observed maxima
 #' are samples from a weibull tail. Defaults to \code{censor=FALSE}.
-#' @param censor_opts An empty list which can be populated with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}. 
-#' They give the range of quantiles used as left-censoring threshold, the month with which the block starts, 
-#' the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples 
+#' @param censor_opts An empty list which can be populated with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}.
+#' They give the range of quantiles used as left-censoring threshold, the month with which the block starts,
+#' the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples
 #' used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.
 #' @param warn If \code{TRUE} which is the default, warnings about censoring are given.
-#' @param sd If \code{sd=TRUE}, confidence intervals of the SMEV distribution are calculated (see details). 
+#' @param sd If \code{sd=TRUE}, confidence intervals of the SMEV distribution are calculated (see details).
 #' @param sd.method Currently only a non parametric bootstrap technique can be used to calculate SMEV confidence intervals with \code{sd.method='boot'}. The default is \code{sd=FALSE}.
 #' @param R The number of samples drawn from the SMEV distribution to calculate the confidence intervals with \code{sd.method='boot'}
 #'
@@ -108,59 +108,72 @@ NULL
 #' \item{method}{ Method used to fit the MEVD. }
 #' \item{censor}{ \code{TRUE} when the data-series was left-censored and \code{FALSE} otherwise.}
 #' \item{type}{ The type of distribution ("SMEV")}
-#' \item{rejected}{ If \code{censor=TRUE}, \code{rejected=TRUE} when the Weibull tail assumption is rejected and \code{rejected=FALSE} otherwise. 
+#' \item{rejected}{ If \code{censor=TRUE}, \code{rejected=TRUE} when the Weibull tail assumption is rejected and \code{rejected=FALSE} otherwise.
 #' If \code{censor=FALSE} this value is not returned.}
-#' 
+#'
 #' @export
 #'
 #' @references 	Marra, F. et al. (2019) 'A simplified MEV formulation to model extremes emerging from multiple nonstationary underlying processes', Advances in Water Resources. Elsevier Ltd, 127(April), pp. 280-290. doi: 10.1016/j.advwatres.2019.04.002.
 #' @examples
 #' data(dailyrainfall)
-#' 
+#'
 #' fit <- fsmev(dailyrainfall)
 #' fit
 #' plot(fit)
-#' 
+#'
 #' # left censor data prior to fitting
 #' set.seed(123)
 #' sample_dates <- seq.Date(from = as.Date("2000-01-01"), to = as.Date("2020-12-31"), by = 1)
 #' sample_data <- data.frame(dates = sample_dates, val = sample(rnorm(length(sample_dates))))
 #' d <- sample_data |>
 #'   filter(val >= 0 & !is.na(val))
-#' 
+#'
 #' fit <- fsmev(d)
-#' fit_c <- fsmev(d, 
-#'                censor = TRUE, 
+#' fit_c <- fsmev(d,
+#'                censor = TRUE,
 #'                censor_opts = list(thresholds = c(seq(0.5, 0.9, 0.1), 0.95),
 #'                                   mon = 1,
 #'                                   nrtrials = 2,
 #'                                   R = 100))
-#' 
+#'
 #' rp <- 2:100
 #' rl <- return.levels.mev(fit, return.periods = rp)
 #' rl_c <- return.levels.mev(fit_c, return.periods = rp)
-#' plot(sort(pp.weibull(fit$maxima)), sort(fit$maxima), 
+#' plot(sort(pp.weibull(fit$maxima)), sort(fit$maxima),
 #'   xlab = "Return period (a)", ylab = "daily rain (mm)")
 #' lines(rl$rp, rl$rl)
 #' lines(rl_c$rp, rl_c$rl, col = "red")
-#' legend("bottomright", legend = c("std", "censored"), 
+#' legend("bottomright", legend = c("std", "censored"),
 #'   col = c("black", "red"), lty = c(1, 2), lwd = c(1, 1.5), bty = "n")
-#' 
+#'
 #'
 #' @author Harald Schellander, Alexander Lieb
-#' 
+#'
 #' @seealso \code{\link{fmev}}, \code{\link{ftmev}}
-fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = FALSE, censor_opts = list(),
-                  warn = TRUE, sd = FALSE, sd.method = "boot", R = 502){
-
-  censor_opts_defaults <- list(thresholds = seq(0.05, 0.95, 0.05), mon = 1, nrtrials = 5, R = 500)
+fsmev <- function(
+  data,
+  threshold = 0,
+  method = c("pwm", "mle", "ls"),
+  censor = FALSE,
+  censor_opts = list(),
+  warn = TRUE,
+  sd = FALSE,
+  sd.method = "boot",
+  R = 502
+) {
+  censor_opts_defaults <- list(
+    thresholds = seq(0.05, 0.95, 0.05),
+    mon = 1,
+    nrtrials = 5,
+    R = 500
+  )
   cens_opts <- utils::modifyList(censor_opts_defaults, censor_opts)
-  
+
   orig_data <- data
-  
+
   if (!inherits(data, c("data.frame", "numeric")))
     stop("data must be of class 'data.frame' or 'numeric'")
-  
+
   if (!is.vector(data)) {
     vec <- FALSE
     colnames(data) <- c("groupvar", "val")
@@ -168,39 +181,38 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
     vec <- TRUE
     data = data.frame(val = data)
   }
-  
-  if (!inherits(data$groupvar, c("Date", "POSIXct"))) 
+
+  if (!inherits(data$groupvar, c("Date", "POSIXct")))
     stop("date column must be of class 'Date' or 'POSIXct'")
-  
+
   if (!inherits(data$val, "numeric"))
     stop("data values must be of class 'numeric'")
-  
-  if (length(which(data$val < 0)) > 0)
-    stop("data must not contain values < 0")
-  
+
+  if (length(which(data$val < 0)) > 0) stop("data must not contain values < 0")
+
   if (any(is.na(data$val))) {
     n <- nrow(data)
     data <- na.omit(data)
     nn <- nrow(data)
     warning(paste0("data contains ", n - nn, " NA values which are ignored."))
   }
-  
-  if (isTRUE(sd) & sd.method != "boot") 
+
+  if (isTRUE(sd) & sd.method != "boot")
     stop("only method 'boot' is allowed for calculation of standard errors")
-  
+
   method <- match.arg(method)
-  
+
   # only wet days: remove data smaller than threshold
   data_pot <- data |>
     dplyr::filter(.data$val > threshold)
-  
+
   if (!vec) {
-    data_pot <- data_pot |> 
+    data_pot <- data_pot |>
       dplyr::mutate(nvar = format(.data$groupvar, "%Y"))
     n_vec <- data_pot |>
       group_by(.data$nvar) |>
       count() |>
-      ungroup() |> 
+      ungroup() |>
       pull(n)
     years <- as.numeric(unique(data_pot$nvar))
   } else {
@@ -208,30 +220,37 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
     n_vec <- length(data_pot$val) / (length(data$val) / 365.25)
     years <- NULL
   }
-  
+
   data_pot$nvar <- NULL
-  
+
   if (censor) {
-    # try nrtrial times 
-    for (i in 1:cens_opts$nrtrials) {    
+    # try nrtrial times
+    for (i in 1:cens_opts$nrtrials) {
       theta <- data_pot |>
-        group_modify(~ fit.mev.censor(data_pot, cens_opts$thresholds, cens_opts$mon, cens_opts$R, warn = warn)) |>
+        group_modify(
+          ~ fit.mev.censor(
+            data_pot,
+            cens_opts$thresholds,
+            cens_opts$mon,
+            cens_opts$R,
+            warn = warn
+          )
+        ) |>
         ungroup()
       if (!all(is.na(theta))) {
         break
       }
     }
-    
+
     # if tail is not weibull, uncensored fit with SMEV
     if (all(is.na(theta$w)) & all(is.na(theta$c))) {
       theta <- data_pot |>
         group_modify(~ fit.mev(.x$val, method)) |>
         ungroup()
-      if (warn)
-        warning("fitting uncensored SMEV")
+      if (warn) warning("fitting uncensored SMEV")
       rejected <- TRUE
     } else {
-      #method = "censored lsreg"  
+      #method = "censored lsreg"
       rejected <- FALSE
       opt_thresh <- theta$opt_thresh
       opt_quant <- theta$opt_quant
@@ -242,7 +261,7 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
       ungroup()
   }
   theta$n <- mean(n_vec)
-  
+
   if (!vec) {
     maxima <- data_pot |>
       dplyr::mutate(year = format(.data$groupvar, "%Y")) |>
@@ -252,49 +271,52 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
   } else {
     maxima <- NULL
   }
-  
+
   params <- c("c" = theta$c, "w" = theta$w, "n" = theta$n)
-  
+
   if (vec) {
     res_data <- data_pot$val
   } else {
     res_data <- data_pot
   }
-  
-  if(sd){
-    if(sd.method == "boot"){
-    err <- smev.boot(data_pot, method = method, R = R)
-    res <- list(c = theta$c, 
-                w = theta$w, 
-                n = theta$n, 
-                params = params, 
-                maxima = maxima, 
-                std = err$std, 
-                varcov = err$varcov, 
-                data = res_data, 
-                orig_data = orig_data,
-                years = years, 
-                threshold = threshold, 
-                method = method,
-                censor = censor,
-                type = "SMEV")
+
+  if (sd) {
+    if (sd.method == "boot") {
+      err <- smev.boot(data_pot, method = method, R = R)
+      res <- list(
+        c = theta$c,
+        w = theta$w,
+        n = theta$n,
+        params = params,
+        maxima = maxima,
+        std = err$std,
+        varcov = err$varcov,
+        data = res_data,
+        orig_data = orig_data,
+        years = years,
+        threshold = threshold,
+        method = method,
+        censor = censor,
+        type = "SMEV"
+      )
     }
   } else {
-    res <- list(c = theta$c, 
-                w = theta$w, 
-                n = theta$n, 
-                params = params,
-                maxima = maxima,
-                data = res_data, 
-                orig_data = orig_data,
-                years = years, 
-                threshold = threshold,
-                method = method,
-                censor = censor,
-                type = "SMEV")
-    
+    res <- list(
+      c = theta$c,
+      w = theta$w,
+      n = theta$n,
+      params = params,
+      maxima = maxima,
+      data = res_data,
+      orig_data = orig_data,
+      years = years,
+      threshold = threshold,
+      method = method,
+      censor = censor,
+      type = "SMEV"
+    )
   }
-  
+
   if (censor) {
     res$rejected <- rejected
   }
@@ -307,58 +329,57 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
 }
 
 
-
 #' Fitting the Metastatistical Extreme Value Distribution (MEVD)
-#' 
+#'
 #' Fit the MEVD distribution to rainfall observations with different estimation methods.
 #'
-#' With the aim of weakening the requirement of an asymptotic assumption for the GEV distribution, 
-#' a metastatistical approach was proposed by Marani and Ignaccolo (2015). The MEVD is defined 
-#' in terms of the distribution of the statistical parameters describing "ordinary" daily rainfall 
-#' occurrence and intensity. The MEVD accounts for the random process of event occurrence in each 
-#' block and the possibly changing probability distribution of event magnitudes across different blocks, 
-#' by recognizing the number of events in each block, n, and the values of the shape and scale 
-#' parameters w and C of the parent Weibull distribution to be realisations of stochastic variables. 
+#' With the aim of weakening the requirement of an asymptotic assumption for the GEV distribution,
+#' a metastatistical approach was proposed by Marani and Ignaccolo (2015). The MEVD is defined
+#' in terms of the distribution of the statistical parameters describing "ordinary" daily rainfall
+#' occurrence and intensity. The MEVD accounts for the random process of event occurrence in each
+#' block and the possibly changing probability distribution of event magnitudes across different blocks,
+#' by recognizing the number of events in each block, n, and the values of the shape and scale
+#' parameters w and C of the parent Weibull distribution to be realisations of stochastic variables.
 #' The MEVD can then be written as
 #'
 #' \deqn{F = \frac{1}{T} \sum_{j=1}^T \prod_{k \in A_j} \left( 1-e^{-\left(\frac{x}{C(j,k)}\right)^{w(j,k)}} \right)}
-#' 
-#' for \eqn{w > 0} and \eqn{C > 0}. With T fully recorded years, yearly C and w can be estimated 
-#' by fitting a Weibull distribution to the values x of this year, and n is the number of ordinary 
-#' events per year, i.e. all rainfall events larger than a threshold. 
 #'
-#' If the probability distribution of daily rainfall is assumed to be time-invariant, the MEVD can be simplified to 
+#' for \eqn{w > 0} and \eqn{C > 0}. With T fully recorded years, yearly C and w can be estimated
+#' by fitting a Weibull distribution to the values x of this year, and n is the number of ordinary
+#' events per year, i.e. all rainfall events larger than a threshold.
+#'
+#' If the probability distribution of daily rainfall is assumed to be time-invariant, the MEVD can be simplified to
 #'
 #' \deqn{F = [1 - exp(-x/C)^w]^n}
 #'
-#'with single values for the shape and scale parameters w and C. n is then the mean number of wet 
+#'with single values for the shape and scale parameters w and C. n is then the mean number of wet
 #'days at this location (Marra et al., 2019; Schellander et al., 2019).
 #'
-#' As is shown e.g. Schellander et al., 2019, probability weighted moments should be preferred 
-#' over maximum likelihood for the estimation of the Weibull parameters w and C. 
+#' As is shown e.g. Schellander et al., 2019, probability weighted moments should be preferred
+#' over maximum likelihood for the estimation of the Weibull parameters w and C.
 #' Therefore \code{method = 'pwm'} is the default.
 #'
-#'The MEVD can also be used for sub-daily precipitation (Marra et al., 2019). 
+#'The MEVD can also be used for sub-daily precipitation (Marra et al., 2019).
 #'In that case n has to be adapted accordingly to the 'mean number of wet events' per year.
 #'
-#' This function returns the parameters of the fitted MEVD distribution as well as some 
-#' additional fitting results and input parameters useful for further analysis. 
+#' This function returns the parameters of the fitted MEVD distribution as well as some
+#' additional fitting results and input parameters useful for further analysis.
 #'
-#' @param data The data to which the MEVD should be fitted to. \code{data} must be a data.frame with two columns. 
-#' The first column must contain dates of class  \code{Date}, the second or last column must contain the rainfall 
+#' @param data The data to which the MEVD should be fitted to. \code{data} must be a data.frame with two columns.
+#' The first column must contain dates of class  \code{Date}, the second or last column must contain the rainfall
 #' values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning.
-#' @param threshold A numeric that is used to define wet days as values > threshold. 
-#' \eqn{data <= threshold} is set to NA.  
-#' @param method Character string describing the method that is used to estimate the 
-#' Weibull parameters c and w. Possible options are probability weighted moments (\code{method='pwm'}), 
-#' maximum likelihood (\code{method='mle'}) or least squares (\code{method='ls'}). 
+#' @param threshold A numeric that is used to define wet days as values > threshold.
+#' \eqn{data <= threshold} is set to NA.
+#' @param method Character string describing the method that is used to estimate the
+#' Weibull parameters c and w. Possible options are probability weighted moments (\code{method='pwm'}),
+#' maximum likelihood (\code{method='mle'}) or least squares (\code{method='ls'}).
 #' The \code{default} is \code{pwm}. (see details).
 #' @param censor If \code{censor=TRUE}, the data series will be left-censored to assure that the observed maxima
 #' are samples from a weibull tail. Defaults to \code{censor=FALSE}.
-#' @param censor_opts An empty list which can be populated with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}. 
-#' They give the range of quantiles used as left-censoring threshold, the month with which the block starts, 
-#' the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples 
-#' used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}. 
+#' @param censor_opts An empty list which can be populated with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}.
+#' They give the range of quantiles used as left-censoring threshold, the month with which the block starts,
+#' the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples
+#' used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.
 #' @param warn If \code{TRUE} which is the default, warnings about censoring are given.
 #'
 #' @return A list of class \code{mevr} with the fitted Weibull parameters and other helpful ingredients.
@@ -372,9 +393,9 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
 #' \item{threshold}{ The chosen threshold.}
 #' \item{method}{ Method used to fit the MEVD.}
 #' \item{type}{ The type of distribution ("MEVD")}
-#' 
+#'
 #' @export
-#' 
+#'
 #' @references Marani, M. and Ignaccolo, M. (2015) 'A metastatistical approach to rainfall extremes', Advances in Water Resources. Elsevier Ltd, 79(Supplement C), pp. 121-126. doi: 10.1016/j.advwatres.2015.03.001.
 #' @references Schellander, H., Lieb, A. and Hell, T. (2019) 'Error Structure of Metastatistical and Generalized Extreme Value Distributions for Modeling Extreme Rainfall in Austria', Earth and Space Science, 6, pp. 1616-1632. doi: 10.1029/2019ea000557.
 #'
@@ -383,45 +404,55 @@ fsmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = 
 #' fit <- fmev(dailyrainfall, method = "mle")
 #' fit
 #' plot(fit)
-#' 
+#'
 #' @author Harald Schellander, Alexander Lieb
-#' 
+#'
 #' @seealso \code{\link{fsmev}}, \code{\link{ftmev}}
-fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = FALSE, censor_opts = list(), warn = TRUE){
+fmev <- function(
+  data,
+  threshold = 0,
+  method = c("pwm", "mle", "ls"),
+  censor = FALSE,
+  censor_opts = list(),
+  warn = TRUE
+) {
   # data must be data.frame for yearly parameters
   # data must be in last/second column
   # col1 must hold the group variable
   # col2 must contain the data
-  # col1 must be kind of date 
-  
-  censor_opts_defaults <- list(thresholds = seq(0.05, 0.95, 0.05), mon = 1, nrtrials = 5, R = 500)
+  # col1 must be kind of date
+
+  censor_opts_defaults <- list(
+    thresholds = seq(0.05, 0.95, 0.05),
+    mon = 1,
+    nrtrials = 5,
+    R = 500
+  )
   cens_opts <- utils::modifyList(censor_opts_defaults, censor_opts)
-  
-  if(!inherits(data, "data.frame"))
-    stop("data must be of class 'data.frame'")
-  
+
+  if (!inherits(data, "data.frame")) stop("data must be of class 'data.frame'")
+
   colnames(data) <- c("groupvar", "val")
-  
-  if (!inherits(data$groupvar, c("Date", "POSIXct"))) 
+
+  if (!inherits(data$groupvar, c("Date", "POSIXct")))
     stop("date column must be of class 'Date' or 'POSIXct'")
-  
+
   if (!inherits(data$val, "numeric"))
     stop("data values must be of class 'numeric'")
-  
-  if(length(which(data$val < 0)) > 0)
-    stop("data must not contain values < 0")
-  
+
+  if (length(which(data$val < 0)) > 0) stop("data must not contain values < 0")
+
   if (any(is.na(data$val))) {
     n <- nrow(data)
     data <- na.omit(data)
     nn <- nrow(data)
     warning(paste0("data contains ", n - nn, " NA values which are ignored."))
   }
-  
+
   method <- match.arg(method)
-  if(method != "pwm" & threshold > 0)
+  if (method != "pwm" & threshold > 0)
     stop("threshold can only be used for method 'pwm'")
-  
+
   # only wet days: remove data smaller than threshold
   data_pot <- data |>
     dplyr::filter(.data$val > threshold) |>
@@ -429,37 +460,58 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = F
   n_vec <- data_pot |>
     group_by(.data$year) |>
     count() |>
-    ungroup() |> 
+    ungroup() |>
     pull(n)
-  
+
   if (censor) {
-    # try nrtrial times 
-    for (i in 1:cens_opts$nrtrials) {    
+    # try nrtrial times
+    for (i in 1:cens_opts$nrtrials) {
       theta <- data_pot |>
         group_by(.data$year) |>
-        group_modify(~ fit.mev.censor(.x, cens_opts$thresholds, cens_opts$mon, cens_opts$R, warn = warn)) |>
+        group_modify(
+          ~ fit.mev.censor(
+            .x,
+            cens_opts$thresholds,
+            cens_opts$mon,
+            cens_opts$R,
+            warn = warn
+          )
+        ) |>
         ungroup()
       if (!all(is.na(theta))) {
         break
       }
     }
-    
-    # per year: 
+
+    # per year:
     # if tail is not weibull, uncensored fit with SMEV
     theta_yrs <- list()
     for (j in seq_along(unique(theta$year))) {
       yr <- as.numeric(unique(theta$year)[j])
-      theta_yr <- theta |> 
+      theta_yr <- theta |>
         filter(.data$year == yr)
       if (all(is.na(theta_yr$w) & is.na(theta_yr$c))) {
         warning("fitting uncensored SMEV")
         theta_tmp <- data_pot |>
-          filter(.data$year == yr) |> 
+          filter(.data$year == yr) |>
           group_modify(~ fit.mev(.x$val, method)) |>
           ungroup()
-        theta_yrs[[j]] <- tibble(year = as.character(yr), theta_tmp, opt_thresh = NA, opt_quant = NA, rejected = TRUE)
+        theta_yrs[[j]] <- tibble(
+          year = as.character(yr),
+          theta_tmp,
+          opt_thresh = NA,
+          opt_quant = NA,
+          rejected = TRUE
+        )
       } else {
-        theta_yrs[[j]] <- tibble(year = as.character(yr), w =  theta_yr$w, c =  theta_yr$c, opt_thresh = theta_yr$opt_thresh, opt_quant = theta_yr$opt_quant, rejected = FALSE)
+        theta_yrs[[j]] <- tibble(
+          year = as.character(yr),
+          w = theta_yr$w,
+          c = theta_yr$c,
+          opt_thresh = theta_yr$opt_thresh,
+          opt_quant = theta_yr$opt_quant,
+          rejected = FALSE
+        )
       }
     }
     theta <- do.call(rbind, theta_yrs)
@@ -470,28 +522,30 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = F
       ungroup()
   }
   theta$n <- n_vec
-  
+
   maxima <- data_pot |>
     dplyr::mutate(year = format(.data$groupvar, "%Y")) |>
     group_by(.data$year) |>
     summarise(max = max(.data$val, na.rm = TRUE)) |>
-    pull(max) 
+    pull(max)
 
   params <- data.frame("c" = theta$c, "w" = theta$w, "n" = theta$n)
   years <- as.numeric(unique(data_pot$year))
-  
-  res <- list(c = theta$c, 
-              w = theta$w,
-              n = theta$n, 
-              params = params, 
-              maxima = maxima, 
-              data = data_pot, 
-              years = years, 
-              threshold = threshold, 
-              method = method, 
-              censor = censor,
-              type = "MEVD")
-  
+
+  res <- list(
+    c = theta$c,
+    w = theta$w,
+    n = theta$n,
+    params = params,
+    maxima = maxima,
+    data = data_pot,
+    years = years,
+    threshold = threshold,
+    method = method,
+    censor = censor,
+    type = "MEVD"
+  )
+
   if (censor) {
     res$rejected <- theta$rejected
     res$opt_thresh <- theta$opt_thresh
@@ -502,69 +556,68 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = F
 }
 
 
-
 #' Fitting the temporal Metastatistical Extreme Value Distribution (TMEV)
-#' 
+#'
 #' Fit the temporal MEVD distribution TMEV to rainfall observations with a cyclic spline to account for seasonality.
 #'
-#' With the aim of exploiting the full temporal information for parameter estimation, 
-#' Falkensteiner et al., (2023) introduced the TMEV, which is an explicitly 
-#' non-stationary formulation of the MEVD (Marani and Ignaccolo, 2015). Adopting a 
-#' Weibull distribution for ordinary rainfall events, the assumption of yearly 
+#' With the aim of exploiting the full temporal information for parameter estimation,
+#' Falkensteiner et al., (2023) introduced the TMEV, which is an explicitly
+#' non-stationary formulation of the MEVD (Marani and Ignaccolo, 2015). Adopting a
+#' Weibull distribution for ordinary rainfall events, the assumption of yearly
 #' constant coefficients is relaxed by allowing the Weibull
-#' parameters to fluctuate with time. The TMEV can then be written as  
-#' 
+#' parameters to fluctuate with time. The TMEV can then be written as
+#'
 #'  \deqn{F = \frac{1}{T} \sum_{j=1}^T \prod_{k \in A_j} \left( 1-e^{-\left(\frac{x}{C(j,k)}\right)^{w(j,k)}} \right)}
 #'
-#' with \eqn{w > 0} and \eqn{C > 0} being the Weibull shape and scale parameters, and 
-#' $A_j \\subseteq (1, ..., 366)$ being the wet days in year j. The temporal and 
-#' the superimposed seasonal dependence on w and c is modeled with a cyclic seasonal 
-#' effect on the day of the year. 
-#' 
-#' Technically this is accomplished by fitting a cyclic spline to the daily rainfall 
-#' values. The following formula is used for the fitting procedure of both the Weibull scale and 
-#' shape parameter with the function \code{\link[bamlss]{bamlss}} from package \code{bamlss}: 
-#' 
+#' with \eqn{w > 0} and \eqn{C > 0} being the Weibull shape and scale parameters, and
+#' $A_j \\subseteq (1, ..., 366)$ being the wet days in year j. The temporal and
+#' the superimposed seasonal dependence on w and c is modeled with a cyclic seasonal
+#' effect on the day of the year.
+#'
+#' Technically this is accomplished by fitting a cyclic spline to the daily rainfall
+#' values. The following formula is used for the fitting procedure of both the Weibull scale and
+#' shape parameter with the function \code{\link[bamlss]{bamlss}} from package \code{bamlss}:
+#'
 #' \deqn{parameter = x \sim s(year) + ti(yday, bs = "cc", k = 10)}
-#' 
-#' The first effect models the long-term temporal trend of the parameter with a thin-plate spline. 
-#' The second effect models the superimposed seasonal fluctuations of the parameter 
-#' with the 'day of the year' with a cyclic cubic regression spline and 10 knots, 
+#'
+#' The first effect models the long-term temporal trend of the parameter with a thin-plate spline.
+#' The second effect models the superimposed seasonal fluctuations of the parameter
+#' with the 'day of the year' with a cyclic cubic regression spline and 10 knots,
 #' to ensure a smooth transition between December and January. The number of knots (k)
-#' in the above equation can be set separately for the year and yday effect as well as 
+#' in the above equation can be set separately for the year and yday effect as well as
 #' separately for the shape and scale parameter of the Weibull distribution. This can be done
-#' by overwriting the parameters \code{yday_ti_shape_k}, \code{yday_ti_scale_k}, 
-#' \code{year_ti_shape_k}, \code{year_ti_scale_k} in the call to \code{ftmev}. Note that 
+#' by overwriting the parameters \code{yday_ti_shape_k}, \code{yday_ti_scale_k},
+#' \code{year_ti_shape_k}, \code{year_ti_scale_k} in the call to \code{ftmev}. Note that
 #' these values depend on many factors, such as the structure of the data, the TMEV is fitted to.
-#' Please refer to the documentation of the packages \code{\link[bamlss]{bamlss}} and, 
+#' Please refer to the documentation of the packages \code{\link[bamlss]{bamlss}} and,
 #' in particular \code{\link[mgcv]{mgcv}}.
-#' 
-#' For data series with lengths < 10 years, the first temporal effect is changed to 
-#' a simple linear time trend. 
-#' 
-#' For trend analysis, an additional interaction term can be added to the model formula. 
-#' The following term models the relationship between the seasonality as day of the year 
+#'
+#' For data series with lengths < 10 years, the first temporal effect is changed to
+#' a simple linear time trend.
+#'
+#' For trend analysis, an additional interaction term can be added to the model formula.
+#' The following term models the relationship between the seasonality as day of the year
 #' and the year itself with a combination of a thin plate and a cyclic cubic spline:
-#' 
+#'
 #'  \deqn{ti(year, yday, bs = c("tp", "cc"), d = c(1, 1), k = c(year_ti_k, yday_ti_k))}
 #'
-#' This function returns the parameters of the fitted TMEV distribution as well as some 
-#' additional fitting results and input parameters useful for further analysis. 
+#' This function returns the parameters of the fitted TMEV distribution as well as some
+#' additional fitting results and input parameters useful for further analysis.
 #'
-#' @param data The data to which the TMEV should be fitted to. \code{data} must be a data.frame with two columns. 
-#' The first column must contain dates of class  \code{Date}, the second or last column must contain the rainfall 
+#' @param data The data to which the TMEV should be fitted to. \code{data} must be a data.frame with two columns.
+#' The first column must contain dates of class  \code{Date}, the second or last column must contain the rainfall
 #' values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning.
-#' @param threshold A numeric that is used to define wet days as values > threshold. 
-#' \eqn{data <= threshold} is set to NA.  
+#' @param threshold A numeric that is used to define wet days as values > threshold.
+#' \eqn{data <= threshold} is set to NA.
 #' @param minyears Minimum number of available years for fitting a cyclic spline to the non-stationary data series (see details).
-#' @param day_year_interaction Logical. Should an additional year vs day of the year 
-#' interaction be used for the calculation of the temporal trend in seasonality?  (see details). Default is \code{FALSE}. 
+#' @param day_year_interaction Logical. Should an additional year vs day of the year
+#' interaction be used for the calculation of the temporal trend in seasonality?  (see details). Default is \code{FALSE}.
 #' @param verbose Logical. If \code{TRUE}, verbose output of the temporal fitting process is shown during runtime.
 #' @param yday_ti_shape_k A numeric that is used to set the dimension of the bases used to represent the smooth term ti() for yday in the formula for shape.
 #' @param yday_ti_scale_k A numeric that is used to set the dimension of the bases used to represent the smooth term ti() for yday in the formula for scale.
 #' @param year_ti_shape_k A numeric that is used to set the dimension of the bases used to represent the smooth term ti() for year in the formula for shape (only used when day_year_interaction == TRUE).
 #' @param year_ti_scale_k A numeric that is used to set the dimension of the bases used to represent the smooth term ti() for year in the formula for scale (only used when day_year_interaction == TRUE).
-#' 
+#'
 #' @return A list of class \code{mevr} with components:
 #' \item{c}{ Vector of Weibull scale parameters of the TMEV, each row refers to one event, which is a day for daiyl rainfall.}
 #' \item{w}{ Vector of Weibull shape parameters of the TMEV, each row refers to one event, which is a day for daiyl rainfall.}
@@ -576,109 +629,149 @@ fmev <- function(data, threshold = 0, method = c("pwm", "mle", "ls"), censor = F
 #' \item{x}{ The fitted \code{bamlss} object.}
 #' \item{type}{ The type of distribution ("TMEV").}
 #' \item{minyears}{ The minimum number of years used to fit the TMEV as provided.}
-#' 
+#'
 #' @export
 #' @references Marani, M. and Ignaccolo, M. (2015) 'A metastatistical approach to rainfall extremes', Advances in Water Resources. Elsevier Ltd, 79(Supplement C), pp. 121-126. doi: 10.1016/j.advwatres.2015.03.001.
 #' @references Falkensteiner, M., Schellander, H., Hell, T. (2023) 'Accounting for seasonality in the metastatistical extreme value distribution', (Weather and Climate Extremes, 42, 2023, https://doi.org/10.1016/j.wace.2023.100601).
 #'
-#' @examples 
+#' @examples
 #' data(dailyrainfall)
 #' fit <- ftmev(dailyrainfall)
 #' plot(fit, type = "rl")
-#' 
-#' # temporal trend of the Weibull parameters 
+#'
+#' # temporal trend of the Weibull parameters
 #' pred <- predict(fit)
 #' pred_year <- predict(fit, term = "year")
 #' boxplot(c.pred ~ year, data = pred)
 #' with(pred_year, lines(year - 1970, c.pred.year, type = "b", pch = 20, col = "red"))
-#' 
+#'
 #' @author Marc-Andre Falkensteiner, Harald Schellander
-#' 
+#'
 #' @seealso \code{\link{fmev}}, \code{\link{fsmev}}
-ftmev <- function(data, threshold = 0, minyears = 10, day_year_interaction = FALSE, verbose = FALSE, 
-                  yday_ti_shape_k = 10, yday_ti_scale_k = 10, year_ti_shape_k = 10, year_ti_scale_k = 10){
-  if(!inherits(data, "data.frame"))
-    stop("data must be of class 'data.frame'")
-  
+ftmev <- function(
+  data,
+  threshold = 0,
+  minyears = 10,
+  day_year_interaction = FALSE,
+  verbose = FALSE,
+  yday_ti_shape_k = 10,
+  yday_ti_scale_k = 10,
+  year_ti_shape_k = 10,
+  year_ti_scale_k = 10
+) {
+  if (!inherits(data, "data.frame")) stop("data must be of class 'data.frame'")
+
   colnames(data) <- c("groupvar", "val")
-  
-  if (!inherits(data$groupvar, c("Date", "POSIXct"))) 
+
+  if (!inherits(data$groupvar, c("Date", "POSIXct")))
     stop("date column must be of class 'Date' or 'POSIXct'")
-  
+
   if (!inherits(data$val, "numeric"))
     stop("data values must be of class 'numeric'")
-  
-  if(length(which(data$val < 0)) > 0)
-    stop("data must not contain values < 0")
-  
+
+  if (length(which(data$val < 0)) > 0) stop("data must not contain values < 0")
+
   if (any(is.na(data$val))) {
     n <- nrow(data)
     data <- na.omit(data)
     nn <- nrow(data)
     warning(paste0("data contains ", n - nn, " NA values which are ignored."))
   }
-  
+
   # only wet days: remove data smaller than threshold
   data_pot <- data |>
     dplyr::filter(.data$val > threshold) |>
-    dplyr::mutate(year = as.numeric(format(.data$groupvar, "%Y")),
-                  yday = as.POSIXlt(.data$groupvar)$yday + 1)
+    dplyr::mutate(
+      year = as.numeric(format(.data$groupvar, "%Y")),
+      yday = as.POSIXlt(.data$groupvar)$yday + 1
+    )
   n_vec <- data_pot |>
-    group_by(.data$year)  |> 
+    group_by(.data$year) |>
     count() |>
-    ungroup() |> 
+    ungroup() |>
     pull(n)
-  nyears <- length(n_vec) 
-  if (nyears < minyears){
-    stop(paste0("data must have at least ", minyears, " years, but has only ", nyears))
+  nyears <- length(n_vec)
+  if (nyears < minyears) {
+    stop(paste0(
+      "data must have at least ",
+      minyears,
+      " years, but has only ",
+      nyears
+    ))
   }
-  
-  if(nyears < 10){
-    fy <- list("lambda" = val ~ year + ti(yday, bs = "cc", k = yday_ti_shape_k),
-               "alpha" = ~ year + ti(yday, bs = "cc", k = yday_ti_scale_k))
+
+  if (nyears < 10) {
+    fy <- list(
+      "lambda" = val ~ year + ti(yday, bs = "cc", k = yday_ti_shape_k),
+      "alpha" = ~ year + ti(yday, bs = "cc", k = yday_ti_scale_k)
+    )
   } else {
     if (isTRUE(day_year_interaction)) {
       fy <- list(
-        "lambda" = val ~ s(year) + 
-          ti(yday, bs = "cc", k = yday_ti_shape_k) +
-          ti(year, yday, bs = c("tp", "cc"), d = c(1, 1), k = c(year_ti_shape_k, yday_ti_shape_k)),
-        "alpha" = ~  s(year) + 
+        "lambda" = val ~
+          s(year) +
+            ti(yday, bs = "cc", k = yday_ti_shape_k) +
+            ti(
+              year,
+              yday,
+              bs = c("tp", "cc"),
+              d = c(1, 1),
+              k = c(year_ti_shape_k, yday_ti_shape_k)
+            ),
+        "alpha" = ~ s(year) +
           ti(yday, bs = "cc", k = yday_ti_scale_k) +
-          ti(year, yday, bs = c("tp", "cc"), d = c(1, 1), k = c(year_ti_scale_k, yday_ti_scale_k))
-      )      
-    } else if (isFALSE(day_year_interaction)){
+          ti(
+            year,
+            yday,
+            bs = c("tp", "cc"),
+            d = c(1, 1),
+            k = c(year_ti_scale_k, yday_ti_scale_k)
+          )
+      )
+    } else if (isFALSE(day_year_interaction)) {
       fy <- list(
         "lambda" = val ~ s(year) + ti(yday, bs = "cc", k = yday_ti_shape_k),
         "alpha" = ~ s(year) + ti(yday, bs = "cc", k = yday_ti_scale_k)
-      )  
+      )
     } else {
-      stop("Only logical values are allowed for day_year_interaction") 
+      stop("Only logical values are allowed for day_year_interaction")
     }
   }
-  
-  bamy <- bamlss(formula = fy, 
-                 data = data_pot, 
-                 family = weibull_bamlss(),
-                 optimizer = opt_bfit,
-                 samplestats = samplestats,
-                 results = results.bamlss.default,
-                 sampler = FALSE,
-                 verbose = verbose)
+
+  bamy <- bamlss(
+    formula = fy,
+    data = data_pot,
+    family = weibull_bamlss(),
+    optimizer = opt_bfit,
+    samplestats = samplestats,
+    results = results.bamlss.default,
+    sampler = FALSE,
+    verbose = verbose
+  )
   data_pot$c <- exp(bamy$fitted.values$lambda)
   data_pot$w <- exp(bamy$fitted.values$alpha)
-  
+
   maxima <- data_pot |>
     dplyr::mutate(year = format(.data$groupvar, "%Y")) |>
     group_by(.data$year) |>
     summarise(max = max(.data$val, na.rm = TRUE)) |>
-    pull(max) 
-  
+    pull(max)
+
   years <- unique(data_pot$year)
-  
-  res <- list(c = data_pot$c, w = data_pot$w, n = n_vec, maxima = maxima, 
-              data = data_pot, years = years, threshold = threshold, 
-              x = bamy, type = "TMEV", minyears = minyears)
-  
+
+  res <- list(
+    c = data_pot$c,
+    w = data_pot$w,
+    n = n_vec,
+    maxima = maxima,
+    data = data_pot,
+    years = years,
+    threshold = threshold,
+    x = bamy,
+    type = "TMEV",
+    minyears = minyears
+  )
+
   class(res) <- "mevr"
   return(res)
 }
@@ -687,47 +780,46 @@ ftmev <- function(data, threshold = 0, minyears = 10, day_year_interaction = FAL
 fit.mev.censor <- function(data, thresholds, mon, R, warn) {
   #thresholds <- seq(0.05, 0.95, 0.05)
   wbtest <- lapply(thresholds, function(x) {
-      weibull_tail_test(data, mon = mon, cens_quant = x, R = R)
-    })
+    weibull_tail_test(data, mon = mon, cens_quant = x, R = R)
+  })
   wbtest <- do.call(rbind, wbtest)
   cens_fit <- censored_weibull_fit(wbtest, thresholds, warn)
-  return(data.frame(w = cens_fit$shape, 
-                    c = cens_fit$scale,
-                    opt_thresh = cens_fit$optimal_threshold,
-                    opt_quant = cens_fit$quantile
-                    ))
+  return(data.frame(
+    w = cens_fit$shape,
+    c = cens_fit$scale,
+    opt_thresh = cens_fit$optimal_threshold,
+    opt_quant = cens_fit$quantile
+  ))
 }
 
 
-fit.mev <- function(data, method){
-  if(method == "pwm"){
+fit.mev <- function(data, method) {
+  if (method == "pwm") {
     data <- sort(data)
-    
+
     M0hat <- mean(data)
     M1hat <- 0
     N <- length(data) # sample size
-    for (i in 1:N){
+    for (i in 1:N) {
       M1hat <- M1hat + data[i] * (N - i)
     }
     M1hat = M1hat / (N * (N - 1))
-    c = M0hat / gamma(log(M0hat / M1hat) / log(2)) 
-    w = log(2) / log(M0hat / (2 * M1hat)) 
-    
-  } else if (method == "mle"){
+    c = M0hat / gamma(log(M0hat / M1hat) / log(2))
+    w = log(2) / log(M0hat / (2 * M1hat))
+  } else if (method == "mle") {
     # data above threshold
     x <- data
     n <- length(x)
-    
+
     # derivative of the log likelihood function with respect to w
     # like <- function(w) n * (1 / w - sum((x^w) * log(x)) / sum(x^w)) + sum(log(x))
     # w <- uniroot(like, lower = 0, upper = 100)$root
     # c <- (sum(x^w_hat) / n )^(1.0 / w_hat)
-    
+
     est <- EnvStats::eweibull(x, method = "mle")
     w <- as.double(est$parameters[1])
     c <- as.double(est$parameters[2])
-    
-    
+
     #if std:
     ##parhat = c(c_hat, w_hat)
     #  varcov = gev.hess(wei_negloglike, parhat, sample)
@@ -735,34 +827,33 @@ fit.mev <- function(data, method){
     #return n,c_hat,w_hat , parstd, varcov
     #else:
     #  return n,c_hat,w_hat
-
-  } else if (method == "ls"){
+  } else if (method == "ls") {
     xi <- sort(data)
     N <- length(xi)
     Fi <- 1:N / (N + 1)
     yr <- log(-log(1 - Fi))
     xr <- log(xi)
-    
+
     xrbar <- mean(xr)
     yrbar <- mean(yr)
     xrstd <- sd(xr)
     yrstd <- sd(yr)
-    
-    w <- yrstd / xrstd 
+
+    w <- yrstd / xrstd
     c <- exp(xrbar - 1 / w * yrbar)
   }
-   
+
   return(data.frame(w = w, c = c))
 }
 
 
-smev.boot <- function(data, method = c("pwm", "mle", "ls"), R = 502){
+smev.boot <- function(data, method = c("pwm", "mle", "ls"), R = 502) {
   method <- match.arg(method)
   weisample <- data$val
   N <- length(weisample)
   theta.hat <- matrix(NA, R, 2)
   colnames(theta.hat) <- c("c", "w")
-  for (i in seq_len(R)){
+  for (i in seq_len(R)) {
     replaced <- sample(weisample, N, replace = TRUE)
     theta <- fit.mev(replaced, method)
     theta.hat[i, "c"] <- theta$c
@@ -772,31 +863,31 @@ smev.boot <- function(data, method = c("pwm", "mle", "ls"), R = 502){
   varcov <- cov(theta.hat)
   return(list(std = std, varcov = varcov))
 }
- 
+
 
 #' The Metastatistical Extreme Value Distribution
-#' 
-#' Density, distribution function, quantile function and random generation for the 
-#' MEV distribution with shape parameter 'w', scale parameter 'c'. 
-#' Parameter 'n' refers either to the mean number of wet days per year in case 
+#'
+#' Density, distribution function, quantile function and random generation for the
+#' MEV distribution with shape parameter 'w', scale parameter 'c'.
+#' Parameter 'n' refers either to the mean number of wet days per year in case
 #' of the simplified MEV, or to the number of wet days for each year.
-#' 
+#'
 #' @aliases dmev pmev qmev rmev
-#' 
-#' @param x,q  numeric vector or single values of quantiles for \code{dmev} 
+#'
+#' @param x,q  numeric vector or single values of quantiles for \code{dmev}
 #' and \code{pmev}.
 #' @param p vector or single value of probabilities for \code{qmev}.
 #' @param N Number of observations to sample from the MEVD or SMEV.
-#' @param w,c vector or single values of shape and scale parameter of the 
+#' @param w,c vector or single values of shape and scale parameter of the
 #' MEV distribution. If a vector, w and c must have the same length as n.
-#' @param n Either mean number of wet events per year for the SMEV, 
-#' or a vector for yearly MEVD calculations, i.e. one value per year (see details). 
+#' @param n Either mean number of wet events per year for the SMEV,
+#' or a vector for yearly MEVD calculations, i.e. one value per year (see details).
 #' If a vector, n must have the same length as w and c.
 #'
-#' @return \code{dmev} gives the density function, \code{pmev} gives the distribution function, 
-#' \code{qmev} gives the quantile function and \code{rmev} provides random realizations of 
-#' the SMEV and MEVD. 
-#' 
+#' @return \code{dmev} gives the density function, \code{pmev} gives the distribution function,
+#' \code{qmev} gives the quantile function and \code{rmev} provides random realizations of
+#' the SMEV and MEVD.
+#'
 #' @export
 #'
 #' @examples
@@ -804,27 +895,30 @@ smev.boot <- function(data, method = c("pwm", "mle", "ls"), R = 502){
 #' dmev(1200:1300, 0.7, 20, 110)
 #' pmev(1200:1300, 0.7, 70, 110)
 #' qmev(1 - 1 / seq(5,50,5), 0.7, 70, 110)
-#' 
+#'
 #' # MEVD: 50-year event of 10 years Weibull series
 #' w <- rnorm(10, 0.8, 0.1) # shape parameter
 #' c <- rnorm(10, 200, 30) # scale parameter
 #' n <- rnorm(10, 200, 50) # number of wet days
 #' qmev(1 - 1 / 50, w, c, n)
-#' 
+#'
 #' # rl-plot
 #' rp <- seq(5, 50, 5)
 #' rl <- qmev(1 - 1 / rp, w, c, n)
 #' pp <- (1:length(rp)) / (length(rp) + 1)
 #' plot(pp, rl, type = "o")
-dmev <- function(x, w, c, n){
+dmev <- function(x, w, c, n) {
   nyears <- length(n)
   ret <- c()
-  for(y in x){
-    if(y > 0){
-      val <- n * w * (y^(w - 1) / (c^w)) * exp(-y^w / c^w) * (1 - exp(-y^w / c^w))^(n - 1)
+  for (y in x) {
+    if (y > 0) {
+      val <- n *
+        w *
+        (y^(w - 1) / (c^w)) *
+        exp(-y^w / c^w) *
+        (1 - exp(-y^w / c^w))^(n - 1)
       val <- sum(val) / nyears
-    }
-    else{
+    } else {
       val <- 0
     }
     ret <- c(ret, val)
@@ -835,11 +929,11 @@ dmev <- function(x, w, c, n){
 
 #' @describeIn dmev distribution quantile function
 #' @export
-pmev <- function(q, w, c, n){
+pmev <- function(q, w, c, n) {
   nyears <- length(n)
   ret = c()
-  for(y in q){
-    if(y >= 0){
+  for (y in q) {
+    if (y >= 0) {
       val <- sum((1 - exp(-y^w / c^w))^n) / nyears
     } else {
       val <- 0
@@ -852,36 +946,32 @@ pmev <- function(q, w, c, n){
 
 #' @describeIn dmev quantile function
 #' @export
-qmev <- function(p, w, c, n){
+qmev <- function(p, w, c, n) {
   ret <- list()
   # SMEV
-  if(length(w) == 1){
-    for(i in 1:length(p)){
-      if(p[i] == 0){
+  if (length(w) == 1) {
+    for (i in 1:length(p)) {
+      if (p[i] == 0) {
         val <- -Inf
-      }
-      else if(p[i] == 1){
+      } else if (p[i] == 1) {
         val <- Inf
       } else {
         val <- c * (-log(1 - p[i]^(1 / n)))^(1 / w)
       }
       ret[[i]] <- val
     }
-  }
-  # MEVD
-  else if(length(w) > 1){ 
-    for(i in 1:length(p)){
-      if(p[i] == 0){
+  } # MEVD
+  else if (length(w) > 1) {
+    for (i in 1:length(p)) {
+      if (p[i] == 0) {
         val <- -Inf
-      }
-      else if(p[i] == 1){
+      } else if (p[i] == 1) {
         val <- Inf
-      }
-      else{
-        min_fun <- function(x){
+      } else {
+        min_fun <- function(x) {
           return(pmev(x, w, c, n) - p[i])
         }
-        val <- uniroot(min_fun,lower = 0, upper = 10^10)$root
+        val <- uniroot(min_fun, lower = 0, upper = 10^10)$root
       }
       ret[[i]] <- val
     }
@@ -892,7 +982,7 @@ qmev <- function(p, w, c, n){
 
 #' @describeIn dmev random generation function
 #' @export
-rmev <- function(N, w, c, n){
+rmev <- function(N, w, c, n) {
   x <- runif(N)
   ret <- qmev(x, w, c, n)
   return(ret)
@@ -900,32 +990,29 @@ rmev <- function(N, w, c, n){
 
 #Return levels MEV
 #q: return period(Vector)
-rlmev <- function(q, w, c, n){
-  if(all(q > 1)){
+rlmev <- function(q, w, c, n) {
+  if (all(q > 1)) {
     ret <- qmev(1 - 1 / q, w, c, n)
     return(ret)
-  }
-  else{
+  } else {
     stop("return period 'q' has to be greater than 1")
   }
 }
 
 
-
-
 #' The non-stationary Metastatistical Extreme Value Distribution
-#' 
+#'
 #' Quantile function for the TMEV distribution with a Weibull parent distribution.
-#' 
+#'
 #' @aliases dtmev ptmev qtmev
-#' 
+#'
 #' @param x,q Numeric vector or single value of probabilities for \code{dtmev}.
 #' @param p Numeric vector or single value of probabilities for \code{qtmev}.
-#' @param data A data frame with at least columns \code{c}, \code{w} and \code{year}. 
-#' Can be taken from the output of the fitted TMEV object, i.e. \code{x$data} (see \code{\link{ftmev}}). 
+#' @param data A data frame with at least columns \code{c}, \code{w} and \code{year}.
+#' Can be taken from the output of the fitted TMEV object, i.e. \code{x$data} (see \code{\link{ftmev}}).
 #'
-#' @return \code{dtmev} gives the density function, \code{ptmev} gives the distribution function, 
-#' and \code{qtmev} gives the quantile function of the TMEV. 
+#' @return \code{dtmev} gives the density function, \code{ptmev} gives the distribution function,
+#' and \code{qtmev} gives the quantile function of the TMEV.
 #' @export
 #'
 #' @examples
@@ -935,25 +1022,22 @@ rlmev <- function(q, w, c, n){
 #' rl <- qtmev(1 - 1 / rp, fit$data)
 #' plot(rp, sort(fit$maxima), main = "TMEV", ylab = "return level", xlab = "return period (years)")
 #' lines(rp, rl, type = "l")
-#' 
-#' 
+#'
+#'
 dtmev <- function(x, data) {
-  
-  if (length(x) > 1)
-    stop("x must be a single numeric")
-  
-  if (!inherits(data, "data.frame"))
-    stop("data must be of class 'data.frame'")
-  
+  if (length(x) > 1) stop("x must be a single numeric")
+
+  if (!inherits(data, "data.frame")) stop("data must be of class 'data.frame'")
+
   #data$px <- pweibull(x, shape = data$w.pred, scale = data$c.pred)
   #data$dx <- dweibull(x, shape = data$w.pred, scale = data$c.pred)
   data$px <- pweibull(x, shape = data$w, scale = data$c)
   data$dx <- dweibull(x, shape = data$w, scale = data$c)
-  
+
   recyear <- unique(data$year)
   nyears <- length(recyear)
   val <- 0
-  
+
   if (x > 0) {
     for (k in seq_along(recyear)) {
       singledata <- subset(data, data$year == recyear[k])
@@ -961,12 +1045,11 @@ dtmev <- function(x, data) {
       u <- sapply(j, function(i) singledata$px[-i])
       val <- val + sum(apply(u, 2, prod) * singledata$dx[j])
     }
-  } 
-  
+  }
+
   ret <- val / nyears
   return(ret)
 }
-
 
 
 #' @describeIn dtmev distribution quantile function
@@ -974,7 +1057,7 @@ dtmev <- function(x, data) {
 ptmev <- function(q, data) {
   #Create distribution function value for each single day
   data$x <- 1 - exp(-(q / data$c)^data$w)
-  
+
   #Group by years and calculate the product
   ret <- sum(aggregate(x ~ year, data, prod)[2]) / length(unique(data$year))
   return(ret)
@@ -984,19 +1067,15 @@ ptmev <- function(q, data) {
 #' @describeIn dtmev distribution quantile function
 #' @export
 qtmev <- function(p, data) {
-  
-  if (!inherits(data, "data.frame"))
-    stop("data must be of class 'data.frame'")
-  
+  if (!inherits(data, "data.frame")) stop("data must be of class 'data.frame'")
+
   ret <- list()
-  for(i in 1:length(p)){
+  for (i in 1:length(p)) {
     if (p[i] == 0) {
       val <- 0
-    }
-    else if (p[i] == 1) {
+    } else if (p[i] == 1) {
       val <- Inf
-    }
-    else {
+    } else {
       min_fun <- function(x) {
         return(ptmev(x, data = data) - p[i])
       }
@@ -1009,58 +1088,74 @@ qtmev <- function(p, data) {
 }
 
 
-
-
-
 #' Return Levels for the MEVD/SMEV/TMEV extreme value distributions
-#' 
-#' Calculate return levels for a MEVD, SMEV or TMEV extreme value distributions 
+#'
+#' Calculate return levels for a MEVD, SMEV or TMEV extreme value distributions
 #' from an object of class \code{mevr}.
-#' 
-#' Note that bootstraping the confidence intervals is very slow. 
+#'
+#' Note that bootstraping the confidence intervals is very slow.
 #'
 #' @param x An object of class \code{mevr}, either fitted with the MEVD, SMEV or TMEV
 #' @param return.periods A vector of return periods in years, excluding 1.
 #' @param ci  If \code{ci=TRUE}, confidence intervals are calculated depending on the type of distribution (only for MEVD or SMEV).
-#' @param alpha Number between zero and one giving the \code{1 - alpha} confidence level. Defaults to \code{alpha=0.05}. 
-#' @param method Character string giving the method for confidence interval calculation. Option \code{method='boot'} employs a 
-#' parametric bootstrap that simulates data from the fitted model, and then fits the chosen MEVD type to each simulated data set 
+#' @param alpha Number between zero and one giving the \code{1 - alpha} confidence level. Defaults to \code{alpha=0.05}.
+#' @param method Character string giving the method for confidence interval calculation. Option \code{method='boot'} employs a
+#' parametric bootstrap that simulates data from the fitted model, and then fits the chosen MEVD type to each simulated data set
 #' to obtain a sample of parameters or return levels (very slow).
 #' @param R The number of bootstrap iterations.
 #' @param ncores Number of cores used for parallel computing of confidence intervals. Defaults to 2.
 #'
-#' @return A list with return levels, chosen return periods and, if \code{ci=TRUE}, 
+#' @return A list with return levels, chosen return periods and, if \code{ci=TRUE},
 #' \code{alpha/2} and \code{1 - alpha/2} confidence intervals.
 #' @export
 #'
 #' @examples
 #' data(dailyrainfall)
-#' 
+#'
 #' fit <- fmev(dailyrainfall)
 #' return.levels.mev(fit)
 #' plot(fit)
-#'  
-return.levels.mev <- function(x, return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200), 
-                              ci = FALSE, alpha = 0.05, method = "boot", R = 502, ncores = 2L){
-  if (!inherits(x, "mevr"))
-    stop("x must be object of class 'mevr'")
-  
-  if (any(return.periods <= 1))
-    stop("All return periods have to be > 1")
-  
+#'
+return.levels.mev <- function(
+  x,
+  return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
+  ci = FALSE,
+  alpha = 0.05,
+  method = "boot",
+  R = 502,
+  ncores = 2L
+) {
+  if (!inherits(x, "mevr")) stop("x must be object of class 'mevr'")
+
+  if (any(return.periods <= 1)) stop("All return periods have to be > 1")
+
   if (tolower(x$type) != "tmev") {
     w <- x$w
     c <- x$c
     n <- x$n
     q <- return.periods
-    
+
     rls <- rlmev(q, w, c, n)
-    
-    if(isTRUE(ci)) {
-      if(length(w) == 1){
-        cis <- ci.smev(x, method = c("boot"), alpha = alpha, return.periods = return.periods, R = R, ncores = ncores)  
+
+    if (isTRUE(ci)) {
+      if (length(w) == 1) {
+        cis <- ci.smev(
+          x,
+          method = c("boot"),
+          alpha = alpha,
+          return.periods = return.periods,
+          R = R,
+          ncores = ncores
+        )
       } else {
-        cis <- ci.mev(x, method = c("boot"), alpha = alpha, return.periods = return.periods, R = R, ncores = ncores)  
+        cis <- ci.mev(
+          x,
+          method = c("boot"),
+          alpha = alpha,
+          return.periods = return.periods,
+          R = R,
+          ncores = ncores
+        )
       }
       res <- list(rl = rls, rp = return.periods, ci = cis)
     } else {
@@ -1068,52 +1163,70 @@ return.levels.mev <- function(x, return.periods = c(2, 10, 20, 30, 50, 75, 100, 
     }
   } else {
     rls <- qtmev(1 - 1 / return.periods, x$data)
-    if(isTRUE(ci)) {
-      cis <- ci.tmev(x, x$minyears, method = c("boot"), alpha = alpha, return.periods = return.periods, R = R, ncores = ncores)  
+    if (isTRUE(ci)) {
+      cis <- ci.tmev(
+        x,
+        x$minyears,
+        method = c("boot"),
+        alpha = alpha,
+        return.periods = return.periods,
+        R = R,
+        ncores = ncores
+      )
       res <- list(rl = rls, rp = return.periods, ci = cis)
     } else {
-      res <- list(rl = rls, rp = return.periods)  
+      res <- list(rl = rls, rp = return.periods)
     }
-      
   }
   return(res)
 }
 
 
-ci.mev <- function(x, method = c("boot"), alpha = 0.05, 
-                   return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200), R = 502,
-                   ncores = 2L, subsize = 20){
-  
-  if(!inherits(x, "mevr"))
-    stop("x must be object of class 'mevr'")
-  
+ci.mev <- function(
+  x,
+  method = c("boot"),
+  alpha = 0.05,
+  return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
+  R = 502,
+  ncores = 2L,
+  subsize = 20
+) {
+  if (!inherits(x, "mevr")) stop("x must be object of class 'mevr'")
+
   #if(x$method == "mle")
   #  stop("ci caculation does not support 'mle' as parameter estimation method")
-  
-  if(x$type != "MEVD")
-    stop("x must be of type MEVD")
-  
+
+  if (x$type != "MEVD") stop("x must be of type MEVD")
+
   # non-parametric bootstrapping
   # for daily values and wet days
-  if(method == "boot_old"){
-    w <- x$w 
-    c <- x$c 
-    n <- x$n 
+  if (method == "boot_old") {
+    w <- x$w
+    c <- x$c
+    n <- x$n
     #l <- nrow(x$data)  #n
     theta.hat <- tibble(shape = w, scale = c, n = n)
-    
+
     years <- x$years
     all_samples <- list()
-    for(i in 1:R){
+    for (i in 1:R) {
       single_sample <- list()
-      for(j in seq_len(length(years))){
+      for (j in seq_len(length(years))) {
         sample_year <- sample.int(n = length(years), size = 1)
         sample_n <- x$n[sample_year]
 
-        sample_dates <- seq(as.Date(paste0(years[sample_year], "-01-01")), as.Date(paste0(years[sample_year], "-12-31")), by = "1 day")
+        sample_dates <- seq(
+          as.Date(paste0(years[sample_year], "-01-01")),
+          as.Date(paste0(years[sample_year], "-12-31")),
+          by = "1 day"
+        )
 
         sample_val <- rep(0, length(sample_dates))
-        sample_year_val <- stats::rweibull(n = sample_n, shape = w[sample_year], scale = c[sample_year])
+        sample_year_val <- stats::rweibull(
+          n = sample_n,
+          shape = w[sample_year],
+          scale = c[sample_year]
+        )
         n_zero <- length(sample_dates) - sample_n
         sample_val <- sample(c(sample_year_val, rep(0, n_zero)), replace = TRUE)
         single_sample[[j]] <- tibble(
@@ -1123,29 +1236,34 @@ ci.mev <- function(x, method = c("boot"), alpha = 0.05,
       }
       all_samples[[i]] <- do.call("rbind", single_sample)
     }
-    
-    bfun <- function(z){
-      fit <- fmev(z, threshold = x$threshold, method = x$method) 
+
+    bfun <- function(z) {
+      fit <- fmev(z, threshold = x$threshold, method = x$method)
       return(list(shape = fit$w, scale = fit$c, n = fit$n))
     }
     pars <- lapply(all_samples, bfun)
-    
+
     # compute return levels from R w, c, and n parameters
     th.est <- theta.hat
-    theta.hat <- rlmev(q = return.periods, w = th.est$shape, c = th.est$scale, n = th.est$n)
-    
+    theta.hat <- rlmev(
+      q = return.periods,
+      w = th.est$shape,
+      c = th.est$scale,
+      n = th.est$n
+    )
+
     # compute quantiles of simulated return levels
-    rlfun <- function(theta, q) rlmev(q = q, w = theta$shape, c = theta$scale, n = theta$n)
+    rlfun <- function(theta, q)
+      rlmev(q = q, w = theta$shape, c = theta$scale, n = theta$n)
     sam <- lapply(pars, rlfun, q = return.periods)
     sam <- do.call("cbind", sam)
     rownames(sam) <- paste0(return.periods, "-year")
-    out <- apply(sam, 1, quantile, probs = c(alpha/2,1 - alpha/2))
+    out <- apply(sam, 1, quantile, probs = c(alpha / 2, 1 - alpha / 2))
     out.names <- rownames(out)
     out <- rbind(out[1, ], theta.hat, out[2, ])
     rownames(out) <- c(out.names[1], "Estimate", out.names[2])
     colnames(out) <- rownames(sam)
     out <- t(out)
-    
   } else if (method == "boot") {
     if (subsize > length(x$years)) {
       subsize <- floor(length(x$years) * 0.75)
@@ -1166,49 +1284,59 @@ ci.mev <- function(x, method = c("boot"), alpha = 0.05,
     } else {
       registerDoParallel(ncores)
     }
-    
-    sam <- foreach(i = 1:R, .combine = cbind, .export = c("fmev", "fit.mev", "qmev", "pmev"), .packages = c("dplyr")) %dopar% {
-      sampleyears <- sample(x$years, size = subsize)
-      nd <- x$data |> 
-        #filter(year(.data$groupvar) %in% sampleyears) |> 
-        filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) |> 
-        dplyr::select(.data$groupvar, .data$val)
-      fitdf <- fmev(nd)
-      qmev(1 - 1 / return.periods, fitdf$w, fitdf$c, fitdf$n)
-    }
-    
+
+    sam <- foreach(
+      i = 1:R,
+      .combine = cbind,
+      .export = c("fmev", "fit.mev", "qmev", "pmev"),
+      .packages = c("dplyr")
+    ) %dopar%
+      {
+        sampleyears <- sample(x$years, size = subsize)
+        nd <- x$data |>
+          #filter(year(.data$groupvar) %in% sampleyears) |>
+          filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) |>
+          dplyr::select(.data$groupvar, .data$val)
+        fitdf <- fmev(nd)
+        qmev(1 - 1 / return.periods, fitdf$w, fitdf$c, fitdf$n)
+      }
+
     if (runsWindows) {
       stopCluster(cl)
     }
-    
+
     theta.hat <- return.levels.mev(x, return.periods = return.periods)$rl
     rownames(sam) <- paste0(return.periods, "-year")
-    out <- apply(sam, 1, quantile, probs = c(alpha/2,1 - alpha/2))
+    out <- apply(sam, 1, quantile, probs = c(alpha / 2, 1 - alpha / 2))
     out.names <- rownames(out)
     out <- rbind(out[1, ], theta.hat, out[2, ])
     rownames(out) <- c(out.names[1], "Estimate", out.names[2])
     colnames(out) <- rownames(sam)
     out <- t(out)
-  } 
+  }
   return(out)
 }
-  
 
-ci.tmev <- function(x, minyears, method = c("boot"), alpha = 0.05, 
-                    return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200), R = 100, 
-                    ncores = 2L, subsize = 20){
-  
-  if(!inherits(x, "mevr"))
-    stop("x must be object of class 'mevr'")
-  
-  if(tolower(x$type) != "tmev")
-    stop("x must be of type TMEV")
-  
+
+ci.tmev <- function(
+  x,
+  minyears,
+  method = c("boot"),
+  alpha = 0.05,
+  return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
+  R = 100,
+  ncores = 2L,
+  subsize = 20
+) {
+  if (!inherits(x, "mevr")) stop("x must be object of class 'mevr'")
+
+  if (tolower(x$type) != "tmev") stop("x must be of type TMEV")
+
   if (method == "boot") {
     if (subsize > length(x$years)) {
       subsize <- floor(length(x$years) * 0.75)
     }
-    
+
     # chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
     # #if (nzchar(chk) && chk == "TRUE") {
     # if (chk == "TRUE") {
@@ -1224,113 +1352,124 @@ ci.tmev <- function(x, minyears, method = c("boot"), alpha = 0.05,
     } else {
       registerDoParallel(ncores)
     }
-    
-    sam <- foreach(i = 1:R, .combine = cbind, .export = c("ftmev", "qtmev", "ptmev"), .packages = c("dplyr", "bamlss")) %dopar% {
-      sampleyears <- sample(x$years, size = subsize)
-      nd <- x$data |> 
-        filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) |> 
-        dplyr::select(.data$groupvar, .data$val)
-      fitdf <- ftmev(nd, minyears = minyears)
-      qtmev(1 - 1 / return.periods, fitdf$data)
-    }
-    
+
+    sam <- foreach(
+      i = 1:R,
+      .combine = cbind,
+      .export = c("ftmev", "qtmev", "ptmev"),
+      .packages = c("dplyr", "bamlss")
+    ) %dopar%
+      {
+        sampleyears <- sample(x$years, size = subsize)
+        nd <- x$data |>
+          filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) |>
+          dplyr::select(.data$groupvar, .data$val)
+        fitdf <- ftmev(nd, minyears = minyears)
+        qtmev(1 - 1 / return.periods, fitdf$data)
+      }
+
     if (runsWindows) {
       stopCluster(cl)
     }
-    
+
     theta.hat <- return.levels.mev(x, return.periods = return.periods)$rl
     rownames(sam) <- paste0(return.periods, "-year")
-    out <- apply(sam, 1, quantile, probs = c(alpha/2,1 - alpha/2))
+    out <- apply(sam, 1, quantile, probs = c(alpha / 2, 1 - alpha / 2))
     out.names <- rownames(out)
     out <- rbind(out[1, ], theta.hat, out[2, ])
     rownames(out) <- c(out.names[1], "Estimate", out.names[2])
     colnames(out) <- rownames(sam)
     out <- t(out)
-    
   }
-  
+
   return(out)
 }
 
-  
-ci.smev <- function(x, method = c("boot"), alpha = 0.05, 
-                    return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200), R = 502,
-                    ncores = 2L, subsize = 20){
-  
-  if(!inherits(x, "mevr"))
-    stop("x must be object of class 'mevr'")
-  
-  if(x$type != "SMEV")
-    stop("x must be of type SMEV")
-  
+
+ci.smev <- function(
+  x,
+  method = c("boot"),
+  alpha = 0.05,
+  return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
+  R = 502,
+  ncores = 2L,
+  subsize = 20
+) {
+  if (!inherits(x, "mevr")) stop("x must be object of class 'mevr'")
+
+  if (x$type != "SMEV") stop("x must be of type SMEV")
+
   # parametric bootstrapping
   # with weibull sampling
-  if(method == "boot_old"){
-    w <- x$w 
-    c <- x$c 
-    n <- x$n 
-    l <- nrow(x$data)  
+  if (method == "boot_old") {
+    w <- x$w
+    c <- x$c
+    n <- x$n
+    l <- nrow(x$data)
     theta.hat <- c(shape = w, scale = c, n = n)
-    
-    
+
     # draw R samples of length l with w and C
-    Z <- stats::rweibull(n = l * R, shape = w, scale = c) 
+    Z <- stats::rweibull(n = l * R, shape = w, scale = c)
     #Z <- rmev(l * R, w, c, n)
     Z <- matrix(Z, l, R)
-    
-    
+
     # fit MEVD to simulated samples
-    bfun <- function(z, n){
+    bfun <- function(z, n) {
       z <- tibble(groupvar = x$data$groupvar, val = z)
-      fit <- fsmev(z, threshold = x$threshold, method = x$method) 
+      fit <- fsmev(z, threshold = x$threshold, method = x$method)
       #return(c(shape = fit$w, scale = fit$c, n = fit$n))
       return(c(shape = fit$w, scale = fit$c, n = fit$n))
     }
     pars <- apply(Z, 2, bfun, n = n)
-    shape <- pars["shape",]
-    scale <- pars["scale",]
-    n <- pars["n",]
-    
-    
+    shape <- pars["shape", ]
+    scale <- pars["scale", ]
+    n <- pars["n", ]
+
     # compute return levels from R w and C parameters
     th <- rbind(shape, scale, n)
     th.est <- theta.hat
-    rlfun <- function(theta, q) rlmev(q = q, w = theta[1], c = theta[2], n = theta[3])
+    rlfun <- function(theta, q)
+      rlmev(q = q, w = theta[1], c = theta[2], n = theta[3])
     sam <- apply(th, 2, rlfun, q = return.periods)
     rownames(sam) <- paste0(return.periods, "-year")
-    theta.hat <- rlmev(q = return.periods, w = th.est[1], c = th.est[2], n = th.est[3])
-    
+    theta.hat <- rlmev(
+      q = return.periods,
+      w = th.est[1],
+      c = th.est[2],
+      n = th.est[3]
+    )
+
     # compute quantiles of simulated return levels
-    out <- apply(sam, 1, quantile, probs = c(alpha/2, 1 - alpha/2))
+    out <- apply(sam, 1, quantile, probs = c(alpha / 2, 1 - alpha / 2))
     out.names <- rownames(out)
     out <- rbind(out[1, ], theta.hat, out[2, ])
     rownames(out) <- c(out.names[1], "Estimate", out.names[2])
     colnames(out) <- rownames(sam)
     out <- t(out)
-  # } else if (method == "delta"){
-  #   w.lower <- w - x$std[2]
-  #   w.upper <- w + x$std[2]
-  #   c.lower <- c - x$std[1]
-  #   c.upper <- c + x$std[1]
-  #   
-  #   q <- rlmev(q = return.periods, w = w, c = c, n = n)
-  #   q.upper <- rlmev(q = return.periods, w = w.lower, c = c.lower, n = n)
-  #   q.lower <- rlmev(q = return.periods, w = w.upper, c = c.upper, n = n)
-  #   out <- cbind(q.lower, q, q.upper)
-  #   rownames(out) <- paste0(return.periods, "-year")
-  #   colnames(out) <- c("0.05%", "Estimate", "97.5%")
-  #   return(out)
-  #   # Fi <- 1 - 1/return.periods
-  #   # q <- (-log(1 - Fi))^(1 / w) * c
-  #   # for(i in 1:length(Fi)){
-  #   #   yr <- 1 - Fi[i]
-  #   #   DEL <- c((-log(yr))^(1/w),c*(-log(yr))^(1/w)*log(-log(1-Fi[i])))
-  #   #   prod1 = DEL %*% x$varcov
-  #   #   varz = DEL %*% prod1
-  #   #   stdz = sqrt(varz)
-  #   #   ql[ii] = q[ii] - 1.96*stdz
-  #   #   qu[ii] = q[ii] + 1.96*stdz  
-  #   # }
+    # } else if (method == "delta"){
+    #   w.lower <- w - x$std[2]
+    #   w.upper <- w + x$std[2]
+    #   c.lower <- c - x$std[1]
+    #   c.upper <- c + x$std[1]
+    #
+    #   q <- rlmev(q = return.periods, w = w, c = c, n = n)
+    #   q.upper <- rlmev(q = return.periods, w = w.lower, c = c.lower, n = n)
+    #   q.lower <- rlmev(q = return.periods, w = w.upper, c = c.upper, n = n)
+    #   out <- cbind(q.lower, q, q.upper)
+    #   rownames(out) <- paste0(return.periods, "-year")
+    #   colnames(out) <- c("0.05%", "Estimate", "97.5%")
+    #   return(out)
+    #   # Fi <- 1 - 1/return.periods
+    #   # q <- (-log(1 - Fi))^(1 / w) * c
+    #   # for(i in 1:length(Fi)){
+    #   #   yr <- 1 - Fi[i]
+    #   #   DEL <- c((-log(yr))^(1/w),c*(-log(yr))^(1/w)*log(-log(1-Fi[i])))
+    #   #   prod1 = DEL %*% x$varcov
+    #   #   varz = DEL %*% prod1
+    #   #   stdz = sqrt(varz)
+    #   #   ql[ii] = q[ii] - 1.96*stdz
+    #   #   qu[ii] = q[ii] + 1.96*stdz
+    #   # }
   } else if (method == "boot") {
     if (subsize > length(x$years)) {
       subsize <- floor(length(x$years) * 0.75)
@@ -1351,47 +1490,53 @@ ci.smev <- function(x, method = c("boot"), alpha = 0.05,
     } else {
       registerDoParallel(ncores)
     }
-    
-    sam <- foreach(i = 1:R, .combine = cbind, .export = c("fsmev", "fit.mev", "qmev", "pmev"), .packages = c("dplyr")) %dopar% {
-      sampleyears <- sample(x$years, size = subsize)
-      nd <- x$data |> 
-        filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) |> 
-        dplyr::select(.data$groupvar, .data$val)
-      fitdf <- fsmev(nd)
-      qmev(1 - 1 / return.periods, fitdf$w, fitdf$c, fitdf$n)
-    }
-    
+
+    sam <- foreach(
+      i = 1:R,
+      .combine = cbind,
+      .export = c("fsmev", "fit.mev", "qmev", "pmev"),
+      .packages = c("dplyr")
+    ) %dopar%
+      {
+        sampleyears <- sample(x$years, size = subsize)
+        nd <- x$data |>
+          filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) |>
+          dplyr::select(.data$groupvar, .data$val)
+        fitdf <- fsmev(nd)
+        qmev(1 - 1 / return.periods, fitdf$w, fitdf$c, fitdf$n)
+      }
+
     if (runsWindows) {
       stopCluster(cl)
     }
-    
+
     theta.hat <- return.levels.mev(x, return.periods = return.periods)$rl
     rownames(sam) <- paste0(return.periods, "-year")
-    out <- apply(sam, 1, quantile, probs = c(alpha/2,1 - alpha/2))
+    out <- apply(sam, 1, quantile, probs = c(alpha / 2, 1 - alpha / 2))
     out.names <- rownames(out)
     out <- rbind(out[1, ], theta.hat, out[2, ])
     rownames(out) <- c(out.names[1], "Estimate", out.names[2])
     colnames(out) <- rownames(sam)
     out <- t(out)
-  } 
-  
+  }
+
   # if (method == "normal"){
   #   cat("\n", "Using Normal Approximation Method.\n")
   #   z.alpha <- qnorm(alpha/2, lower.tail = FALSE)
   #   cov.theta <- x$varcov
-  #   if (is.null(cov.theta)) 
+  #   if (is.null(cov.theta))
   #     stop("ci: Sorry, unable to calculate the parameter covariance matrix.  Maybe try a different method.")
   #   var.theta <- diag(cov.theta)
-  #   if (any(var.theta < 0)) 
+  #   if (any(var.theta < 0))
   #     stop("ci: negative Std. Err. estimates obtained.  Not trusting any of them.")
   #   ###
   #   #grads <- rlgrad.fevd(x, period = return.periods)
   #   rlgrad <- function(x, period = 100){
   #     p <- c(shape = x$w,scale = x$c)
   #     yp <- -log(1 - 1/period)
-  #     res <- cbind(1, (-1/p["shape"]) * (1 - yp^(-p["shape"])), 
-  #                  p["scale"] * (p["shape"])^(-2) * 
-  #                    (1 - yp^(-p["shape"])) - (p["scale"]/p["shape"]) * 
+  #     res <- cbind(1, (-1/p["shape"]) * (1 - yp^(-p["shape"])),
+  #                  p["scale"] * (p["shape"])^(-2) *
+  #                    (1 - yp^(-p["shape"])) - (p["scale"]/p["shape"]) *
   #                    yp^(-p["shape"]) * log(yp))
   #   }
   #   grads <- rlgrad(x, period = return.periods)
@@ -1399,22 +1544,18 @@ ci.smev <- function(x, method = c("boot"), alpha = 0.05,
   #   lam <- 1
   #   var.theta <- t(grads) %*% cov.theta %*% grads
   #   ###
-  #   
+  #
   # }
-  
-  
+
   return(out)
 }
 
 
-
-
-
 #' Weibull plotting position
-#' 
+#'
 #' Calculates the Weibull plotting position for the given maxima
 #'
-#' @param x Numeric vector of block maxima 
+#' @param x Numeric vector of block maxima
 #'
 #' @return A numeric vector of Weibull plotting positions corresponding to the given maxima \code{x}
 #' @export
@@ -1426,29 +1567,28 @@ ci.smev <- function(x, method = c("boot"), alpha = 0.05,
 #' rl <- return.levels.mev(fit, return.periods = rp)
 #' plot(rp, sort(fit$maxima), xlab = "Return period (years)", ylab = "Return level", main = fit$type)
 #' lines(rp, rl$rl)
-pp.weibull <- function(x){
+pp.weibull <- function(x) {
   x <- na.omit(x)
   n <- length(x)
   Fi <- (1:n) / (n + 1)
   wpp <- 1 / (1 - Fi)
-#  if (length(wpp) != length(x))
-#    stop("length of output differs from length of input")
+  #  if (length(wpp) != length(x))
+  #    stop("length of output differs from length of input")
   return(wpp)
 }
 
 
-
 #' Plot graphs of MEVD, SMEV or TMEV fit
-#' 
+#'
 #' A return level plot, qq-plot, pp-plot and a histogram with the fitted density is produced
 #'
 #' @param x An object of class\code{mevr}, whose \code{type} argument is one of MEVD, SMEV or TMEV
 #' @param q vector of return periods, \eqn{q > 1}.
 #' @param ci if \code{ci=TRUE}, confidence intervals will be computed.
-#' @param type if omitted a panel with a return level plot (\code{type='rl'}, 
-#' a density plot (\code{type='hist'}), a qq-plot (\code{type='qq'}) and a 
-#' probability plot (\code{tpe='pp'}) are shown. 
-#' @param ... Further parameters may also be supplied as arguments. 
+#' @param type if omitted a panel with a return level plot (\code{type='rl'},
+#' a density plot (\code{type='hist'}), a qq-plot (\code{type='qq'}) and a
+#' probability plot (\code{tpe='pp'}) are shown.
+#' @param ... Further parameters may also be supplied as arguments.
 #' See e.g. \link[base]{plot}.
 #'
 #' @method plot mevr
@@ -1457,30 +1597,32 @@ pp.weibull <- function(x){
 #'
 #' @examples
 #' data(dailyrainfall)
-#' 
+#'
 #' # fit a simplified MEVD
 #' fit <- fsmev(dailyrainfall)
 #' fit
 #' plot(fit)
-#' 
+#'
 #' # fit MEVD
 #' fit <- fmev(dailyrainfall, method = "ls")
 #' fit
 #' plot(fit)
-plot.mevr <- function(x, q = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
-                      ci = FALSE, 
-                      type = c("all", "rl", "qq", "pp", "hist"), ...){
-  
-  if(!inherits(x, "mevr"))
-    stop("x must be object of class 'mevr'")
-  
+plot.mevr <- function(
+  x,
+  q = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
+  ci = FALSE,
+  type = c("all", "rl", "qq", "pp", "hist"),
+  ...
+) {
+  if (!inherits(x, "mevr")) stop("x must be object of class 'mevr'")
+
   type <- match.arg(type)
-  
+
   if (!is.vector(x$data)) {
     if (!is.null(x$opt_thresh)) {
       obs.y <- x$maxima[x$maxima > x$opt_thresh]
     } else {
-      obs.y <- x$maxima  
+      obs.y <- x$maxima
     }
     obs.x <- pp.weibull(obs.y)
   } else {
@@ -1489,26 +1631,26 @@ plot.mevr <- function(x, q = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
     } else {
       obs.y <- x$data
     }
-    lambda <- length(obs.y) / length(x$orig_data)  # Exceedance rate
+    lambda <- length(obs.y) / length(x$orig_data) # Exceedance rate
     obs.x <- 1 / (lambda * (1 - pmev(sort(obs.y), x$w, x$c, x$n)))
   }
-  
-  if (tolower(x$type) != "tmev"){
+
+  if (tolower(x$type) != "tmev") {
     rls <- rlmev(q, x$w, x$c, x$n)
   } else {
     rls <- qtmev(1 - 1 / q, x$data)
   }
-  
-  if(type == "all"){
-    oldpar <- par(no.readonly = TRUE) 
-    on.exit(par(oldpar)) 
+
+  if (type == "all") {
+    oldpar <- par(no.readonly = TRUE)
+    on.exit(par(oldpar))
     par(mfrow = c(2, 2), oma = c(0, 0, 2, 0))
   }
-  
+
   if (is.element(type, c("all", "rl"))) {
-    if(ci == TRUE){
-      if(tolower(x$type) == "smev"){
-        ci <- ci.smev(x, ...)  
+    if (ci == TRUE) {
+      if (tolower(x$type) == "smev") {
+        ci <- ci.smev(x, ...)
       } else if (tolower(x$type) == "mevd") {
         ci <- ci.mev(x, ...)
       } else if (tolower(x$type) == "tmev") {
@@ -1516,22 +1658,38 @@ plot.mevr <- function(x, q = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
       } else {
         stop(paste0("confidence intervals are not supported with type", x$type))
       }
-      plot(q, rls, type = "l", xlab = "Return Period [years]", ylab = "Return Level", ylim = c(0, max(rls) * 1.2), log = "x")
+      plot(
+        q,
+        rls,
+        type = "l",
+        xlab = "Return Period [years]",
+        ylab = "Return Level",
+        ylim = c(0, max(rls) * 1.2),
+        log = "x"
+      )
       points(obs.x, sort(obs.y))
       lines(q, ci[, 1], lty = 2, col = "grey")
       lines(q, ci[, 3], lty = 2, col = "grey")
     } else {
-      plot(q, rls, type = "l", xlab = "Return Period [years]", ylab = "Return Level", ylim = c(0, max(rls) * 1.2), log = "x")
+      plot(
+        q,
+        rls,
+        type = "l",
+        xlab = "Return Period [years]",
+        ylab = "Return Level",
+        ylim = c(0, max(rls) * 1.2),
+        log = "x"
+      )
       points(obs.x, sort(obs.y))
     }
   }
-  
+
   if (is.element(type, c("all", "hist"))) {
     # density plot
     N <- 512
     yd <- density(obs.y, n = N)
     xd <- seq(min(yd$x, na.rm = TRUE), max(yd$x, na.rm = TRUE), length.out = N)
-    if (tolower(x$type) != "tmev"){
+    if (tolower(x$type) != "tmev") {
       if (is.vector(x$data)) {
         # #dens.y <- dmev(dens.x, x$w, x$c, lambda) # daily
         # yd <- density(obs.y)
@@ -1544,21 +1702,27 @@ plot.mevr <- function(x, q = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
         dens.y <- dmev(xd, x$w, x$c, x$n)
       }
     } else {
-     dens.y <- c()
-     # for (i in 1:length(dens.x)) {
-     #   dens.y <- c(dens.y, dtmev(dens.x[i], x$data))
-     # }
-     for (i in 1:length(xd)) {
-       dens.y <- c(dens.y, dtmev(xd[i], x$data))
-     }
+      dens.y <- c()
+      # for (i in 1:length(dens.x)) {
+      #   dens.y <- c(dens.y, dtmev(dens.x[i], x$data))
+      # }
+      for (i in 1:length(xd)) {
+        dens.y <- c(dens.y, dtmev(xd[i], x$data))
+      }
     }
     ylab <- ifelse(is.vector(x$data), "Observed", "Observed yearly maxima")
     hist(obs.y, prob = TRUE, main = ylab, xlab = paste("N =", length(obs.y)))
     lines(xd, yd$y, lty = 2, lwd = 1.5)
     lines(xd, dens.y, lty = 2, col = "red", lwd = 1.5)
-    legend("topright", legend = c("Empirical", "Modeled"),
-           col = c("black", "red"), lty = c(1, 1), lwd = c(1.5, 1.5), bty = "n")
-    
+    legend(
+      "topright",
+      legend = c("Empirical", "Modeled"),
+      col = c("black", "red"),
+      lty = c(1, 1),
+      lwd = c(1.5, 1.5),
+      bty = "n"
+    )
+
     # # density plot
     # #h <- hist(obs.y, plot = FALSE)
     # #dens.x <- seq(min(h$breaks), min(max(h$breaks)), length.out = 100)
@@ -1579,41 +1743,54 @@ plot.mevr <- function(x, q = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
     #  }
     # }
     # ylab <- ifelse(is.vector(x$data), "Observed", "Observed yearly maxima")
-    # hist(obs.y, prob = TRUE, main = ylab, xlab = paste("N =", length(obs.y)))  
+    # hist(obs.y, prob = TRUE, main = ylab, xlab = paste("N =", length(obs.y)))
     # lines(dens.x, dens.y, lty = 2, col = "blue", lwd = 1.5)
-    # legend("topright", legend = c("Empirical", "Modeled"), 
+    # legend("topright", legend = c("Empirical", "Modeled"),
     #        col = c("black", "red"), lty = c(1, 1), lwd = c(1.5, 1.5), bty = "n")
   }
-  
-  
+
   if (is.element(type, c("all", "qq"))) {
     # quantile plot
-    if (tolower(x$type) != "tmev"){
+    if (tolower(x$type) != "tmev") {
       q.m <- rlmev(obs.x, x$w, x$c, x$n)
     } else {
       q.m <- qtmev(1 - 1 / obs.x, x$data)
     }
-    plot(q.m, sort(obs.y), main = "Quantile plot", xlab = "Model Quantiles", ylab = "Empirical Quantiles")
-    abline(c(0,1))
+    plot(
+      q.m,
+      sort(obs.y),
+      main = "Quantile plot",
+      xlab = "Model Quantiles",
+      ylab = "Empirical Quantiles"
+    )
+    abline(c(0, 1))
   }
-  
+
   if (is.element(type, c("all", "pp"))) {
     # probability plot
     N <- length(obs.y)
     Fi <- (1:N) / (N + 1)
-    if (tolower(x$type) != "tmev"){
+    if (tolower(x$type) != "tmev") {
       p.m <- pmev(sort(obs.y), x$w, x$c, x$n)
     } else {
       p.m <- c()
-      for (i in 1:length(obs.y)){
-        p.m <- c(p.m, ptmev(sort(obs.y)[i], x$data))  
+      for (i in 1:length(obs.y)) {
+        p.m <- c(p.m, ptmev(sort(obs.y)[i], x$data))
       }
     }
-    plot(Fi, p.m, main = "Probability plot", xlab = "Model Probabilities", ylab = "Empirical Probabilities", xlim = c(0, 1), ylim = c(0, 1))
-    abline(c(0,1))
+    plot(
+      Fi,
+      p.m,
+      main = "Probability plot",
+      xlab = "Model Probabilities",
+      ylab = "Empirical Probabilities",
+      xlim = c(0, 1),
+      ylim = c(0, 1)
+    )
+    abline(c(0, 1))
   }
-  
-  if(tolower(x$type) != "tmev"){
+
+  if (tolower(x$type) != "tmev") {
     title_strg <- paste(x$type, "/", x$method)
   } else {
     title_strg <- paste(x$type)
@@ -1624,95 +1801,127 @@ plot.mevr <- function(x, q = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
 
 
 #' TMEV prediction
-#' 
-#' Takes a \code{mevr} object where the TMEV has been fitted to rainfall data and calculates 
-#' \code{bamlss} predictions for the distributional parameters and the model terms. Basically 
+#'
+#' Takes a \code{mevr} object where the TMEV has been fitted to rainfall data and calculates
+#' \code{bamlss} predictions for the distributional parameters and the model terms. Basically
 #' a wrapper to the corresponding function \code{predict.bamlss}
-#' 
-#' See also the details of \code{\link{ftmev}} for an explanation of the model terms used to fit the temporal trend 
-#' of the Weibull parameters. The basis dimensions yday_ti_shape_k, 
-#' yday_ti_scale_k, year_ti_shape_k, year_ti_scale_k are taken from 
-#' the fitting process, i.e. the call to \code{\link{ftmev}}. 
-#' 
-#' @param object Object of class \code{mevr}, fitted with the TMEV. 
-#' @param newdata A data frame with the model covariates (year, yday) at which predictions are required. 
+#'
+#' See also the details of \code{\link{ftmev}} for an explanation of the model terms used to fit the temporal trend
+#' of the Weibull parameters. The basis dimensions yday_ti_shape_k,
+#' yday_ti_scale_k, year_ti_shape_k, year_ti_scale_k are taken from
+#' the fitting process, i.e. the call to \code{\link{ftmev}}.
+#'
+#' @param object Object of class \code{mevr}, fitted with the TMEV.
+#' @param newdata A data frame with the model covariates (year, yday) at which predictions are required.
 #' Note that depending on argument term, only covariates that are needed by the corresponding model terms need to be supplied.
 #' If not supplied, predictions are made on the data supplied by the fitted object \code{x}.
-#' @param term Character of the model terms for which predictions shall be calculated. 
+#' @param term Character of the model terms for which predictions shall be calculated.
 #' Can only be \code{"year"} or \code{"yday"}. If not specified, predictions for all terms are calculated.
 #' @param ... Arguments passed to prediction functions that are part of a bamlss.family object, i.e., the objects has a $predict() function that should be used instead.
-#' 
-#' @return A data.frame with the supplied covariables and the predicted parameters.
-#' @export 
 #'
-#' @examples 
+#' @return A data.frame with the supplied covariables and the predicted parameters.
+#' @export
+#'
+#' @examples
 #' data(dailyrainfall)
-#' 
+#'
 #' # restrict for the sake of speed
 #' idx <- which(as.POSIXlt(dailyrainfall$date)$year + 1900 < 1976)
 #' data <- dailyrainfall[idx, ]
-#' 
+#'
 #' f <- ftmev(data, minyears = 5)
 #' predict(f, term = "year")
-#' 
+#'
 #' @seealso \code{\link{ftmev}}, \code{\link[bamlss]{predict.bamlss}}
-predict.mevr <- function(object, newdata, term, ...){
-  
+predict.mevr <- function(object, newdata, term, ...) {
   # if(!inherits(object, "mevr"))
   #   stop("object must be object of class 'mevr'")
-  
-  if(tolower(object$type) != "tmev")
+
+  if (tolower(object$type) != "tmev")
     stop("fitted object must be of type 'tmev'")
-  
-  if (missing(newdata)) 
-    newdata <- object$data |> 
+
+  if (missing(newdata))
+    newdata <- object$data |>
       dplyr::select("year", "yday")
-  
-  if(missing(term)){
+
+  if (missing(term)) {
     term <- "all"
   } else {
-    term <- match.arg(term, choices = c("year", "yday")) 
+    term <- match.arg(term, choices = c("year", "yday"))
   }
 
   bamfit <- object$x
-  
-  if(term == "year"){
+
+  if (term == "year") {
     param_pred <- list()
     years <- unique(newdata$year)
-    for(i in seq_along(years)){
+    for (i in seq_along(years)) {
       y <- years[i]
-      d <- newdata |> 
+      d <- newdata |>
         filter(.data$year == y)
-      c.pred.year <- predict(bamfit, newdata = d, model = "lambda", type = "parameter", term = "year")
-      w.pred.year <- predict(bamfit, newdata = d, model = "alpha", type = "parameter", term = "year")
+      c.pred.year <- predict(
+        bamfit,
+        newdata = d,
+        model = "lambda",
+        type = "parameter",
+        term = "year"
+      )
+      w.pred.year <- predict(
+        bamfit,
+        newdata = d,
+        model = "alpha",
+        type = "parameter",
+        term = "year"
+      )
       param_pred[[i]] <- cbind(year = y, c.pred.year, w.pred.year)
     }
-    param_pred <- do.call(rbind, param_pred) |> 
-      unique() |> 
+    param_pred <- do.call(rbind, param_pred) |>
+      unique() |>
       as.data.frame()
-  } else if(term == "yday"){
+  } else if (term == "yday") {
     param_pred <- list()
     ydays <- unique(newdata$yday)
-    for(i in seq_along(ydays)){
+    for (i in seq_along(ydays)) {
       dy <- ydays[i]
-      d <- newdata |> 
+      d <- newdata |>
         filter(.data$yday == dy)
-      c.pred.yday <- predict(bamfit, newdata = d, model = "lambda", type = "parameter", term = "yday")
-      w.pred.yday <- predict(bamfit, newdata = d, model = "alpha", type = "parameter", term = "yday")
+      c.pred.yday <- predict(
+        bamfit,
+        newdata = d,
+        model = "lambda",
+        type = "parameter",
+        term = "yday"
+      )
+      w.pred.yday <- predict(
+        bamfit,
+        newdata = d,
+        model = "alpha",
+        type = "parameter",
+        term = "yday"
+      )
       param_pred[[i]] <- cbind(yday = dy, c.pred.yday, w.pred.yday)
     }
-    param_pred <- do.call(rbind, param_pred) |> 
-      unique() |> 
+    param_pred <- do.call(rbind, param_pred) |>
+      unique() |>
       as.data.frame()
-  } else if(term == "all"){
-      c.pred <- predict(bamfit, newdata = newdata, model = "lambda", type = "parameter")
-      w.pred <- predict(bamfit, newdata = newdata, model = "alpha", type = "parameter")
-      param_pred <- cbind(newdata, c.pred, w.pred)    
+  } else if (term == "all") {
+    c.pred <- predict(
+      bamfit,
+      newdata = newdata,
+      model = "lambda",
+      type = "parameter"
+    )
+    w.pred <- predict(
+      bamfit,
+      newdata = newdata,
+      model = "alpha",
+      type = "parameter"
+    )
+    param_pred <- cbind(newdata, c.pred, w.pred)
   }
-  
+
   return(param_pred)
 }
-
 
 
 #' Print method for object of class mevr
@@ -1733,27 +1942,29 @@ predict.mevr <- function(object, newdata, term, ...){
 #' # fit a simplified MEVD
 #' fit <- fsmev(dailyrainfall)
 #' print(fit)
-print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...){
-  if(!inherits(x, "mevr"))
-    stop("x must be object of class 'mevr'")
-  
+print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...) {
+  if (!inherits(x, "mevr")) stop("x must be object of class 'mevr'")
+
   cat("MEVD fitting\n\n")
   cat(paste0("Type: ", x$type, "\n"))
-  if(tolower(x$type) != "tmev") {
+  if (tolower(x$type) != "tmev") {
     cat(paste0("Estimator: ", x$method, "\n"))
   }
-  
+
   if (tolower(x$type) == "smev") {
     if (x$censor) {
       #cat(paste0("Weibull tail assumption rejected: ", x$rejected, "\n"))
-      cat("probably a Weibull tail? ", ifelse(x$rejected, FALSE, TRUE) , "\n")
-    }  
+      cat("probably a Weibull tail? ", ifelse(x$rejected, FALSE, TRUE), "\n")
+    }
   } else if (tolower(x$type) == "mevd") {
     if (x$censor) {
-      tibble(year = x$years, "probably a Weibull tail" = ifelse(x$rejected, FALSE, TRUE))
+      tibble(
+        year = x$years,
+        "probably a Weibull tail" = ifelse(x$rejected, FALSE, TRUE)
+      )
     }
   }
-  
+
   cat("\nParameters:")
   cat("\nScale C:\n")
   scale <- x$c
@@ -1762,7 +1973,7 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...){
   shape <- x$w
   print.default(format(shape, digits = digits), print.gap = 2, quote = FALSE)
 
-  if(length(x$w) == 1){
+  if (length(x$w) == 1) {
     cat("\nMean number of wet events n:\n")
   } else {
     cat("\nWet events n:\n")
@@ -1770,7 +1981,7 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...){
   n <- x$n
   print.default(format(n, digits = digits), print.gap = 2, quote = FALSE)
 
-  if(length(x$w) > 1){
+  if (length(x$w) > 1) {
     cat("\nYears:\n")
     nyears <- length(n)
     print.default(format(nyears, digits = digits), print.gap = 2, quote = FALSE)
@@ -1784,7 +1995,6 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...){
 }
 
 
-
 # wei_negloglike <- function(parhat, data){
 #   # compute Weibull neg log likelihood function
 #   # for a given sample xi and estimated parameters C, w
@@ -1794,8 +2004,8 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...){
 #   N = length(xi)
 #   - N * log(w / C) - (w - 1) * sum(log(xi / C)) + sum((xi / C)^w)
 # }
-# 
-# 
+#
+#
 # hess <- function(fun, y, data){
 #   # numeric Hessian matrix
 #   # for estimating MLE parameters confidence intervals
@@ -1824,54 +2034,53 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...){
 #   x4[:] = x[:]
 #   x4[i] = x4[i] - eps[i]
 #   x4[j] = x4[j] - eps[j]
-#   m[i,j] = (fun(x1, data) -fun(x2, data) - fun(x3, data) + fun(x4, data))/(4*eps[i]*eps[j]) 
+#   m[i,j] = (fun(x1, data) -fun(x2, data) - fun(x3, data) + fun(x4, data))/(4*eps[i]*eps[j])
 #   M = np.asmatrix(m)
 #   return inv(M)
 # }
 
-
 #' Detect Rainfall Events with Specified Separation Time (Dry Time) and Minimum Rain Threshold
 #'
-#' The `event_separation` function identifies rainfall events in time-series 
-#' data based on a minimum rainfall threshold and a separation time between 
-#' events. It uses morphological operations to detect and separate events, 
+#' This function identifies rainfall events in time-series
+#' data based on a minimum rainfall threshold and a separation time between
+#' events. It uses morphological operations to detect and separate events,
 #' and it can ignore short events that do not meet a minimum duration criterion.
-#' Based on Marra...
-#' 
-#' @details
-#' The function works by first dilating the rainfall data using a structuring 
-#' element defined by the separation time, followed by erosion to remove noise. 
+#' Based on Marra et al. 2024: "Predicting Extreme Sub-Hourly Precipitation Intensification Based on Temperature Shifts“.
+#' Hydrology and Earth System Sciences 28, Nr. 2: 375–89. https://doi.org/10.5194/hess-28-375-2024.
+#'
+#' @details The function works by first dilating the rainfall data using a structuring
+#' element defined by the separation time, followed by erosion to remove noise.
 #' It then detects events based on the separation time and the minimum rainfall
-#' threshold, returning the time intervals where events occurred.  
-#' Events that span more than two years or are shorter than 
+#' threshold, returning the time intervals where events occurred.
+#' Events that span more than two years or are shorter than
 #' the `ignore_event_duration` are ignored.
 #'
 #' @param data A data frame with two columns, observation date and values.
 #'   \itemize{
 #'     \item `groupvar`: A time variable (e.g., POSIXct or Date) indicating the timestamp of each observation.
-#'     \item `val`: A numeric vector containing the observed rainfall values.
+#'     \item `val`: A numeric of the observed rainfall values.
 #'   }
-#' @param separation_in_min Numeric. The minimum dry period (in minutes) 
+#' @param separation_period Numeric. The minimum dry period (in minutes)
 #' that separates two distinct rainfall events. Default is 360 minutes (6 hours).
-#' Values less than \code{min_rain} count as zero. Note that this should 
-#' depend on local climatological conditions. 
-#' @param time_resolution Numeric. The time step resolution of the data 
-#' (in minutes). For example, if observations are recorded every 10 minutes, 
+#' Values less than \code{min_rain} count as zero. Note that this should
+#' depend on local climatological conditions.
+#' @param time_resolution Numeric. The time step resolution of the data
+#' (in minutes). For example, if observations are recorded every 10 minutes,
 #' `time_resolution` should be 10. Default is 10 minutes.
-#' @param ignore_event_duration Numeric. The minimum duration (in minutes) 
-#' of rainfall required for an event to be considered valid. 
+#' @param ignore_event_duration Numeric. The minimum duration (in minutes)
+#' of rainfall required for an event to be considered valid.
 #' Events shorter than this will be ignored. Default is 30 minutes.
-#' @param min_rain Numeric. The minimum rainfall value (e.g., in mm) 
+#' @param min_rain Numeric. The minimum rainfall value (e.g., in mm)
 #' required for a data point to be considered part of an event. Default is 0.1.
-#' 
+#'
 #' @return A list with the following elements:
 #'   \itemize{
-#'     \item `data`: A modified version of the input data with an additional 
-#'     column `is_event`, indicating whether each time step is part of 
-#'     a detected event (1 for event, 0 for no event). This is useful in the 
-#'     next step of the \code{\link{event_separation}}.
-#'     \item `fromto`: A tibble with two columns, `from` and `to`, 
-#'     representing the indices of the start (`from`) and end (`to`) 
+#'     \item `data`: A modified version of the input data with an additional
+#'     column `is_event`, indicating whether each time step is part of
+#'     a detected event (1 for event, 0 for no event). This is useful in the
+#'     next step \code{\link{ordinary_events}}.
+#'     \item `fromto`: A tibble with two columns, `from` and `to`,
+#'     representing the indices of the start (`from`) and end (`to`)
 #'     of each detected rainfall event.
 #'     \item `ts_res`: The time resolution used in the function (in minutes).
 #'   }
@@ -1885,30 +2094,35 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...){
 #' )
 #'
 #' # Detect rainfall events with a separation of 6 hours and a minimum rain threshold of 0.1
-#' result <- event_separation(mock_data, separation_in_min = 360, time_resolution = 10, min_rain = 0.1)
+#' result <- event_separation(mock_data, separation_period = 360, time_resolution = 10, min_rain = 0.1)
 #' print(result$fromto)  # View detected events
 #' }
 #' @export
-event_separation <- function(data, separation_in_min = 360, time_resolution = 10, ignore_event_duration = 30, min_rain = 0.1) {
-  
+event_separation <- function(
+  data,
+  separation_period = 360,
+  time_resolution = 10,
+  ignore_event_duration = 30,
+  min_rain = 0.1
+) {
   colnames(data) <- c("groupvar", "val")
-  
-  #separation_in_min = 360
-  #time_resolution = 10
+
   # number of time steps in a dry spell, must be odd!
-  dry_spell <- separation_in_min / time_resolution 
+  dry_spell <- separation_period / time_resolution
   dry_spell <- ifelse(dry_spell %% 2 == 0, dry_spell - 1, dry_spell)
-  
+
   # Using morphology to define events with separation
-  #dil <- mmand::dilate(c(rep(0, dry_spell), as.numeric(s$rr > 0), rep(0, dry_spell)), rep(1, dry_spell))
-  dil <- mmand::dilate(c(rep(0, dry_spell), as.numeric(data$val > min_rain), rep(0, dry_spell)), rep(1, dry_spell))
+  dil <- mmand::dilate(
+    c(rep(0, dry_spell), as.numeric(data$val > min_rain), rep(0, dry_spell)),
+    rep(1, dry_spell)
+  )
   erd <- mmand::erode(dil, rep(1, dry_spell))
   data$is_event <- erd[(dry_spell + 1):(length(data$val) + dry_spell)]
-  
+
   # Define 'from' and 'to' indices
   from <- which(diff(c(0, data$is_event)) == 1)
   to <- which(diff(c(data$is_event, 0)) == -1)
-  
+
   # Removing events that end after the series or start before the series
   # if (s$is_event[length(s$is_event)] == 1) {
   #   from <- from[-length(from)]
@@ -1916,10 +2130,13 @@ event_separation <- function(data, separation_in_min = 360, time_resolution = 10
   # if (s$is_event[1] == 1) {
   #   to <- to[-1]
   # }
-  
+
   # Remove events that span more than 2 years
-  #toremove <- which((year(s$v_date[to]) - year(s$v_date[from])) >= 2)
-  toremove <- which(as.numeric(format(data$groupvar[to], "%Y")) - as.numeric(format(data$groupvar[from], "%Y")) >= 2)
+  toremove <- which(
+    as.numeric(format(data$groupvar[to], "%Y")) -
+      as.numeric(format(data$groupvar[from], "%Y")) >=
+      2
+  )
   if (length(toremove) > 0) {
     for (i in seq_along(toremove)) {
       data$is_event[from[toremove[i]]:to[toremove[i]]] <- 0
@@ -1927,58 +2144,56 @@ event_separation <- function(data, separation_in_min = 360, time_resolution = 10
     from <- from[-toremove]
     to <- to[-toremove]
   }
-  
+
   # Remove events shorter than ignore_event_duration
-  event_durations <- (to - from + 1) * time_resolution  # Duration in minutes
-  valid_events <- event_durations >= ignore_event_duration  # Filter events
+  event_durations <- (to - from + 1) * time_resolution # Duration in minutes
+  valid_events <- event_durations >= ignore_event_duration # Filter events
   from <- from[valid_events]
   to <- to[valid_events]
-  
+
   res <- list(
     data = data,
     fromto = tibble(from = from, to = to),
     ts_res = time_resolution
   )
-  
+
   return(res)
 }
 
 
-
-
 #' Identifies ordinary rainfall events by calculating the maximum within rainfall events
 #' defined with \code{\link{event_separation}}
-#' 
-#' The `ordinary_events` function calculates the rolling sum of values in the 
-#' provided data over a specified duration and identifies the events with the 
-#' highest sum within the defined time intervals. It is useful for 
+#'
+#' This function calculates the rolling sum of values in the
+#' provided data over a specified duration and identifies the events with the
+#' highest sum within the defined time intervals. It is useful for
 #' detecting significant events based on aggregated values over time.
 #'
-#' @param x A list containing at least the following elements (usually the 
+#' @param x A list containing at least the following elements (usually the
 #' output of function \code{\link{event_separation}}):
 #'   \itemize{
-#'     \item `data`: A data frame or data table with at least two columns: 
-#'     `val` (the values to sum) and `groupvar` (timestamps or another 
+#'     \item `data`: A data frame or data table with at least two columns:
+#'     `val` (the values to sum) and `groupvar` (timestamps or another
 #'     grouping variable).
-#'     \item `ts_res`: The time resolution of the data in minutes (i.e., how 
+#'     \item `ts_res`: The time resolution of the data in minutes (i.e., how
 #'     many minutes each time step represents).
-#'     \item `fromto`: A data frame with two columns: `from` and `to`, 
+#'     \item `fromto`: A data frame with two columns: `from` and `to`,
 #'     representing the start and end indices of the time intervals to analyze.
 #'   }
 #' @param duration Numeric. The duration in minutes for which maxima shall be calculated.
-#' @param na.rm Logical. Removes lines with NA values from \code{x} when \code{na.rm = TRUE}. 
+#' @param na.rm Logical. Removes lines with NA values from \code{x} when \code{na.rm = TRUE}.
 #'
-#' @return Returns a tibble with individual rainfall events that can be 
-#' used as input for functions \code{\link{fsmev}}, \code{\link{fmev}}, \code{\link{ftmev}}. 
+#' @return Returns a tibble with individual rainfall events that can be
+#' used as input for functions \code{\link{fsmev}}, \code{\link{fmev}}, \code{\link{ftmev}}.
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' # Example usage
 #' x <- list(
-#'   data = data.frame(val = runif(100), 
-#'   groupvar = seq.POSIXt(Sys.time(), 
-#'                         by = "10 min", 
+#'   data = data.frame(val = runif(100),
+#'   groupvar = seq.POSIXt(Sys.time(),
+#'                         by = "10 min",
 #'                         length.out = 100)
 #'                         ),
 #'   ts_res = 10,
@@ -1989,17 +2204,16 @@ event_separation <- function(data, separation_in_min = 360, time_resolution = 10
 #' print(result)
 #' }
 ordinary_events <- function(x, duration, na.rm = TRUE) {
-  
   if (nrow(x$data) == 0) {
     stop("data has no rows")
   }
-  
+
   if (na.rm) {
     data <- na.omit(x$data)
   } else {
     data <- x$data
   }
-  
+
   ##30min means 3 * ten minutes
   ##60min means 6 * ten minutes
   ## duration [min] = dur_steps [min] * ts_resolution minutes [min]
@@ -2010,24 +2224,24 @@ ordinary_events <- function(x, duration, na.rm = TRUE) {
     if (length(data$val[from:to]) < dur_steps) {
       NULL
     } else {
-      sums <- data.table::frollsum(data$val[from:to],
-                       n = dur_steps,
-                       na.rm = TRUE,
-                       algo = "fast",
-                       align = "right",
-                       hasNA = TRUE)
+      sums <- data.table::frollsum(
+        data$val[from:to],
+        n = dur_steps,
+        na.rm = TRUE,
+        algo = "fast",
+        align = "right",
+        hasNA = TRUE
+      )
       if (length(which(is.na(sums))) > 2 / 3 * length(sums)) {
         NULL
       } else {
         idx_max <- which(sums == max(sums, na.rm = TRUE))[1]
         max_date <- data$groupvar[from:to][idx_max] # + dur_steps - 1
         tibble(v_date = max_date, val = sums[idx_max])
-        
       }
     }
-    
   })
   res <- res[lengths(res) != 0]
-  res <- do.call(rbind, res) 
+  res <- do.call(rbind, res)
   res
 }

@@ -17,24 +17,24 @@ fsmev(
 )
 }
 \arguments{
-\item{data}{The data to which the SMEV should be fitted to. \code{data} must be a data.frame with two columns. 
-The first column must contain dates of class \code{Date}, the second or last column must contain the rainfall 
+\item{data}{The data to which the SMEV should be fitted to. \code{data} must be a data.frame with two columns.
+The first column must contain dates of class \code{Date}, the second or last column must contain the rainfall
 values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning.}
 
-\item{threshold}{A numeric that is used to define wet days as values > threshold. 
+\item{threshold}{A numeric that is used to define wet days as values > threshold.
 \eqn{data <= threshold} is set to NA.}
 
-\item{method}{Character string describing the method that is used to estimate the 
-Weibull parameters c and w. Possible options are probability weighted moments (\code{method='pwm'}), 
-maximum likelihood (\code{method='mle'}) or least squares (\code{method='ls'}). 
+\item{method}{Character string describing the method that is used to estimate the
+Weibull parameters c and w. Possible options are probability weighted moments (\code{method='pwm'}),
+maximum likelihood (\code{method='mle'}) or least squares (\code{method='ls'}).
 The \code{default} is \code{pwm}. (see details).}
 
 \item{censor}{If \code{censor=TRUE}, the data series will be left-censored to assure that the observed maxima
 are samples from a weibull tail. Defaults to \code{censor=FALSE}.}
 
-\item{censor_opts}{An empty list which can be populated with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}. 
-They give the range of quantiles used as left-censoring threshold, the month with which the block starts, 
-the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples 
+\item{censor_opts}{An empty list which can be populated with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}.
+They give the range of quantiles used as left-censoring threshold, the month with which the block starts,
+the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples
 used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.}
 
 \item{warn}{If \code{TRUE} which is the default, warnings about censoring are given.}
@@ -60,28 +60,28 @@ A list of class \code{mevr} with components:
 \item{method}{ Method used to fit the MEVD. }
 \item{censor}{ \code{TRUE} when the data-series was left-censored and \code{FALSE} otherwise.}
 \item{type}{ The type of distribution ("SMEV")}
-\item{rejected}{ If \code{censor=TRUE}, \code{rejected=TRUE} when the Weibull tail assumption is rejected and \code{rejected=FALSE} otherwise. 
+\item{rejected}{ If \code{censor=TRUE}, \code{rejected=TRUE} when the Weibull tail assumption is rejected and \code{rejected=FALSE} otherwise.
 If \code{censor=FALSE} this value is not returned.}
 }
 \description{
 Fit the SMEV distribution to rainfall observations with different estimation methods.
 }
 \details{
-The SMEV was introduced by (Marra et al., 2019) as a simplified version of the MEVD 
-(Marani and Ignaccolo, 2015) with the assumption of a stationary parent Weibull distribution 
-as 
+The SMEV was introduced by (Marra et al., 2019) as a simplified version of the MEVD
+(Marani and Ignaccolo, 2015) with the assumption of a stationary parent Weibull distribution
+as
 \deqn{F = [1 - exp(-x/C)^w]^n}
-for \eqn{w > 0} and \eqn{C > 0} being the Weibull shape and scale parameter and 
-\eqn{n > 0} being the mean number of wet days over all years. 
-Wet days are defined as rainfall events > threshold. As it was shown by 
-e.g. Schellander et al., 2019, probability weighted moments should be preferred over 
-maximum likelihood for the estimation of the Weibull parameters w and C. Therefore 
+for \eqn{w > 0} and \eqn{C > 0} being the Weibull shape and scale parameter and
+\eqn{n > 0} being the mean number of wet days over all years.
+Wet days are defined as rainfall events > threshold. As it was shown by
+e.g. Schellander et al., 2019, probability weighted moments should be preferred over
+maximum likelihood for the estimation of the Weibull parameters w and C. Therefore
 \code{method = 'pwm'} is the default.
 
-Confidence intervals of the SMEV distribution can be calculated using a non parametric 
-bootstrap technique. Note that this very slow. 
+Confidence intervals of the SMEV distribution can be calculated using a non parametric
+bootstrap technique. Note that this very slow.
 
-This function returns the parameters of the fitted SMEV distribution as well as some 
+This function returns the parameters of the fitted SMEV distribution as well as some
 additional fitting results and input parameters useful for further analysis.
 }
 \examples{
@@ -99,8 +99,8 @@ d <- sample_data |>
   filter(val >= 0 & !is.na(val))
 
 fit <- fsmev(d)
-fit_c <- fsmev(d, 
-               censor = TRUE, 
+fit_c <- fsmev(d,
+               censor = TRUE,
                censor_opts = list(thresholds = c(seq(0.5, 0.9, 0.1), 0.95),
                                   mon = 1,
                                   nrtrials = 2,
@@ -109,11 +109,11 @@ fit_c <- fsmev(d,
 rp <- 2:100
 rl <- return.levels.mev(fit, return.periods = rp)
 rl_c <- return.levels.mev(fit_c, return.periods = rp)
-plot(sort(pp.weibull(fit$maxima)), sort(fit$maxima), 
+plot(sort(pp.weibull(fit$maxima)), sort(fit$maxima),
   xlab = "Return period (a)", ylab = "daily rain (mm)")
 lines(rl$rp, rl$rl)
 lines(rl_c$rp, rl_c$rl, col = "red")
-legend("bottomright", legend = c("std", "censored"), 
+legend("bottomright", legend = c("std", "censored"),
   col = c("black", "red"), lty = c(1, 2), lwd = c(1, 1.5), bty = "n")
 
 

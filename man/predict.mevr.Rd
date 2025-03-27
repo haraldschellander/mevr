@@ -9,11 +9,11 @@
 \arguments{
 \item{object}{Object of class \code{mevr}, fitted with the TMEV.}
 
-\item{newdata}{A data frame with the model covariates (year, yday) at which predictions are required. 
+\item{newdata}{A data frame with the model covariates (year, yday) at which predictions are required.
 Note that depending on argument term, only covariates that are needed by the corresponding model terms need to be supplied.
 If not supplied, predictions are made on the data supplied by the fitted object \code{x}.}
 
-\item{term}{Character of the model terms for which predictions shall be calculated. 
+\item{term}{Character of the model terms for which predictions shall be calculated.
 Can only be \code{"year"} or \code{"yday"}. If not specified, predictions for all terms are calculated.}
 
 \item{...}{Arguments passed to prediction functions that are part of a bamlss.family object, i.e., the objects has a $predict() function that should be used instead.}
@@ -22,14 +22,14 @@ Can only be \code{"year"} or \code{"yday"}. If not specified, predictions for al
 A data.frame with the supplied covariables and the predicted parameters.
 }
 \description{
-Takes a \code{mevr} object where the TMEV has been fitted to rainfall data and calculates 
-\code{bamlss} predictions for the distributional parameters and the model terms. Basically 
+Takes a \code{mevr} object where the TMEV has been fitted to rainfall data and calculates
+\code{bamlss} predictions for the distributional parameters and the model terms. Basically
 a wrapper to the corresponding function \code{predict.bamlss}
 }
 \details{
-See also the details of \code{\link{ftmev}} for an explanation of the model terms used to fit the temporal trend 
-of the Weibull parameters. The basis dimensions yday_ti_shape_k, 
-yday_ti_scale_k, year_ti_shape_k, year_ti_scale_k are taken from 
+See also the details of \code{\link{ftmev}} for an explanation of the model terms used to fit the temporal trend
+of the Weibull parameters. The basis dimensions yday_ti_shape_k,
+yday_ti_scale_k, year_ti_shape_k, year_ti_scale_k are taken from
 the fitting process, i.e. the call to \code{\link{ftmev}}.
 }
 \examples{

@@ -19,11 +19,11 @@
 
 \item{ci}{if \code{ci=TRUE}, confidence intervals will be computed.}
 
-\item{type}{if omitted a panel with a return level plot (\code{type='rl'}, 
-a density plot (\code{type='hist'}), a qq-plot (\code{type='qq'}) and a 
+\item{type}{if omitted a panel with a return level plot (\code{type='rl'},
+a density plot (\code{type='hist'}), a qq-plot (\code{type='qq'}) and a
 probability plot (\code{tpe='pp'}) are shown.}
 
-\item{...}{Further parameters may also be supplied as arguments. 
+\item{...}{Further parameters may also be supplied as arguments.
 See e.g. \link[base]{plot}.}
 }
 \value{

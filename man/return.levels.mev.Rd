@@ -23,8 +23,8 @@ return.levels.mev(
 
 \item{alpha}{Number between zero and one giving the \code{1 - alpha} confidence level. Defaults to \code{alpha=0.05}.}
 
-\item{method}{Character string giving the method for confidence interval calculation. Option \code{method='boot'} employs a 
-parametric bootstrap that simulates data from the fitted model, and then fits the chosen MEVD type to each simulated data set 
+\item{method}{Character string giving the method for confidence interval calculation. Option \code{method='boot'} employs a
+parametric bootstrap that simulates data from the fitted model, and then fits the chosen MEVD type to each simulated data set
 to obtain a sample of parameters or return levels (very slow).}
 
 \item{R}{The number of bootstrap iterations.}
@@ -32,11 +32,11 @@ to obtain a sample of parameters or return levels (very slow).}
 \item{ncores}{Number of cores used for parallel computing of confidence intervals. Defaults to 2.}
 }
 \value{
-A list with return levels, chosen return periods and, if \code{ci=TRUE}, 
+A list with return levels, chosen return periods and, if \code{ci=TRUE},
 \code{alpha/2} and \code{1 - alpha/2} confidence intervals.
 }
 \description{
-Calculate return levels for a MEVD, SMEV or TMEV extreme value distributions 
+Calculate return levels for a MEVD, SMEV or TMEV extreme value distributions
 from an object of class \code{mevr}.
 }
 \details{
@@ -48,5 +48,5 @@ data(dailyrainfall)
 fit <- fmev(dailyrainfall)
 return.levels.mev(fit)
 plot(fit)
- 
+
 }
