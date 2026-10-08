@@ -7,21 +7,21 @@
 censored_weibull_fit(x, thresholds, warn)
 }
 \arguments{
-\item{x}{A tibble which is most commonly a result of function 
+\item{x}{A tibble which is most commonly a result of function
 \code{\link{weibull_tail_test}}.}
 
-\item{thresholds}{A numeric or vector of quantiles which shal be tested 
+\item{thresholds}{A numeric or vector of quantiles which shall be tested
 as optimal threshold for left-censoring.}
 
 \item{warn}{If \code{TRUE} which is the default, warnings about censoring are given.}
 }
 \value{
-A tibble with the optimal threshold itself and 
+A tibble with the optimal threshold itself and
 the Weibull scale and shape parameters obtained from the censored sample.
 }
 \description{
-Finds the optimal left-censoring threshold(s) at which 
-the data series should be censored to make sure that the observations 
+Finds the optimal left-censoring threshold(s) at which
+the data series should be censored to make sure that the observations
 in the tail are likely sampled from a Weibull distribution
 }
 \examples{

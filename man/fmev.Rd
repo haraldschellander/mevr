@@ -10,7 +10,8 @@ fmev(
   method = c("pwm", "mle", "ls"),
   censor = FALSE,
   censor_opts = list(),
-  warn = TRUE
+  warn = TRUE,
+  left_cens = 0
 )
 }
 \arguments{
@@ -35,6 +36,13 @@ the number of trials used to achieve a weibull fit to the left-censored sample, 
 used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.}
 
 \item{warn}{If \code{TRUE} which is the default, warnings about censoring are given.}
+
+\item{left_cens}{A single numeric in [0, 1) giving the fraction of the smallest ordinary events
+of each year that is left-censored for the estimation of c and w (see \code{\link{fsmev}}).
+The default \code{left_cens = 0} uses the complete sample. Note that only
+\code{(1 - left_cens) * n} values per year remain for the estimation, so that
+\code{\link{fsmev}} is usually the better choice for left-censored fits.
+Cannot be combined with \code{censor = TRUE}.}
 }
 \value{
 A list of class \code{mevr} with the fitted Weibull parameters and other helpful ingredients.

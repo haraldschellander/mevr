@@ -22,7 +22,9 @@ output of function \code{\link{event_separation}}):
 
 \item{duration}{Numeric. The duration in minutes for which maxima shall be calculated.}
 
-\item{na.rm}{Logical. Removes lines with NA values from \code{x} when \code{na.rm = TRUE}.}
+\item{na.rm}{Logical. If \code{na.rm = TRUE} (default), missing values within an event are
+ignored in the rolling sum. If \code{na.rm = FALSE}, windows that contain missing values
+are not considered for the event maximum.}
 }
 \value{
 Returns a tibble with individual rainfall events that can be

@@ -71,6 +71,21 @@ NULL
 #' Confidence intervals of the SMEV distribution can be calculated using a non parametric
 #' bootstrap technique. Note that this very slow.
 #'
+#' The estimators above assume that all ordinary events are Weibull distributed. This is
+#' usually acceptable for daily rainfall, but not for sub-daily durations, where the
+#' lower part of the sample is affected by the gauge resolution and by weak events that
+#' do not share the tail of the intense ones. Fitted to the complete sample, the shape
+#' parameter is then overestimated and return levels are strongly underestimated.
+#' Following Marra et al. (2019, 2020) the Weibull distribution can be fitted to the
+#' tail only by left-censoring: with \code{left_cens = 0.9} the smallest 90 percent of the
+#' ordinary events are censored, i.e. their magnitudes are ignored but they keep their
+#' non-exceedance probability, and \code{n} is still the mean number of all ordinary
+#' events per year. With \code{method = 'ls'} this is the least squares regression in
+#' Weibull-transformed coordinates used by Marra et al. (2020), \code{method = 'mle'}
+#' maximizes the likelihood of the left-censored sample and \code{method = 'pwm'} uses
+#' partial probability weighted moments (Wang, 1990). For sub-daily data, ordinary events
+#' should be defined with \code{\link{event_separation}} and \code{\link{ordinary_events}}.
+#'
 #' This function returns the parameters of the fitted SMEV distribution as well as some
 #' additional fitting results and input parameters useful for further analysis.
 #'
@@ -93,6 +108,10 @@ NULL
 #' @param sd If \code{sd=TRUE}, confidence intervals of the SMEV distribution are calculated (see details).
 #' @param sd.method Currently only a non parametric bootstrap technique can be used to calculate SMEV confidence intervals with \code{sd.method='boot'}. The default is \code{sd=FALSE}.
 #' @param R The number of samples drawn from the SMEV distribution to calculate the confidence intervals with \code{sd.method='boot'}
+#' @param left_cens A single numeric in [0, 1) giving the fraction of the smallest ordinary events
+#' that is left-censored for the estimation of c and w (see details). The default \code{left_cens = 0}
+#' uses the complete sample. Values around 0.9 are common for sub-daily rainfall.
+#' Cannot be combined with \code{censor = TRUE}, which selects the censoring quantile with a Weibull tail test.
 #'
 #' @return A list of class \code{mevr} with components:
 #' \item{c}{ Single value of the Weibull scale parameter of the SMEV.}
@@ -107,6 +126,7 @@ NULL
 #' \item{threshold}{ The chosen threshold.}
 #' \item{method}{ Method used to fit the MEVD. }
 #' \item{censor}{ \code{TRUE} when the data-series was left-censored and \code{FALSE} otherwise.}
+#' \item{left_cens}{ The fixed left-censoring quantile used for the estimation of c and w.}
 #' \item{type}{ The type of distribution ("SMEV")}
 #' \item{rejected}{ If \code{censor=TRUE}, \code{rejected=TRUE} when the Weibull tail assumption is rejected and \code{rejected=FALSE} otherwise.
 #' If \code{censor=FALSE} this value is not returned.}
@@ -114,12 +134,18 @@ NULL
 #' @export
 #'
 #' @references 	Marra, F. et al. (2019) 'A simplified MEV formulation to model extremes emerging from multiple nonstationary underlying processes', Advances in Water Resources. Elsevier Ltd, 127(April), pp. 280-290. doi: 10.1016/j.advwatres.2019.04.002.
+#' @references Marra, F. et al. (2020) 'A unified framework for extreme subdaily precipitation frequency analyses based on ordinary events', Geophysical Research Letters, 47, e2020GL090209. doi: 10.1029/2020GL090209.
+#' @references Wang, Q. J. (1990) 'Estimation of the GEV distribution from censored samples by method of partial probability weighted moments', Journal of Hydrology, 120, pp. 103-114.
 #' @examples
 #' data(dailyrainfall)
 #'
 #' fit <- fsmev(dailyrainfall)
 #' fit
 #' plot(fit)
+#'
+#' # estimate c and w from the largest 25 percent of the ordinary events only
+#' fit_lc <- fsmev(dailyrainfall, left_cens = 0.75)
+#' fit_lc
 #'
 #' # left censor data prior to fitting
 #' set.seed(123)
@@ -159,8 +185,11 @@ fsmev <- function(
   warn = TRUE,
   sd = FALSE,
   sd.method = "boot",
-  R = 502
+  R = 502,
+  left_cens = 0
 ) {
+  check.left.cens(left_cens, censor)
+
   censor_opts_defaults <- list(
     thresholds = seq(0.05, 0.95, 0.05),
     mon = 1,
@@ -171,24 +200,29 @@ fsmev <- function(
 
   orig_data <- data
 
-  if (!inherits(data, c("data.frame", "numeric")))
+  if (!inherits(data, c("data.frame", "numeric"))) {
     stop("data must be of class 'data.frame' or 'numeric'")
+  }
 
   if (!is.vector(data)) {
     vec <- FALSE
     colnames(data) <- c("groupvar", "val")
   } else {
     vec <- TRUE
-    data = data.frame(val = data)
+    data <- data.frame(val = data)
   }
 
-  if (!inherits(data$groupvar, c("Date", "POSIXct")))
+  if (!inherits(data$groupvar, c("Date", "POSIXct"))) {
     stop("date column must be of class 'Date' or 'POSIXct'")
+  }
 
-  if (!inherits(data$val, "numeric"))
+  if (!inherits(data$val, "numeric")) {
     stop("data values must be of class 'numeric'")
+  }
 
-  if (length(which(data$val < 0)) > 0) stop("data must not contain values < 0")
+  if (length(which(data$val < 0)) > 0) {
+    stop("data must not contain values < 0")
+  }
 
   if (any(is.na(data$val))) {
     n <- nrow(data)
@@ -197,8 +231,9 @@ fsmev <- function(
     warning(paste0("data contains ", n - nn, " NA values which are ignored."))
   }
 
-  if (isTRUE(sd) & sd.method != "boot")
+  if (isTRUE(sd) & sd.method != "boot") {
     stop("only method 'boot' is allowed for calculation of standard errors")
+  }
 
   method <- match.arg(method)
 
@@ -247,7 +282,9 @@ fsmev <- function(
       theta <- data_pot |>
         group_modify(~ fit.mev(.x$val, method)) |>
         ungroup()
-      if (warn) warning("fitting uncensored SMEV")
+      if (warn) {
+        warning("fitting uncensored SMEV")
+      }
       rejected <- TRUE
     } else {
       #method = "censored lsreg"
@@ -257,7 +294,7 @@ fsmev <- function(
     }
   } else {
     theta <- data_pot |>
-      group_modify(~ fit.mev(.x$val, method)) |>
+      group_modify(~ fit.mev(.x$val, method, left_cens)) |>
       ungroup()
   }
   theta$n <- mean(n_vec)
@@ -282,7 +319,12 @@ fsmev <- function(
 
   if (sd) {
     if (sd.method == "boot") {
-      err <- smev.boot(data_pot, method = method, R = R)
+      err <- smev.boot(
+        data_pot,
+        method = method,
+        R = R,
+        left_cens = left_cens
+      )
       res <- list(
         c = theta$c,
         w = theta$w,
@@ -297,6 +339,7 @@ fsmev <- function(
         threshold = threshold,
         method = method,
         censor = censor,
+        left_cens = left_cens,
         type = "SMEV"
       )
     }
@@ -313,6 +356,7 @@ fsmev <- function(
       threshold = threshold,
       method = method,
       censor = censor,
+      left_cens = left_cens,
       type = "SMEV"
     )
   }
@@ -381,6 +425,12 @@ fsmev <- function(
 #' the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples
 #' used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.
 #' @param warn If \code{TRUE} which is the default, warnings about censoring are given.
+#' @param left_cens A single numeric in [0, 1) giving the fraction of the smallest ordinary events
+#' of each year that is left-censored for the estimation of c and w (see \code{\link{fsmev}}).
+#' The default \code{left_cens = 0} uses the complete sample. Note that only
+#' \code{(1 - left_cens) * n} values per year remain for the estimation, so that
+#' \code{\link{fsmev}} is usually the better choice for left-censored fits.
+#' Cannot be combined with \code{censor = TRUE}.
 #'
 #' @return A list of class \code{mevr} with the fitted Weibull parameters and other helpful ingredients.
 #' \item{c}{ vector of Weibull scale parameters of the MEVD, each component refers to one year.}
@@ -414,8 +464,11 @@ fmev <- function(
   method = c("pwm", "mle", "ls"),
   censor = FALSE,
   censor_opts = list(),
-  warn = TRUE
+  warn = TRUE,
+  left_cens = 0
 ) {
+  check.left.cens(left_cens, censor)
+
   # data must be data.frame for yearly parameters
   # data must be in last/second column
   # col1 must hold the group variable
@@ -430,17 +483,23 @@ fmev <- function(
   )
   cens_opts <- utils::modifyList(censor_opts_defaults, censor_opts)
 
-  if (!inherits(data, "data.frame")) stop("data must be of class 'data.frame'")
+  if (!inherits(data, "data.frame")) {
+    stop("data must be of class 'data.frame'")
+  }
 
   colnames(data) <- c("groupvar", "val")
 
-  if (!inherits(data$groupvar, c("Date", "POSIXct")))
+  if (!inherits(data$groupvar, c("Date", "POSIXct"))) {
     stop("date column must be of class 'Date' or 'POSIXct'")
+  }
 
-  if (!inherits(data$val, "numeric"))
+  if (!inherits(data$val, "numeric")) {
     stop("data values must be of class 'numeric'")
+  }
 
-  if (length(which(data$val < 0)) > 0) stop("data must not contain values < 0")
+  if (length(which(data$val < 0)) > 0) {
+    stop("data must not contain values < 0")
+  }
 
   if (any(is.na(data$val))) {
     n <- nrow(data)
@@ -450,8 +509,9 @@ fmev <- function(
   }
 
   method <- match.arg(method)
-  if (method != "pwm" & threshold > 0)
+  if (method != "pwm" & threshold > 0) {
     stop("threshold can only be used for method 'pwm'")
+  }
 
   # only wet days: remove data smaller than threshold
   data_pot <- data |>
@@ -518,7 +578,7 @@ fmev <- function(
   } else {
     theta <- data_pot |>
       group_by(.data$year) |>
-      group_modify(~ fit.mev(.x$val, method)) |>
+      group_modify(~ fit.mev(.x$val, method, left_cens)) |>
       ungroup()
   }
   theta$n <- n_vec
@@ -543,6 +603,7 @@ fmev <- function(
     threshold = threshold,
     method = method,
     censor = censor,
+    left_cens = left_cens,
     type = "MEVD"
   )
 
@@ -659,17 +720,23 @@ ftmev <- function(
   year_ti_shape_k = 10,
   year_ti_scale_k = 10
 ) {
-  if (!inherits(data, "data.frame")) stop("data must be of class 'data.frame'")
+  if (!inherits(data, "data.frame")) {
+    stop("data must be of class 'data.frame'")
+  }
 
   colnames(data) <- c("groupvar", "val")
 
-  if (!inherits(data$groupvar, c("Date", "POSIXct")))
+  if (!inherits(data$groupvar, c("Date", "POSIXct"))) {
     stop("date column must be of class 'Date' or 'POSIXct'")
+  }
 
-  if (!inherits(data$val, "numeric"))
+  if (!inherits(data$val, "numeric")) {
     stop("data values must be of class 'numeric'")
+  }
 
-  if (length(which(data$val < 0)) > 0) stop("data must not contain values < 0")
+  if (length(which(data$val < 0)) > 0) {
+    stop("data must not contain values < 0")
+  }
 
   if (any(is.na(data$val))) {
     n <- nrow(data)
@@ -710,14 +777,14 @@ ftmev <- function(
       fy <- list(
         "lambda" = val ~
           s(year) +
-            ti(yday, bs = "cc", k = yday_ti_shape_k) +
-            ti(
-              year,
-              yday,
-              bs = c("tp", "cc"),
-              d = c(1, 1),
-              k = c(year_ti_shape_k, yday_ti_shape_k)
-            ),
+          ti(yday, bs = "cc", k = yday_ti_shape_k) +
+          ti(
+            year,
+            yday,
+            bs = c("tp", "cc"),
+            d = c(1, 1),
+            k = c(year_ti_shape_k, yday_ti_shape_k)
+          ),
         "alpha" = ~ s(year) +
           ti(yday, bs = "cc", k = yday_ti_scale_k) +
           ti(
@@ -776,6 +843,24 @@ ftmev <- function(
   return(res)
 }
 
+check.left.cens <- function(left_cens, censor) {
+  if (
+    !is.numeric(left_cens) ||
+      length(left_cens) != 1 ||
+      is.na(left_cens) ||
+      left_cens < 0 ||
+      left_cens >= 1
+  ) {
+    stop("left_cens must be a single numeric in [0, 1)")
+  }
+  if (left_cens > 0 && isTRUE(censor)) {
+    stop(
+      "use either 'left_cens' (fixed left-censoring quantile) or 'censor = TRUE' (quantile from the Weibull tail test), not both"
+    )
+  }
+  invisible(TRUE)
+}
+
 
 fit.mev.censor <- function(data, thresholds, mon, R, warn) {
   #thresholds <- seq(0.05, 0.95, 0.05)
@@ -793,7 +878,13 @@ fit.mev.censor <- function(data, thresholds, mon, R, warn) {
 }
 
 
-fit.mev <- function(data, method) {
+fit.mev <- function(data, method, left_cens = 0) {
+  # left-censored fit: only the upper tail of the ordinary events is used
+  # to estimate c and w, see fit.mev.leftcens()
+  if (left_cens > 0 && floor(length(data) * left_cens) >= 1) {
+    return(fit.mev.leftcens(data, method, left_cens))
+  }
+
   if (method == "pwm") {
     data <- sort(data)
 
@@ -803,9 +894,9 @@ fit.mev <- function(data, method) {
     for (i in 1:N) {
       M1hat <- M1hat + data[i] * (N - i)
     }
-    M1hat = M1hat / (N * (N - 1))
-    c = M0hat / gamma(log(M0hat / M1hat) / log(2))
-    w = log(2) / log(M0hat / (2 * M1hat))
+    M1hat <- M1hat / (N * (N - 1))
+    c <- M0hat / gamma(log(M0hat / M1hat) / log(2))
+    w <- log(2) / log(M0hat / (2 * M1hat))
   } else if (method == "mle") {
     # data above threshold
     x <- data
@@ -847,7 +938,100 @@ fit.mev <- function(data, method) {
 }
 
 
-smev.boot <- function(data, method = c("pwm", "mle", "ls"), R = 502) {
+# Weibull fit to a left-censored sample of ordinary events.
+#
+# The k = floor(N * left_cens) smallest values are censored: their magnitudes
+# are not used, but they keep their weight (their non-exceedance probability)
+# in the sample. This is the approach of Marra et al. (2019, 2020) for
+# ordinary events whose lower part is not Weibull distributed (e.g. sub-daily
+# rainfall close to the gauge resolution, or a mixture of rainfall types).
+#   ls : least squares in Weibull-transformed coordinates on the uncensored
+#        tail, with plotting positions i / (N + 1) of the complete sample
+#        (identical to the SMEV reference implementation of Marra et al.)
+#   mle: maximum likelihood for a type-II left-censored sample
+#   pwm: partial probability weighted moments (Wang, 1990). For a Weibull
+#        parent and a censored fraction F0 = k / N, with u0 = -log(1 - F0),
+#          M0' = int_F0^1 x(F) dF         = c * Gamma(1 + 1/w, u0)
+#          M1' = int_F0^1 x(F) (1 - F) dF = c * Gamma(1 + 1/w, 2 * u0) / 2^(1 + 1/w)
+#        (Gamma(a, u): upper incomplete gamma function). For F0 = 0 these are
+#        the equations solved in closed form in fit.mev().
+fit.mev.leftcens <- function(data, method, left_cens) {
+  x <- sort(data)
+  N <- length(x)
+  k <- floor(N * left_cens) # number of censored (smallest) values
+  if (N - k < 3) {
+    stop("left_cens leaves less than 3 values for the estimation of c and w")
+  }
+  idx <- (k + 1):N
+  xu <- x[idx]
+
+  # least squares in Weibull coordinates: log(x) = log(c) + 1/w * log(-log(1 - F))
+  X <- log(-log(1 - idx / (N + 1)))
+  Y <- log(xu)
+  slope <- stats::cov(X, Y) / stats::var(X)
+  w <- 1 / slope
+  c <- exp(mean(Y) - slope * mean(X))
+
+  if (method == "mle") {
+    thr <- xu[1]
+    nll <- function(par) {
+      shape <- exp(par[1])
+      scale <- exp(par[2])
+      ll <- suppressWarnings(
+        k *
+          stats::pweibull(thr, shape, scale, log.p = TRUE) +
+          sum(stats::dweibull(xu, shape, scale, log = TRUE))
+      )
+      if (!is.finite(ll)) {
+        return(1e10)
+      }
+      -ll
+    }
+    # the least squares estimates are the starting values
+    opt <- stats::optim(log(c(w, c)), nll, method = "BFGS")
+    if (opt$convergence != 0) {
+      warning("left-censored maximum likelihood did not converge")
+    }
+    w <- exp(opt$par[1])
+    c <- exp(opt$par[2])
+  } else if (method == "pwm") {
+    M0hat <- sum(xu) / N
+    M1hat <- sum(xu * (N - idx)) / (N * (N - 1))
+    u0 <- -log(1 - k / N)
+    # log(M0' / M1') as a function of w, strictly decreasing in w
+    pwm_eq <- function(shape) {
+      a <- 1 + 1 / shape
+      a *
+        log(2) +
+        stats::pgamma(u0, a, lower.tail = FALSE, log.p = TRUE) -
+        stats::pgamma(2 * u0, a, lower.tail = FALSE, log.p = TRUE) -
+        log(M0hat / M1hat)
+    }
+    root <- tryCatch(
+      stats::uniroot(pwm_eq, lower = 0.02, upper = 100, tol = 1e-10)$root,
+      error = function(e) NA_real_
+    )
+    if (is.na(root)) {
+      warning("left-censored pwm did not converge, returning NA")
+      w <- NA_real_
+      c <- NA_real_
+    } else {
+      w <- root
+      a <- 1 + 1 / w
+      c <- M0hat / (gamma(a) * stats::pgamma(u0, a, lower.tail = FALSE))
+    }
+  }
+
+  return(data.frame(w = w, c = c))
+}
+
+
+smev.boot <- function(
+  data,
+  method = c("pwm", "mle", "ls"),
+  R = 502,
+  left_cens = 0
+) {
   method <- match.arg(method)
   weisample <- data$val
   N <- length(weisample)
@@ -855,7 +1039,7 @@ smev.boot <- function(data, method = c("pwm", "mle", "ls"), R = 502) {
   colnames(theta.hat) <- c("c", "w")
   for (i in seq_len(R)) {
     replaced <- sample(weisample, N, replace = TRUE)
-    theta <- fit.mev(replaced, method)
+    theta <- fit.mev(replaced, method, left_cens)
     theta.hat[i, "c"] <- theta$c
     theta.hat[i, "w"] <- theta$w
   }
@@ -931,7 +1115,7 @@ dmev <- function(x, w, c, n) {
 #' @export
 pmev <- function(q, w, c, n) {
   nyears <- length(n)
-  ret = c()
+  ret <- c()
   for (y in q) {
     if (y >= 0) {
       val <- sum((1 - exp(-y^w / c^w))^n) / nyears
@@ -950,6 +1134,7 @@ qmev <- function(p, w, c, n) {
   ret <- list()
   # SMEV
   if (length(w) == 1) {
+    # MEVD
     for (i in 1:length(p)) {
       if (p[i] == 0) {
         val <- -Inf
@@ -960,8 +1145,7 @@ qmev <- function(p, w, c, n) {
       }
       ret[[i]] <- val
     }
-  } # MEVD
-  else if (length(w) > 1) {
+  } else if (length(w) > 1) {
     for (i in 1:length(p)) {
       if (p[i] == 0) {
         val <- -Inf
@@ -1025,9 +1209,13 @@ rlmev <- function(q, w, c, n) {
 #'
 #'
 dtmev <- function(x, data) {
-  if (length(x) > 1) stop("x must be a single numeric")
+  if (length(x) > 1) {
+    stop("x must be a single numeric")
+  }
 
-  if (!inherits(data, "data.frame")) stop("data must be of class 'data.frame'")
+  if (!inherits(data, "data.frame")) {
+    stop("data must be of class 'data.frame'")
+  }
 
   #data$px <- pweibull(x, shape = data$w.pred, scale = data$c.pred)
   #data$dx <- dweibull(x, shape = data$w.pred, scale = data$c.pred)
@@ -1067,7 +1255,9 @@ ptmev <- function(q, data) {
 #' @describeIn dtmev distribution quantile function
 #' @export
 qtmev <- function(p, data) {
-  if (!inherits(data, "data.frame")) stop("data must be of class 'data.frame'")
+  if (!inherits(data, "data.frame")) {
+    stop("data must be of class 'data.frame'")
+  }
 
   ret <- list()
   for (i in 1:length(p)) {
@@ -1125,9 +1315,13 @@ return.levels.mev <- function(
   R = 502,
   ncores = 2L
 ) {
-  if (!inherits(x, "mevr")) stop("x must be object of class 'mevr'")
+  if (!inherits(x, "mevr")) {
+    stop("x must be object of class 'mevr'")
+  }
 
-  if (any(return.periods <= 1)) stop("All return periods have to be > 1")
+  if (any(return.periods <= 1)) {
+    stop("All return periods have to be > 1")
+  }
 
   if (tolower(x$type) != "tmev") {
     w <- x$w
@@ -1191,12 +1385,16 @@ ci.mev <- function(
   ncores = 2L,
   subsize = 20
 ) {
-  if (!inherits(x, "mevr")) stop("x must be object of class 'mevr'")
+  if (!inherits(x, "mevr")) {
+    stop("x must be object of class 'mevr'")
+  }
 
   #if(x$method == "mle")
   #  stop("ci caculation does not support 'mle' as parameter estimation method")
 
-  if (x$type != "MEVD") stop("x must be of type MEVD")
+  if (x$type != "MEVD") {
+    stop("x must be of type MEVD")
+  }
 
   # non-parametric bootstrapping
   # for daily values and wet days
@@ -1253,8 +1451,9 @@ ci.mev <- function(
     )
 
     # compute quantiles of simulated return levels
-    rlfun <- function(theta, q)
+    rlfun <- function(theta, q) {
       rlmev(q = q, w = theta$shape, c = theta$scale, n = theta$n)
+    }
     sam <- lapply(pars, rlfun, q = return.periods)
     sam <- do.call("cbind", sam)
     rownames(sam) <- paste0(return.periods, "-year")
@@ -1288,7 +1487,14 @@ ci.mev <- function(
     sam <- foreach(
       i = 1:R,
       .combine = cbind,
-      .export = c("fmev", "fit.mev", "qmev", "pmev"),
+      .export = c(
+        "fmev",
+        "fit.mev",
+        "fit.mev.leftcens",
+        "check.left.cens",
+        "qmev",
+        "pmev"
+      ),
       .packages = c("dplyr")
     ) %dopar%
       {
@@ -1297,7 +1503,12 @@ ci.mev <- function(
           #filter(year(.data$groupvar) %in% sampleyears) |>
           filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) |>
           dplyr::select(.data$groupvar, .data$val)
-        fitdf <- fmev(nd)
+        fitdf <- mevr::fmev(
+          nd,
+          threshold = x$threshold,
+          method = x$method,
+          left_cens = if (is.null(x$left_cens)) 0 else x$left_cens
+        )
         qmev(1 - 1 / return.periods, fitdf$w, fitdf$c, fitdf$n)
       }
 
@@ -1328,9 +1539,13 @@ ci.tmev <- function(
   ncores = 2L,
   subsize = 20
 ) {
-  if (!inherits(x, "mevr")) stop("x must be object of class 'mevr'")
+  if (!inherits(x, "mevr")) {
+    stop("x must be object of class 'mevr'")
+  }
 
-  if (tolower(x$type) != "tmev") stop("x must be of type TMEV")
+  if (tolower(x$type) != "tmev") {
+    stop("x must be of type TMEV")
+  }
 
   if (method == "boot") {
     if (subsize > length(x$years)) {
@@ -1395,9 +1610,13 @@ ci.smev <- function(
   ncores = 2L,
   subsize = 20
 ) {
-  if (!inherits(x, "mevr")) stop("x must be object of class 'mevr'")
+  if (!inherits(x, "mevr")) {
+    stop("x must be object of class 'mevr'")
+  }
 
-  if (x$type != "SMEV") stop("x must be of type SMEV")
+  if (x$type != "SMEV") {
+    stop("x must be of type SMEV")
+  }
 
   # parametric bootstrapping
   # with weibull sampling
@@ -1428,8 +1647,9 @@ ci.smev <- function(
     # compute return levels from R w and C parameters
     th <- rbind(shape, scale, n)
     th.est <- theta.hat
-    rlfun <- function(theta, q)
+    rlfun <- function(theta, q) {
       rlmev(q = q, w = theta[1], c = theta[2], n = theta[3])
+    }
     sam <- apply(th, 2, rlfun, q = return.periods)
     rownames(sam) <- paste0(return.periods, "-year")
     theta.hat <- rlmev(
@@ -1494,7 +1714,14 @@ ci.smev <- function(
     sam <- foreach(
       i = 1:R,
       .combine = cbind,
-      .export = c("fsmev", "fit.mev", "qmev", "pmev"),
+      .export = c(
+        "fsmev",
+        "fit.mev",
+        "fit.mev.leftcens",
+        "check.left.cens",
+        "qmev",
+        "pmev"
+      ),
       .packages = c("dplyr")
     ) %dopar%
       {
@@ -1502,7 +1729,12 @@ ci.smev <- function(
         nd <- x$data |>
           filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) |>
           dplyr::select(.data$groupvar, .data$val)
-        fitdf <- fsmev(nd)
+        fitdf <- mevr::fsmev(
+          nd,
+          threshold = x$threshold,
+          method = x$method,
+          left_cens = if (is.null(x$left_cens)) 0 else x$left_cens
+        )
         qmev(1 - 1 / return.periods, fitdf$w, fitdf$c, fitdf$n)
       }
 
@@ -1614,7 +1846,9 @@ plot.mevr <- function(
   type = c("all", "rl", "qq", "pp", "hist"),
   ...
 ) {
-  if (!inherits(x, "mevr")) stop("x must be object of class 'mevr'")
+  if (!inherits(x, "mevr")) {
+    stop("x must be object of class 'mevr'")
+  }
 
   type <- match.arg(type)
 
@@ -1837,12 +2071,14 @@ predict.mevr <- function(object, newdata, term, ...) {
   # if(!inherits(object, "mevr"))
   #   stop("object must be object of class 'mevr'")
 
-  if (tolower(object$type) != "tmev")
+  if (tolower(object$type) != "tmev") {
     stop("fitted object must be of type 'tmev'")
+  }
 
-  if (missing(newdata))
+  if (missing(newdata)) {
     newdata <- object$data |>
       dplyr::select("year", "yday")
+  }
 
   if (missing(term)) {
     term <- "all"
@@ -1943,7 +2179,9 @@ predict.mevr <- function(object, newdata, term, ...) {
 #' fit <- fsmev(dailyrainfall)
 #' print(fit)
 print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...) {
-  if (!inherits(x, "mevr")) stop("x must be object of class 'mevr'")
+  if (!inherits(x, "mevr")) {
+    stop("x must be object of class 'mevr'")
+  }
 
   cat("MEVD fitting\n\n")
   cat(paste0("Type: ", x$type, "\n"))
@@ -1990,6 +2228,15 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...) {
   cat("\nThreshold:\n")
   t <- x$threshold
   print.default(format(t, digits = digits), print.gap = 2, quote = FALSE)
+
+  if (!is.null(x$left_cens) && x$left_cens > 0) {
+    cat("\nLeft-censoring quantile:\n")
+    print.default(
+      format(x$left_cens, digits = digits),
+      print.gap = 2,
+      quote = FALSE
+    )
+  }
 
   invisible(x)
 }
@@ -2181,7 +2428,9 @@ event_separation <- function(
 #'     representing the start and end indices of the time intervals to analyze.
 #'   }
 #' @param duration Numeric. The duration in minutes for which maxima shall be calculated.
-#' @param na.rm Logical. Removes lines with NA values from \code{x} when \code{na.rm = TRUE}.
+#' @param na.rm Logical. If \code{na.rm = TRUE} (default), missing values within an event are
+#' ignored in the rolling sum. If \code{na.rm = FALSE}, windows that contain missing values
+#' are not considered for the event maximum.
 #'
 #' @return Returns a tibble with individual rainfall events that can be
 #' used as input for functions \code{\link{fsmev}}, \code{\link{fmev}}, \code{\link{ftmev}}.
@@ -2208,11 +2457,10 @@ ordinary_events <- function(x, duration, na.rm = TRUE) {
     stop("data has no rows")
   }
 
-  if (na.rm) {
-    data <- na.omit(x$data)
-  } else {
-    data <- x$data
-  }
+  # x$fromto holds row indices of x$data. Rows must therefore never be
+  # dropped here, otherwise every event behind a missing value is shifted.
+  # Missing values are handled within the rolling sum instead.
+  data <- x$data
 
   ##30min means 3 * ten minutes
   ##60min means 6 * ten minutes
@@ -2227,7 +2475,7 @@ ordinary_events <- function(x, duration, na.rm = TRUE) {
       sums <- data.table::frollsum(
         data$val[from:to],
         n = dur_steps,
-        na.rm = TRUE,
+        na.rm = na.rm,
         algo = "fast",
         align = "right",
         hasNA = TRUE

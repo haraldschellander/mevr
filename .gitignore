@@ -9,3 +9,4 @@ mevr_0.1-0.zip
 mevr_1.0.0.tar.gz
 .Rproj.user
 docs
+*.patch
