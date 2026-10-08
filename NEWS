@@ -1,15 +1,25 @@
+mevr 1.3.0 (release date: 2026-10-08)
+=========================================
+
+Changes:
+
+* New argument left_cens in fsmev() and fmev(). With left_cens = 0.9, c and w come from the top 10 % of events while n still counts all of them.
+* Ordinary_events() no longer drops rows; missing values are handled inside the rolling sum.
+* Bootstrap confidence intervals now refit with the object's own method, threshold and left_cens; before, they always refitted with default PWM.
+
+
 mevr 1.2.3 (release date: 2025-03-27)
 =========================================
-     
-Changes: 
+
+Changes:
 
 * Included some tests for new functions for storm separation and ordinary events definition.
 
 
 mevr 1.2.2 (release date: 2024-09-18)
 =========================================
-     
-Changes: 
+
+Changes:
 
 * Two functions added for storm separation and definition of ordinary events.
 * Functions fmsev, fmev and ftmev can now be used for sub-daily rainfall durations.
@@ -17,36 +27,35 @@ Changes:
 
 mevr 1.1.2 (release date: 2024-08-06)
 =========================================
-     
-Changes: 
 
-* The Weibull tail test now returns the result to the fsmev function. 
+Changes:
+
+* The Weibull tail test now returns the result to the fsmev function.
 * Some tests were added.
 
 
 mevr 1.1.1 (release date: 2024-06-21)
 =========================================
-     
-Changes: 
 
-* A Weibull tail test based on left-censoring the input data can be performed 
-prior to fitting a SMEV. This can drastly improve fitting results. 
-* Some internal code improvements. 
+Changes:
+
+* A Weibull tail test based on left-censoring the input data can be performed
+prior to fitting a SMEV. This can drastly improve fitting results.
+* Some internal code improvements.
 
 
 mevr 1.0.1 (release date: 2024-06-19)
 =========================================
-     
-Changes: 
 
-* NA values are always removed. Functions fsmev, fmev and ftmev throw warnings 
-if the data contains any NA values. 
-* Some internal code improvements. 
+Changes:
+
+* NA values are always removed. Functions fsmev, fmev and ftmev throw warnings
+if the data contains any NA values.
+* Some internal code improvements.
 * Added more tests.
 
 
 mevr 1.0.0 (release date: 2024-06-15)
 =========================================
-     
-* First release, submitted to CRAN.
 
+* First release, submitted to CRAN.

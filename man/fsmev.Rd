@@ -13,7 +13,8 @@ fsmev(
   warn = TRUE,
   sd = FALSE,
   sd.method = "boot",
-  R = 502
+  R = 502,
+  left_cens = 0
 )
 }
 \arguments{
@@ -44,6 +45,11 @@ used for the test statistics, respectively. See also \code{\link{weibull_tail_te
 \item{sd.method}{Currently only a non parametric bootstrap technique can be used to calculate SMEV confidence intervals with \code{sd.method='boot'}. The default is \code{sd=FALSE}.}
 
 \item{R}{The number of samples drawn from the SMEV distribution to calculate the confidence intervals with \code{sd.method='boot'}}
+
+\item{left_cens}{A single numeric in [0, 1) giving the fraction of the smallest ordinary events
+that is left-censored for the estimation of c and w (see details). The default \code{left_cens = 0}
+uses the complete sample. Values around 0.9 are common for sub-daily rainfall.
+Cannot be combined with \code{censor = TRUE}, which selects the censoring quantile with a Weibull tail test.}
 }
 \value{
 A list of class \code{mevr} with components:
@@ -59,6 +65,7 @@ A list of class \code{mevr} with components:
 \item{threshold}{ The chosen threshold.}
 \item{method}{ Method used to fit the MEVD. }
 \item{censor}{ \code{TRUE} when the data-series was left-censored and \code{FALSE} otherwise.}
+\item{left_cens}{ The fixed left-censoring quantile used for the estimation of c and w.}
 \item{type}{ The type of distribution ("SMEV")}
 \item{rejected}{ If \code{censor=TRUE}, \code{rejected=TRUE} when the Weibull tail assumption is rejected and \code{rejected=FALSE} otherwise.
 If \code{censor=FALSE} this value is not returned.}
@@ -81,6 +88,21 @@ maximum likelihood for the estimation of the Weibull parameters w and C. Therefo
 Confidence intervals of the SMEV distribution can be calculated using a non parametric
 bootstrap technique. Note that this very slow.
 
+The estimators above assume that all ordinary events are Weibull distributed. This is
+usually acceptable for daily rainfall, but not for sub-daily durations, where the
+lower part of the sample is affected by the gauge resolution and by weak events that
+do not share the tail of the intense ones. Fitted to the complete sample, the shape
+parameter is then overestimated and return levels are strongly underestimated.
+Following Marra et al. (2019, 2020) the Weibull distribution can be fitted to the
+tail only by left-censoring: with \code{left_cens = 0.9} the smallest 90 percent of the
+ordinary events are censored, i.e. their magnitudes are ignored but they keep their
+non-exceedance probability, and \code{n} is still the mean number of all ordinary
+events per year. With \code{method = 'ls'} this is the least squares regression in
+Weibull-transformed coordinates used by Marra et al. (2020), \code{method = 'mle'}
+maximizes the likelihood of the left-censored sample and \code{method = 'pwm'} uses
+partial probability weighted moments (Wang, 1990). For sub-daily data, ordinary events
+should be defined with \code{\link{event_separation}} and \code{\link{ordinary_events}}.
+
 This function returns the parameters of the fitted SMEV distribution as well as some
 additional fitting results and input parameters useful for further analysis.
 }
@@ -90,6 +112,10 @@ data(dailyrainfall)
 fit <- fsmev(dailyrainfall)
 fit
 plot(fit)
+
+# estimate c and w from the largest 25 percent of the ordinary events only
+fit_lc <- fsmev(dailyrainfall, left_cens = 0.75)
+fit_lc
 
 # left censor data prior to fitting
 set.seed(123)
@@ -120,6 +146,10 @@ legend("bottomright", legend = c("std", "censored"),
 }
 \references{
 Marra, F. et al. (2019) 'A simplified MEV formulation to model extremes emerging from multiple nonstationary underlying processes', Advances in Water Resources. Elsevier Ltd, 127(April), pp. 280-290. doi: 10.1016/j.advwatres.2019.04.002.
+
+Marra, F. et al. (2020) 'A unified framework for extreme subdaily precipitation frequency analyses based on ordinary events', Geophysical Research Letters, 47, e2020GL090209. doi: 10.1029/2020GL090209.
+
+Wang, Q. J. (1990) 'Estimation of the GEV distribution from censored samples by method of partial probability weighted moments', Journal of Hydrology, 120, pp. 103-114.
 }
 \seealso{
 \code{\link{fmev}}, \code{\link{ftmev}}
