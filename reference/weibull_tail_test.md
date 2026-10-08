@@ -130,14 +130,14 @@ cens$quantile
 
 # plot return levels censored vs uncensored
 rp <- c(2:100)
-rl_uncensored <- return.levels.mev(fit_uncensored, return.periods = rp)$rl 
+rl_uncensored <- return.levels.mev(fit_uncensored, return.periods = rp)$rl
 rl_censored <- qmev(1 - 1/rp, cens$shape, cens$scale, fit_uncensored$n)
-plot(rp, rl_uncensored, type = "l", log = "x", ylim = c(0, max(rl_censored, rl_uncensored)), 
+plot(rp, rl_uncensored, type = "l", log = "x", ylim = c(0, max(rl_censored, rl_uncensored)),
      ylab = "return level", xlab = "return period (a)")
 points(pp.weibull(fit_uncensored$maxima), sort(fit_uncensored$maxima))
 lines(rp, rl_censored, type = "l", col = "red")
-legend("bottomright", legend = c("uncensored", 
-        paste0("censored at ", round(cens$optimal_threshold, 1), "mm")), 
+legend("bottomright", legend = c("uncensored",
+        paste0("censored at ", round(cens$optimal_threshold, 1), "mm")),
         col = c("black", "red"), lty = c(1, 1))
 
 ```

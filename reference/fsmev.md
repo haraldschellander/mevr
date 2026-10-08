@@ -15,7 +15,8 @@ fsmev(
   warn = TRUE,
   sd = FALSE,
   sd.method = "boot",
-  R = 502
+  R = 502,
+  left_cens = 0
 )
 ```
 
@@ -77,6 +78,15 @@ fsmev(
   The number of samples drawn from the SMEV distribution to calculate
   the confidence intervals with `sd.method='boot'`
 
+- left_cens:
+
+  A single numeric in \[0, 1) giving the fraction of the smallest
+  ordinary events that is left-censored for the estimation of c and w
+  (see details). The default `left_cens = 0` uses the complete sample.
+  Values around 0.9 are common for sub-daily rainfall. Cannot be
+  combined with `censor = TRUE`, which selects the censoring quantile
+  with a Weibull tail test.
+
 ## Value
 
 A list of class `mevr` with components:
@@ -131,6 +141,10 @@ A list of class `mevr` with components:
 
   `TRUE` when the data-series was left-censored and `FALSE` otherwise.
 
+- left_cens:
+
+  The fixed left-censoring quantile used for the estimation of c and w.
+
 - type:
 
   The type of distribution ("SMEV")
@@ -157,6 +171,26 @@ is the default.
 Confidence intervals of the SMEV distribution can be calculated using a
 non parametric bootstrap technique. Note that this very slow.
 
+The estimators above assume that all ordinary events are Weibull
+distributed. This is usually acceptable for daily rainfall, but not for
+sub-daily durations, where the lower part of the sample is affected by
+the gauge resolution and by weak events that do not share the tail of
+the intense ones. Fitted to the complete sample, the shape parameter is
+then overestimated and return levels are strongly underestimated.
+Following Marra et al. (2019, 2020) the Weibull distribution can be
+fitted to the tail only by left-censoring: with `left_cens = 0.9` the
+smallest 90 percent of the ordinary events are censored, i.e. their
+magnitudes are ignored but they keep their non-exceedance probability,
+and `n` is still the mean number of all ordinary events per year. With
+`method = 'ls'` this is the least squares regression in
+Weibull-transformed coordinates used by Marra et al. (2020),
+`method = 'mle'` maximizes the likelihood of the left-censored sample
+and `method = 'pwm'` uses partial probability weighted moments (Wang,
+1990). For sub-daily data, ordinary events should be defined with
+[`event_separation`](https://haraldschellander.github.io/mevr/reference/event_separation.md)
+and
+[`ordinary_events`](https://haraldschellander.github.io/mevr/reference/ordinary_events.md).
+
 This function returns the parameters of the fitted SMEV distribution as
 well as some additional fitting results and input parameters useful for
 further analysis.
@@ -167,6 +201,14 @@ Marra, F. et al. (2019) 'A simplified MEV formulation to model extremes
 emerging from multiple nonstationary underlying processes', Advances in
 Water Resources. Elsevier Ltd, 127(April), pp. 280-290. doi:
 10.1016/j.advwatres.2019.04.002.
+
+Marra, F. et al. (2020) 'A unified framework for extreme subdaily
+precipitation frequency analyses based on ordinary events', Geophysical
+Research Letters, 47, e2020GL090209. doi: 10.1029/2020GL090209.
+
+Wang, Q. J. (1990) 'Estimation of the GEV distribution from censored
+samples by method of partial probability weighted moments', Journal of
+Hydrology, 120, pp. 103-114.
 
 ## See also
 
@@ -203,6 +245,30 @@ fit
 #> [1]  0
 plot(fit)
 
+
+# estimate c and w from the largest 25 percent of the ordinary events only
+fit_lc <- fsmev(dailyrainfall, left_cens = 0.75)
+fit_lc
+#> MEVD fitting
+#> 
+#> Type: SMEV
+#> Estimator: pwm
+#> 
+#> Parameters:
+#> Scale C:
+#> [1]  91.79
+#> 
+#> Shape w:
+#> [1]  0.8842
+#> 
+#> Mean number of wet events n:
+#> [1]  179.2
+#> 
+#> Threshold:
+#> [1]  0
+#> 
+#> Left-censoring quantile:
+#> [1]  0.75
 
 # left censor data prior to fitting
 set.seed(123)

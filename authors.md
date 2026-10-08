@@ -15,13 +15,13 @@
 ## Citation
 
 Schellander H (2026). *mevr: Fitting the Metastatistical Extreme Value
-Distribution MEVD*. R package version 1.2.3,
+Distribution MEVD*. R package version 1.3.0,
 <https://haraldschellander.github.io/mevr/>.
 
     @Manual{,
       title = {mevr: Fitting the Metastatistical Extreme Value Distribution MEVD},
       author = {Harald Schellander},
       year = {2026},
-      note = {R package version 1.2.3},
+      note = {R package version 1.3.0},
       url = {https://haraldschellander.github.io/mevr/},
     }

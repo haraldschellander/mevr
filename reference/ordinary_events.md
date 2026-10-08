@@ -36,7 +36,9 @@ ordinary_events(x, duration, na.rm = TRUE)
 
 - na.rm:
 
-  Logical. Removes lines with NA values from `x` when `na.rm = TRUE`.
+  Logical. If `na.rm = TRUE` (default), missing values within an event
+  are ignored in the rolling sum. If `na.rm = FALSE`, windows that
+  contain missing values are not considered for the event maximum.
 
 ## Value
 

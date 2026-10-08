@@ -12,7 +12,8 @@ fmev(
   method = c("pwm", "mle", "ls"),
   censor = FALSE,
   censor_opts = list(),
-  warn = TRUE
+  warn = TRUE,
+  left_cens = 0
 )
 ```
 
@@ -57,6 +58,19 @@ fmev(
 - warn:
 
   If `TRUE` which is the default, warnings about censoring are given.
+
+- left_cens:
+
+  A single numeric in \[0, 1) giving the fraction of the smallest
+  ordinary events of each year that is left-censored for the estimation
+  of c and w (see
+  [`fsmev`](https://haraldschellander.github.io/mevr/reference/fsmev.md)).
+  The default `left_cens = 0` uses the complete sample. Note that only
+  `(1 - left_cens) * n` values per year remain for the estimation, so
+  that
+  [`fsmev`](https://haraldschellander.github.io/mevr/reference/fsmev.md)
+  is usually the better choice for left-censored fits. Cannot be
+  combined with `censor = TRUE`.
 
 ## Value
 

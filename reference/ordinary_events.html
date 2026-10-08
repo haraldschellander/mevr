@@ -13,7 +13,7 @@ detecting significant events based on aggregated values over time."></head><body
 
     <a class="navbar-brand me-2" href="../index.html">mevr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,7 +70,9 @@ output of function <code><a href="event_separation.html">event_separation</a></c
 
 
 <dt id="arg-na-rm">na.rm<a class="anchor" aria-label="anchor" href="#arg-na-rm"></a></dt>
-<dd><p>Logical. Removes lines with NA values from <code>x</code> when <code>na.rm = TRUE</code>.</p></dd>
+<dd><p>Logical. If <code>na.rm = TRUE</code> (default), missing values within an event are
+ignored in the rolling sum. If <code>na.rm = FALSE</code>, windows that contain missing values
+are not considered for the event maximum.</p></dd>
 
 </dl></div>
     <div class="section level2">

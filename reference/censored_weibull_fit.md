@@ -19,7 +19,7 @@ censored_weibull_fit(x, thresholds, warn)
 
 - thresholds:
 
-  A numeric or vector of quantiles which shal be tested as optimal
+  A numeric or vector of quantiles which shall be tested as optimal
   threshold for left-censoring.
 
 - warn:

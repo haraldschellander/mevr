@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mevr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,7 +43,8 @@
 <span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pwm"</span>, <span class="st">"mle"</span>, <span class="st">"ls"</span><span class="op">)</span>,</span>
 <span>  censor <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  censor_opts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  warn <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  warn <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  left_cens <span class="op">=</span> <span class="fl">0</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -83,6 +84,15 @@ used for the test statistics, respectively. See also <code><a href="weibull_tail
 
 <dt id="arg-warn">warn<a class="anchor" aria-label="anchor" href="#arg-warn"></a></dt>
 <dd><p>If <code>TRUE</code> which is the default, warnings about censoring are given.</p></dd>
+
+
+<dt id="arg-left-cens">left_cens<a class="anchor" aria-label="anchor" href="#arg-left-cens"></a></dt>
+<dd><p>A single numeric in [0, 1) giving the fraction of the smallest ordinary events
+of each year that is left-censored for the estimation of c and w (see <code><a href="fsmev.html">fsmev</a></code>).
+The default <code>left_cens = 0</code> uses the complete sample. Note that only
+<code>(1 - left_cens) * n</code> values per year remain for the estimation, so that
+<code><a href="fsmev.html">fsmev</a></code> is usually the better choice for left-censored fits.
+Cannot be combined with <code>censor = TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

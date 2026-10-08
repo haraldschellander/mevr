@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mevr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +46,8 @@
 <span>  warn <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  sd <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  sd.method <span class="op">=</span> <span class="st">"boot"</span>,</span>
-<span>  R <span class="op">=</span> <span class="fl">502</span></span>
+<span>  R <span class="op">=</span> <span class="fl">502</span>,</span>
+<span>  left_cens <span class="op">=</span> <span class="fl">0</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -99,6 +100,13 @@ used for the test statistics, respectively. See also <code><a href="weibull_tail
 <dt id="arg-r">R<a class="anchor" aria-label="anchor" href="#arg-r"></a></dt>
 <dd><p>The number of samples drawn from the SMEV distribution to calculate the confidence intervals with <code>sd.method='boot'</code></p></dd>
 
+
+<dt id="arg-left-cens">left_cens<a class="anchor" aria-label="anchor" href="#arg-left-cens"></a></dt>
+<dd><p>A single numeric in [0, 1) giving the fraction of the smallest ordinary events
+that is left-censored for the estimation of c and w (see details). The default <code>left_cens = 0</code>
+uses the complete sample. Values around 0.9 are common for sub-daily rainfall.
+Cannot be combined with <code>censor = TRUE</code>, which selects the censoring quantile with a Weibull tail test.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -139,6 +147,9 @@ used for the test statistics, respectively. See also <code><a href="weibull_tail
 <dt>censor</dt>
 <dd><p><code>TRUE</code> when the data-series was left-censored and <code>FALSE</code> otherwise.</p></dd>
 
+<dt>left_cens</dt>
+<dd><p>The fixed left-censoring quantile used for the estimation of c and w.</p></dd>
+
 <dt>type</dt>
 <dd><p>The type of distribution ("SMEV")</p></dd>
 
@@ -161,12 +172,28 @@ maximum likelihood for the estimation of the Weibull parameters w and C. Therefo
 <code>method = 'pwm'</code> is the default.</p>
 <p>Confidence intervals of the SMEV distribution can be calculated using a non parametric
 bootstrap technique. Note that this very slow.</p>
+<p>The estimators above assume that all ordinary events are Weibull distributed. This is
+usually acceptable for daily rainfall, but not for sub-daily durations, where the
+lower part of the sample is affected by the gauge resolution and by weak events that
+do not share the tail of the intense ones. Fitted to the complete sample, the shape
+parameter is then overestimated and return levels are strongly underestimated.
+Following Marra et al. (2019, 2020) the Weibull distribution can be fitted to the
+tail only by left-censoring: with <code>left_cens = 0.9</code> the smallest 90 percent of the
+ordinary events are censored, i.e. their magnitudes are ignored but they keep their
+non-exceedance probability, and <code>n</code> is still the mean number of all ordinary
+events per year. With <code>method = 'ls'</code> this is the least squares regression in
+Weibull-transformed coordinates used by Marra et al. (2020), <code>method = 'mle'</code>
+maximizes the likelihood of the left-censored sample and <code>method = 'pwm'</code> uses
+partial probability weighted moments (Wang, 1990). For sub-daily data, ordinary events
+should be defined with <code><a href="event_separation.html">event_separation</a></code> and <code><a href="ordinary_events.html">ordinary_events</a></code>.</p>
 <p>This function returns the parameters of the fitted SMEV distribution as well as some
 additional fitting results and input parameters useful for further analysis.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Marra, F. et al. (2019) 'A simplified MEV formulation to model extremes emerging from multiple nonstationary underlying processes', Advances in Water Resources. Elsevier Ltd, 127(April), pp. 280-290. doi: 10.1016/j.advwatres.2019.04.002.</p>
+<p>Marra, F. et al. (2020) 'A unified framework for extreme subdaily precipitation frequency analyses based on ordinary events', Geophysical Research Letters, 47, e2020GL090209. doi: 10.1029/2020GL090209.</p>
+<p>Wang, Q. J. (1990) 'Estimation of the GEV distribution from censored samples by method of partial probability weighted moments', Journal of Hydrology, 120, pp. 103-114.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -202,6 +229,30 @@ additional fitting results and input parameters useful for further analysis.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1]  0</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="fsmev-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># estimate c and w from the largest 25 percent of the ordinary events only</span></span></span>
+<span class="r-in"><span><span class="va">fit_lc</span> <span class="op">&lt;-</span> <span class="fu">fsmev</span><span class="op">(</span><span class="va">dailyrainfall</span>, left_cens <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fit_lc</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> MEVD fitting</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Type: SMEV</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimator: pwm</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Parameters:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Scale C:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  91.79</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Shape w:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  0.8842</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Mean number of wet events n:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  179.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Threshold:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Left-censoring quantile:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  0.75</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># left censor data prior to fitting</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span></span>
