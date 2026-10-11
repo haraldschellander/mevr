@@ -24,11 +24,13 @@ fsmev(
 
 - data:
 
-  The data to which the SMEV should be fitted to. `data` must be a
-  data.frame with two columns. The first column must contain dates of
+  The data to which the SMEV should be fitted to. `data` must be either
+  a data.frame with two columns. The first column must contain dates of
   class `Date`, the second or last column must contain the rainfall
   values corresponding to datums in the rows. No negative values are
-  allowed. NA values are removed with a warning.
+  allowed. NA values are removed with a warning. `data` can also be a
+  numeric vector of rainfall values. Internally a date column beginning
+  at '1970-01-01' is added, assuming daily data.
 
 - threshold:
 
