@@ -1,3 +1,12 @@
+mevr 1.3.1 (release date: 2026-10-08)
+=========================================
+
+Changes:
+
+* The data argument in fsmev now also accepts a vector.  
+* The set of independent storm events identified via event_separation now remains invariant across durations.
+
+
 mevr 1.3.0 (release date: 2026-10-08)
 =========================================
 

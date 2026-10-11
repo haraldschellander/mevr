@@ -22,43 +22,57 @@ export(weibull_tail_test)
 import(dplyr)
 import(rlang)
 importFrom(EnvStats,eweibull)
-importFrom(bamlss,bamlss)
-importFrom(bamlss,bamlss.frame)
-importFrom(bamlss,opt_bfit)
-importFrom(bamlss,results.bamlss.default)
-importFrom(bamlss,samplestats)
-importFrom(bamlss,weibull_bamlss)
+importFrom(bamlss,
+  bamlss,
+  bamlss.frame,
+  opt_bfit,
+  results.bamlss.default,
+  samplestats,
+  weibull_bamlss
+)
 importFrom(data.table,frollsum)
 importFrom(doParallel,registerDoParallel)
-importFrom(foreach,"%dopar%")
-importFrom(foreach,foreach)
-importFrom(graphics,abline)
-importFrom(graphics,hist)
-importFrom(graphics,legend)
-importFrom(graphics,lines)
-importFrom(graphics,par)
-importFrom(graphics,points)
-importFrom(graphics,title)
-importFrom(mgcv,s)
-importFrom(mgcv,ti)
-importFrom(mmand,dilate)
-importFrom(mmand,erode)
-importFrom(parallel,detectCores)
-importFrom(parallel,makeCluster)
-importFrom(parallel,stopCluster)
-importFrom(stats,aggregate)
-importFrom(stats,coef)
-importFrom(stats,cov)
-importFrom(stats,density)
-importFrom(stats,dweibull)
-importFrom(stats,lm)
-importFrom(stats,na.omit)
-importFrom(stats,predict)
-importFrom(stats,pweibull)
-importFrom(stats,quantile)
-importFrom(stats,qweibull)
-importFrom(stats,runif)
-importFrom(stats,rweibull)
-importFrom(stats,sd)
-importFrom(stats,uniroot)
+importFrom(foreach,
+  "%dopar%",
+  foreach
+)
+importFrom(graphics,
+  abline,
+  hist,
+  legend,
+  lines,
+  par,
+  points,
+  title
+)
+importFrom(mgcv,
+  s,
+  ti
+)
+importFrom(mmand,
+  dilate,
+  erode
+)
+importFrom(parallel,
+  detectCores,
+  makeCluster,
+  stopCluster
+)
+importFrom(stats,
+  aggregate,
+  coef,
+  cov,
+  density,
+  dweibull,
+  lm,
+  na.omit,
+  predict,
+  pweibull,
+  quantile,
+  qweibull,
+  runif,
+  rweibull,
+  sd,
+  uniroot
+)
 importFrom(utils,modifyList)

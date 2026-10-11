@@ -73,3 +73,49 @@ test_that("ordinary_events returns correct timestamp for maximum rolling sum", {
   # Check if the v_date in the result is a valid POSIXt type
   expect_true(inherits(result$v_date, "POSIXt"))
 })
+
+
+test_that("ordinary_events handles events shorter than duration correctly and preserves n", {
+  # Setup mock high-resolution time-series data with a very short event (e.g., 20 minutes)
+  mock_times <- seq.POSIXt(
+    as.POSIXct("2020-01-01 00:00:00", tz = "UTC"),
+    by = "10 min",
+    length.out = 150
+  )
+  
+  # Create a short rainfall event of 20 min (2 time steps of 10 min) and a longer one
+  mock_vals <- rep(0, 150)
+  mock_vals[10:11] <- c(1.5, 2.0)  # Short event: 20 minutes total duration
+  mock_vals[50:80] <- runif(31, 0.5, 3.0) # Longer event: over 5 hours
+  
+  mock_data <- data.frame(
+    groupvar = mock_times,
+    val = mock_vals
+  )
+  
+  # Step 1: Run event separation (with short duration tolerance)
+  sep_res <- event_separation(
+    mock_data,
+    separation_period = 180, 
+    time_resolution = 10, 
+    ignore_event_duration = 10, # allow short events
+    min_rain = 0.1
+  )
+  
+  # Step 2: Extract ordinary events at a short duration (e.g., 10 minutes)
+  events_short <- ordinary_events(sep_res, duration = 10)
+  
+  # Step 3: Extract ordinary events at a long duration (e.g., 120 minutes / 2 hours)
+  # The short event (20 min) should NOT be dropped; its sum should be captured.
+  events_long <- ordinary_events(sep_res, duration = 120)
+  
+  # Assertions
+  # The number of detected storms should stay constant across different aggregation durations
+  expect_equal(nrow(events_short), nrow(events_long))
+  expect_equal(nrow(events_long), 2) # Both the short and long events must be present
+  
+  # Verify that the short event's aggregated value at long duration equals its total volume
+  short_event_idx <- 1
+  expected_short_sum <- sum(mock_vals[sep_res$fromto$from[1]:sep_res$fromto$to[1]])
+  expect_equal(events_long$val[short_event_idx], expected_short_sum)
+})

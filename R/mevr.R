@@ -89,9 +89,11 @@ NULL
 #' This function returns the parameters of the fitted SMEV distribution as well as some
 #' additional fitting results and input parameters useful for further analysis.
 #'
-#' @param data The data to which the SMEV should be fitted to. \code{data} must be a data.frame with two columns.
+#' @param data The data to which the SMEV should be fitted to. \code{data} must be either a data.frame with two columns.
 #' The first column must contain dates of class \code{Date}, the second or last column must contain the rainfall
-#' values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning.
+#' values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning. 
+#' \code{data} can also be a numeric vector of rainfall values. Internally a date column beginning at '1970-01-01' is added, 
+#' assuming daily data.
 #' @param threshold A numeric that is used to define wet days as values > threshold.
 #' \eqn{data <= threshold} is set to NA.
 #' @param method Character string describing the method that is used to estimate the
@@ -209,7 +211,10 @@ fsmev <- function(
     colnames(data) <- c("groupvar", "val")
   } else {
     vec <- TRUE
-    data <- data.frame(val = data)
+    data <- data.frame(
+      groupvar = seq.Date(from = as.Date("1970-01-01"), by = "day", length.out = length(data)),
+      val = as.numeric(data)
+    )
   }
 
   if (!inherits(data$groupvar, c("Date", "POSIXct"))) {
@@ -1502,7 +1507,7 @@ ci.mev <- function(
         nd <- x$data |>
           #filter(year(.data$groupvar) %in% sampleyears) |>
           filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) |>
-          dplyr::select(.data$groupvar, .data$val)
+          dplyr::select(all_of(c("groupvar", "val")))
         fitdf <- mevr::fmev(
           nd,
           threshold = x$threshold,
@@ -1578,7 +1583,7 @@ ci.tmev <- function(
         sampleyears <- sample(x$years, size = subsize)
         nd <- x$data |>
           filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) |>
-          dplyr::select(.data$groupvar, .data$val)
+          dplyr::select(all_of(c("groupvar", "val")))
         fitdf <- ftmev(nd, minyears = minyears)
         qtmev(1 - 1 / return.periods, fitdf$data)
       }
@@ -1728,7 +1733,7 @@ ci.smev <- function(
         sampleyears <- sample(x$years, size = subsize)
         nd <- x$data |>
           filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) |>
-          dplyr::select(.data$groupvar, .data$val)
+          dplyr::select(all_of(c("groupvar", "val")))
         fitdf <- mevr::fsmev(
           nd,
           threshold = x$threshold,
@@ -2469,16 +2474,29 @@ ordinary_events <- function(x, duration, na.rm = TRUE) {
   res <- lapply(1:nrow(x$fromto), function(i) {
     from <- x$fromto$from[i]
     to <- x$fromto$to[i]
-    if (length(data$val[from:to]) < dur_steps) {
-      NULL
+    event_vals <- data$val[from:to]
+
+    #if (length(data$val[from:to]) < dur_steps) {
+    if (length(event_vals) < dur_steps) {
+      #NULL
+      # Event is shorter than the requested duration.
+      # Its maximum d-aggregation is the total sum of the event.
+      if (na.rm && all(is.na(event_vals))) {
+        NULL
+      } else {
+        max_val <- sum(event_vals, na.rm = na.rm)
+        max_date <- data$groupvar[from]
+        tibble(v_date = max_date, val = max_val)
+      }
     } else {
       sums <- data.table::frollsum(
-        data$val[from:to],
+        #data$val[from:to],
+        event_vals,
         n = dur_steps,
         na.rm = na.rm,
         algo = "fast",
         align = "right",
-        hasNA = TRUE
+        has.nf = TRUE
       )
       if (length(which(is.na(sums))) > 2 / 3 * length(sums)) {
         NULL

@@ -106,7 +106,7 @@ test_that("return.levels.mev", {
       data <- sample_data %>%
         filter(val >= 0 & !is.na(val))
       fit <- fmev(data)
-      result <- return.levels.mev(fit, ci = TRUE, alpha = 0.2, R = 10)
+      result <- return.levels.mev(fit, ci = TRUE, alpha = 0.2, R = 10, ncores = 2)
       # Check if the result has the expected structure
       expect_true("rl" %in% names(result))
       expect_true("ci" %in% names(result))
@@ -128,7 +128,7 @@ test_that("return.levels.mev", {
       data <- sample_data %>%
         filter(val >= 0 & !is.na(val))
       fit <- ftmev(data, minyears = 7)
-      result <- return.levels.mev(fit, ci = TRUE, alpha = 0.2, R = 10)
+      result <- return.levels.mev(fit, ci = TRUE, alpha = 0.2, R = 10, ncores = 2)
       # Check if the result has the expected structure
       expect_true("rl" %in% names(result))
       expect_true("ci" %in% names(result))
