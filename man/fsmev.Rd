@@ -20,8 +20,8 @@ fsmev(
 \arguments{
 \item{data}{The data to which the SMEV should be fitted to. \code{data} must be either a data.frame with two columns.
 The first column must contain dates of class \code{Date}, the second or last column must contain the rainfall
-values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning. 
-\code{data} can also be a numeric vector of rainfall values. Internally a date column beginning at '1970-01-01' is added, 
+values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning.
+\code{data} can also be a numeric vector of rainfall values. Internally a date column beginning at '1970-01-01' is added,
 assuming daily data.}
 
 \item{threshold}{A numeric that is used to define wet days as values > threshold.

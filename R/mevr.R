@@ -91,8 +91,8 @@ NULL
 #'
 #' @param data The data to which the SMEV should be fitted to. \code{data} must be either a data.frame with two columns.
 #' The first column must contain dates of class \code{Date}, the second or last column must contain the rainfall
-#' values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning. 
-#' \code{data} can also be a numeric vector of rainfall values. Internally a date column beginning at '1970-01-01' is added, 
+#' values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning.
+#' \code{data} can also be a numeric vector of rainfall values. Internally a date column beginning at '1970-01-01' is added,
 #' assuming daily data.
 #' @param threshold A numeric that is used to define wet days as values > threshold.
 #' \eqn{data <= threshold} is set to NA.
@@ -212,7 +212,11 @@ fsmev <- function(
   } else {
     vec <- TRUE
     data <- data.frame(
-      groupvar = seq.Date(from = as.Date("1970-01-01"), by = "day", length.out = length(data)),
+      groupvar = seq.Date(
+        from = as.Date("1970-01-01"),
+        by = "day",
+        length.out = length(data)
+      ),
       val = as.numeric(data)
     )
   }
@@ -1508,7 +1512,7 @@ ci.mev <- function(
           #filter(year(.data$groupvar) %in% sampleyears) |>
           filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) |>
           dplyr::select(all_of(c("groupvar", "val")))
-        fitdf <- mevr::fmev(
+        fitdf <- fmev(
           nd,
           threshold = x$threshold,
           method = x$method,
@@ -1734,7 +1738,7 @@ ci.smev <- function(
         nd <- x$data |>
           filter(as.numeric(format(.data$groupvar, "%Y")) %in% sampleyears) |>
           dplyr::select(all_of(c("groupvar", "val")))
-        fitdf <- mevr::fsmev(
+        fitdf <- fsmev(
           nd,
           threshold = x$threshold,
           method = x$method,
