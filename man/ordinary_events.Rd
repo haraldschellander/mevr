@@ -2,8 +2,8 @@
 % Please edit documentation in R/mevr.R
 \name{ordinary_events}
 \alias{ordinary_events}
-\title{Identifies ordinary rainfall events by calculating the maximum within rainfall events
-defined with \code{\link{event_separation}}}
+\title{Identifies ordinary rainfall events by calculating the maximum within
+rainfall events defined with \code{\link{event_separation}}}
 \usage{
 ordinary_events(x, duration, na.rm = TRUE)
 }
@@ -20,15 +20,17 @@ output of function \code{\link{event_separation}}):
     representing the start and end indices of the time intervals to analyze.
   }}
 
-\item{duration}{Numeric. The duration in minutes for which maxima shall be calculated.}
+\item{duration}{Numeric. The duration in minutes for which maxima shall
+be calculated.}
 
-\item{na.rm}{Logical. If \code{na.rm = TRUE} (default), missing values within an event are
-ignored in the rolling sum. If \code{na.rm = FALSE}, windows that contain missing values
-are not considered for the event maximum.}
+\item{na.rm}{Logical. If \code{na.rm = TRUE} (default), missing values
+within an event are ignored in the rolling sum. If \code{na.rm = FALSE},
+windows that contain missing values are not considered for the event maximum.}
 }
 \value{
 Returns a tibble with individual rainfall events that can be
-used as input for functions \code{\link{fsmev}}, \code{\link{fmev}}, \code{\link{ftmev}}.
+used as input for functions
+\code{\link{fsmev}}, \code{\link{fmev}}, \code{\link{ftmev}}.
 }
 \description{
 This function calculates the rolling sum of values in the

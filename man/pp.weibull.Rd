@@ -10,7 +10,8 @@ pp.weibull(x)
 \item{x}{Numeric vector of block maxima}
 }
 \value{
-A numeric vector of Weibull plotting positions corresponding to the given maxima \code{x}
+A numeric vector of Weibull plotting positions
+corresponding to the given maxima \code{x}
 }
 \description{
 Calculates the Weibull plotting position for the given maxima
@@ -20,6 +21,10 @@ data(dailyrainfall)
 fit <- fsmev(dailyrainfall)
 rp <- pp.weibull(fit$maxima)
 rl <- return.levels.mev(fit, return.periods = rp)
-plot(rp, sort(fit$maxima), xlab = "Return period (years)", ylab = "Return level", main = fit$type)
+plot(rp,
+     sort(fit$maxima),
+     xlab = "Return period (years)",
+     ylab = "Return level",
+     main = fit$type)
 lines(rp, rl$rl)
 }

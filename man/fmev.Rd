@@ -15,83 +15,116 @@ fmev(
 )
 }
 \arguments{
-\item{data}{The data to which the MEVD should be fitted to. \code{data} must be a data.frame with two columns.
-The first column must contain dates of class  \code{Date}, the second or last column must contain the rainfall
-values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning.}
+\item{data}{A data frame with two columns.
+The first column must contain dates of class
+\code{Date}, and the last must contain
+rainfall values. Negative values are disallowed,
+and NA values are removed with a warning.}
 
-\item{threshold}{A numeric that is used to define wet days as values > threshold.
-\eqn{data <= threshold} is set to NA.}
+\item{threshold}{Numeric threshold defining
+wet days. Values below or equal to the
+threshold are set to NA.}
 
-\item{method}{Character string describing the method that is used to estimate the
-Weibull parameters c and w. Possible options are probability weighted moments (\code{method='pwm'}),
-maximum likelihood (\code{method='mle'}) or least squares (\code{method='ls'}).
-The \code{default} is \code{pwm}. (see details).}
+\item{method}{Character string for estimating
+Weibull parameters \code{c} and \code{w}.
+Options are probability weighted moments
+(\code{"pwm"}), maximum likelihood
+(\code{"mle"}), or least squares
+(\code{"ls"}). Default is \code{"pwm"}
+(see details).}
 
-\item{censor}{If \code{censor=TRUE}, the data series will be left-censored to assure that the observed maxima
-are samples from a weibull tail. Defaults to \code{censor=FALSE}.}
+\item{censor}{Logical. If \code{TRUE}, data
+is left-censored to ensure maxima follow
+a Weibull tail. Default is \code{FALSE}.}
 
-\item{censor_opts}{An empty list which can be populated with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}.
-They give the range of quantiles used as left-censoring threshold, the month with which the block starts,
-the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples
-used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.}
+\item{censor_opts}{A list of censoring options:
+\itemize{
+  \item \code{thresholds}: range of quantiles.
+  \item \code{mon}: start month of the block.
+  \item \code{nrtrials}: number of trials.
+  \item \code{R}: number of synthetic samples.
+}
+See \code{\link{weibull_tail_test}}.}
 
-\item{warn}{If \code{TRUE} which is the default, warnings about censoring are given.}
+\item{warn}{Logical. If \code{TRUE} (default),
+censoring warnings are displayed.}
 
-\item{left_cens}{A single numeric in [0, 1) giving the fraction of the smallest ordinary events
-of each year that is left-censored for the estimation of c and w (see \code{\link{fsmev}}).
-The default \code{left_cens = 0} uses the complete sample. Note that only
-\code{(1 - left_cens) * n} values per year remain for the estimation, so that
-\code{\link{fsmev}} is usually the better choice for left-censored fits.
-Cannot be combined with \code{censor = TRUE}.}
+\item{left_cens}{Numeric in [0, 1).
+Fraction of smallest ordinary events
+left-censored (see details). Default
+is \code{0}. Cannot be combined with
+\code{censor = TRUE}.}
 }
 \value{
-A list of class \code{mevr} with the fitted Weibull parameters and other helpful ingredients.
-\item{c}{ vector of Weibull scale parameters of the MEVD, each component refers to one year.}
-\item{w}{ vector of Weibull shape parameters of the MEVD, each component refers to one year.}
-\item{n}{ Number of wet events per year. Wet events are defined as rainfall > \code{threshold}.}
-\item{params}{ A named vector of the fitted parameters. }
-\item{maxima}{ Maximum values corresponding to each year.}
-\item{data}{ \eqn{data >= threshold} used to fit the MEVD and additional components which may be useful for further analysis.}
-\item{years}{ Vector of years as YYYY.}
-\item{threshold}{ The chosen threshold.}
-\item{method}{ Method used to fit the MEVD.}
-\item{type}{ The type of distribution ("MEVD")}
+A list of class \code{mevr} with components:
+\describe{
+  \item{\code{c}}{Vector of Weibull scale parameters of the MEVD,
+    where each component refers to one year.}
+  \item{\code{w}}{Vector of Weibull shape parameters of the MEVD,
+    where each component refers to one year.}
+  \item{\code{n}}{Number of wet events per year. Wet events are defined
+    as rainfall > \code{threshold}.}
+  \item{\code{params}}{A named vector of the fitted parameters.}
+  \item{\code{maxima}}{Maximum values corresponding to each year.}
+  \item{\code{data}}{Filtered data used to fit the MEVD along with
+    additional components useful for further analysis.}
+  \item{\code{years}}{Vector of years as YYYY.}
+  \item{\code{threshold}}{The chosen threshold.}
+  \item{\code{method}}{Method used to fit the MEVD.}
+  \item{\code{type}}{The type of distribution ("MEVD").}
+}
 }
 \description{
-Fit the MEVD distribution to rainfall observations with different estimation methods.
+Fit the MEVD distribution to rainfall observations with different
+estimation methods.
 }
 \details{
-With the aim of weakening the requirement of an asymptotic assumption for the GEV distribution,
-a metastatistical approach was proposed by Marani and Ignaccolo (2015). The MEVD is defined
-in terms of the distribution of the statistical parameters describing "ordinary" daily rainfall
-occurrence and intensity. The MEVD accounts for the random process of event occurrence in each
-block and the possibly changing probability distribution of event magnitudes across different blocks,
-by recognizing the number of events in each block, n, and the values of the shape and scale
-parameters w and C of the parent Weibull distribution to be realisations of stochastic variables.
+With the aim of weakening the requirement of an asymptotic assumption
+for the GEV distribution, a metastatistical approach was proposed by
+Marani and Ignaccolo (2015). The MEVD is defined in terms of the
+distribution of the statistical parameters describing "ordinary"
+daily rainfall occurrence and intensity. The MEVD accounts for
+the random process of event occurrence in each block and the possibly
+changing probability distribution of event magnitudes across different
+blocks, by recognizing the number of events in each block, n, and the
+values of the shape and scale parameters w and C of the parent Weibull
+distribution to be realisations of stochastic variables.
 The MEVD can then be written as
 
-\deqn{F = \frac{1}{T} \sum_{j=1}^T \prod_{k \in A_j} \left( 1-e^{-\left(\frac{x}{C(j,k)}\right)^{w(j,k)}} \right)}
+\deqn{\begin{aligned}
+F = \frac{1}{T} \sum_{j=1}^T \prod_{k \in A_j}
+&\left( 1 - \exp\left( -\left(\frac{x}{C(j,k)}\right)^{w(j,k)} \right) \right)
+\end{aligned}}
 
-for \eqn{w > 0} and \eqn{C > 0}. With T fully recorded years, yearly C and w can be estimated
-by fitting a Weibull distribution to the values x of this year, and n is the number of ordinary
+for \eqn{w > 0} and \eqn{C > 0}.
+With T fully recorded years,
+yearly C and w can be estimated by fitting a Weibull distribution
+to the values x of this year, and n is the number of ordinary
 events per year, i.e. all rainfall events larger than a threshold.
 
-If the probability distribution of daily rainfall is assumed to be time-invariant, the MEVD can be simplified to
+If the probability distribution of daily rainfall is assumed to be
+time-invariant, the MEVD can be simplified to
 
 \deqn{F = [1 - exp(-x/C)^w]^n}
 
-with single values for the shape and scale parameters w and C. n is then the mean number of wet
-days at this location (Marra et al., 2019; Schellander et al., 2019).
+with single values for the shape and scale parameters w and C.
+n is then the mean number of wet days at this location
+(Marra et al., 2019; Schellander et al., 2019).
 
-As is shown e.g. Schellander et al., 2019, probability weighted moments should be preferred
-over maximum likelihood for the estimation of the Weibull parameters w and C.
-Therefore \code{method = 'pwm'} is the default.
+As is shown e.g. Schellander et al., 2019, probability weighted moments
+should be preferred over maximum likelihood for the estimation of
+the Weibull parameters w and C.
+Therefore \code{method = 'pwm'}
+is the default.
 
-The MEVD can also be used for sub-daily precipitation (Marra et al., 2019).
-In that case n has to be adapted accordingly to the 'mean number of wet events' per year.
+The MEVD can also be used for sub-daily precipitation
+(Marra et al., 2019).
+In that case n has to be adapted accordingly to the 'mean number
+of wet events' per year.
 
-This function returns the parameters of the fitted MEVD distribution as well as some
-additional fitting results and input parameters useful for further analysis.
+This function returns the parameters of the fitted MEVD distribution
+as well as some additional fitting results and input parameters useful
+for further analysis.
 }
 \examples{
 data(dailyrainfall)
@@ -101,9 +134,17 @@ plot(fit)
 
 }
 \references{
-Marani, M. and Ignaccolo, M. (2015) 'A metastatistical approach to rainfall extremes', Advances in Water Resources. Elsevier Ltd, 79(Supplement C), pp. 121-126. doi: 10.1016/j.advwatres.2015.03.001.
+Marani, M. and Ignaccolo, M. (2015)
+'A metastatistical
+approach to rainfall extremes', Advances in Water Resources.
+Elsevier Ltd, 79(Supplement C), pp. 121-126.
+\doi{10.1016/j.advwatres.2015.03.001}.
 
-Schellander, H., Lieb, A. and Hell, T. (2019) 'Error Structure of Metastatistical and Generalized Extreme Value Distributions for Modeling Extreme Rainfall in Austria', Earth and Space Science, 6, pp. 1616-1632. doi: 10.1029/2019ea000557.
+Schellander, H., Lieb, A. and Hell, T. (2019)
+'Error Structure of Metastatistical and Generalized Extreme
+Value Distributions for Modeling Extreme Rainfall in Austria',
+Earth and Space Science, 6, pp. 1616-1632.
+\doi{10.1029/2019ea000557}.
 }
 \seealso{
 \code{\link{fsmev}}, \code{\link{ftmev}}

@@ -15,17 +15,20 @@ qtmev(p, data)
 \arguments{
 \item{x, q}{Numeric vector or single value of probabilities for \code{dtmev}.}
 
-\item{data}{A data frame with at least columns \code{c}, \code{w} and \code{year}.
-Can be taken from the output of the fitted TMEV object, i.e. \code{x$data} (see \code{\link{ftmev}}).}
+\item{data}{A data frame with at least columns \code{c}, \code{w}
+and \code{year}. Can be taken from the output of the fitted
+TMEV object, i.e. \code{x$data} (see \code{\link{ftmev}}).}
 
 \item{p}{Numeric vector or single value of probabilities for \code{qtmev}.}
 }
 \value{
-\code{dtmev} gives the density function, \code{ptmev} gives the distribution function,
-and \code{qtmev} gives the quantile function of the TMEV.
+\code{dtmev} gives the density function, \code{ptmev} gives
+the distribution function, and \code{qtmev} gives the quantile function
+of the TMEV.
 }
 \description{
-Quantile function for the TMEV distribution with a Weibull parent distribution.
+Quantile function for the TMEV distribution with a Weibull parent
+distribution.
 }
 \section{Functions}{
 \itemize{
@@ -39,7 +42,11 @@ data(dailyrainfall)
 fit <- ftmev(dailyrainfall)
 rp <- pp.weibull(fit$maxima)
 rl <- qtmev(1 - 1 / rp, fit$data)
-plot(rp, sort(fit$maxima), main = "TMEV", ylab = "return level", xlab = "return period (years)")
+plot(rp,
+     sort(fit$maxima),
+     main = "TMEV",
+     ylab = "return level",
+     xlab = "return period (years)")
 lines(rp, rl, type = "l")
 
 

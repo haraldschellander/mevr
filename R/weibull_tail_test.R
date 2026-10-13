@@ -17,7 +17,8 @@ set_season <- function(datum, block_start) {
 #' \code{\link{weibull_tail_test}}.
 #' @param thresholds A numeric or vector of quantiles which shall be tested
 #' as optimal threshold for left-censoring.
-#' @param warn If \code{TRUE} which is the default, warnings about censoring are given.
+#' @param warn If \code{TRUE} which is the default, warnings about censoring
+#' are given.
 #'
 #' @return A tibble with the optimal threshold itself and
 #' the Weibull scale and shape parameters obtained from the censored sample.
@@ -40,7 +41,9 @@ censored_weibull_fit <- function(x, thresholds, warn) {
   }
 
   if (i_thr > length(thresholds)) {
-    if (warn) warning("the assumption of Weibull tail is rejected")
+    if (warn) {
+      warning("the assumption of Weibull tail is rejected")
+    }
     i_thr <- NA
     optimal_thr <- 0.95
     scale_cens <- NA
@@ -62,36 +65,45 @@ censored_weibull_fit <- function(x, thresholds, warn) {
 
 #' Weibull tail test
 #'
-#' This functions provides a way to test if observed rainfall maxima from a data series are
-#' likely samples from a parent distribution with a Weibull tail. The concept and the
-#' code is based on the paper Marra F, W Amponsah, SM Papalexiou, 2023. Non-asymptotic Weibull tails
-#' explain the statistics of extreme daily precipitation. Adv. Water Resour., 173, 104388,
-#' https://doi.org/10.1016/j.advwatres.2023.104388. They also provide the corresponding Matlab code
-#' (https://zenodo.org/records/7234708).
+#' This functions provides a way to test if observed rainfall maxima from
+#' a data series are likely samples from a parent distribution with a
+#' Weibull tail. The concept and the code is based on the paper
+#' 'Marra F, W Amponsah, SM Papalexiou, 2023. Non-asymptotic Weibull tails
+#' explain the statistics of extreme daily precipitation.
+#' Adv. Water Resour., 173, 104388,
+#' \doi{10.1016/j.advwatres.2023.104388}. They also provide
+#' the corresponding Matlab code (\url{https://zenodo.org/records/7234708}).
 #'
 #' Null-Hyothesis: block maxima are samples from a parent distribution with
-#' Weibull tail (tail defined by a given left-censoring threshold). If the fraction
-#' of observed block maxima outside of the interval defined by
+#' Weibull tail (tail defined by a given left-censoring threshold).
+#' If the fraction of observed block maxima outside of the interval defined by
 #' p_test is larger than p_test the null hypothesis is rejected.
 #'
 #' @param data A data.frame
-#' @param threshold A numeric that is used to define wet days as values > threshold.
+#' @param threshold A numeric that is used to define wet days as
+#' values > threshold.
 #' @param mon This month defines the block whose maxima
 #' will be tested. The block goes from month-YYYY-1 to month-YYYY.
 #' @param cens_quant The quantile at which the tail test should be performed.
 #' Must be a single numeric.
-#' @param p_test A numeric defining the 1 - p_test confidence band. This function
-#' tests the ratio of observed block maxima below p_test and above 1 - p_test. See details.
+#' @param p_test A numeric defining the 1 - p_test confidence band.
+#' This function tests the ratio of observed block maxima below p_test
+#' and above 1 - p_test. See details.
 #' @param R The number of synthetic samples.
 #'
 #' @return A tibble with the test outcome and other useful results:
 #'   \item{is_rejected}{ outcome of the test (TRUE means that the assumption of
 #'   Weibull tails for the given left-censoring threshold is rejected).}
-#'   \item{p_out}{ fraction of block maxima outside of the Y = 1 - p_out confidence interval}
-#'   \item{p_hi}{ fraction of block maxima above the Y = 1 - p_out confidence interval}
-#'   \item{p_lo}{ fraction of block maxima below the Y = 1 - p_out confidence interval}
-#'   \item{scale}{ scale parameter of the Weibull distribution describing the non-censored samples}
-#'   \item{shape}{ shape parameter of the Weibull distribution describing the non-censored samples}
+#'   \item{p_out}{ fraction of block maxima outside of the Y = 1 - p_out
+#' confidence interval}
+#'   \item{p_hi}{ fraction of block maxima above the Y = 1 - p_out
+#' confidence interval}
+#'   \item{p_lo}{ fraction of block maxima below the Y = 1 - p_out
+#' confidence interval}
+#'   \item{scale}{ scale parameter of the Weibull distribution describing
+#' the non-censored samples}
+#'   \item{shape}{ shape parameter of the Weibull distribution describing
+#' the non-censored samples}
 #'   \item{quant}{ the quantile used as left-censoring threshold}
 #' @export
 #'
@@ -101,8 +113,11 @@ censored_weibull_fit <- function(x, thresholds, warn) {
 #'
 #' # generate data
 #' set.seed(123)
-#' sample_dates <- seq.Date(from = as.Date("2000-01-01"), to = as.Date("2010-12-31"), by = 1)
-#' sample_data <- data.frame(dates = sample_dates, val = sample(rnorm(length(sample_dates))))
+#' sample_dates <- seq.Date(from = as.Date("2000-01-01"),
+#'                          to = as.Date("2010-12-31"),
+#'                          by = 1)
+#' sample_data <- data.frame(dates = sample_dates,
+#'                           val = sample(rnorm(length(sample_dates))))
 #' d <- sample_data |>
 #'   filter(val >= 0 & !is.na(val))
 #' fit_uncensored <- fsmev(d)
@@ -124,8 +139,13 @@ censored_weibull_fit <- function(x, thresholds, warn) {
 #' rp <- c(2:100)
 #' rl_uncensored <- return.levels.mev(fit_uncensored, return.periods = rp)$rl
 #' rl_censored <- qmev(1 - 1/rp, cens$shape, cens$scale, fit_uncensored$n)
-#' plot(rp, rl_uncensored, type = "l", log = "x", ylim = c(0, max(rl_censored, rl_uncensored)),
-#'      ylab = "return level", xlab = "return period (a)")
+#' plot(rp,
+#'      rl_uncensored,
+#'      type = "l",
+#'      log = "x",
+#'      ylim = c(0, max(rl_censored, rl_uncensored)),
+#'      ylab = "return level",
+#'      xlab = "return period (a)")
 #' points(pp.weibull(fit_uncensored$maxima), sort(fit_uncensored$maxima))
 #' lines(rp, rl_censored, type = "l", col = "red")
 #' legend("bottomright", legend = c("uncensored",
@@ -140,17 +160,23 @@ weibull_tail_test <- function(
   p_test = 0.1,
   R = 500
 ) {
-  if (!inherits(data, "data.frame")) stop("data must be of class 'data.frame'")
+  if (!inherits(data, "data.frame")) {
+    stop("data must be of class 'data.frame'")
+  }
 
   colnames(data) <- c("groupvar", "val")
 
-  if (!inherits(data$groupvar, c("Date", "POSIXct")))
+  if (!inherits(data$groupvar, c("Date", "POSIXct"))) {
     stop("date column must be of class 'Date' or 'POSIXct'")
+  }
 
-  if (!inherits(data$val, "numeric"))
+  if (!inherits(data$val, "numeric")) {
     stop("data values must be of class 'numeric'")
+  }
 
-  if (length(which(data$val < 0)) > 0) stop("data must not contain values < 0")
+  if (length(which(data$val < 0)) > 0) {
+    stop("data must not contain values < 0")
+  }
 
   if (any(is.na(data$val))) {
     n <- nrow(data)
@@ -198,7 +224,7 @@ weibull_tail_test <- function(
   # weibull parameters for censored sample
   # parameter estimation (least square linear regression in
   # Weibull-transformed coordinates)
-  X <- log(log(1 / (1 - cens_data$ecdf))) # Weibull-transformation for probabilities
+  X <- log(log(1 / (1 - cens_data$ecdf))) # Weibull-transformation for probs
   Y <- log(cens_data$val) # Weibull-transformation for samples
   model <- lm(Y ~ X) # linear regression
   scale <- exp(coef(model)[1]) # Weibull scale parameter

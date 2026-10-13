@@ -23,21 +23,21 @@ and \code{pmev}.}
 MEV distribution. If a vector, w and c must have the same length as n.}
 
 \item{n}{Either mean number of wet events per year for the SMEV,
-or a vector for yearly MEVD calculations, i.e. one value per year (see details).
-If a vector, n must have the same length as w and c.}
+or a vector for yearly MEVD calculations, i.e. one value per year
+(see details). If a vector, n must have the same length as w and c.}
 
 \item{p}{vector or single value of probabilities for \code{qmev}.}
 
 \item{N}{Number of observations to sample from the MEVD or SMEV.}
 }
 \value{
-\code{dmev} gives the density function, \code{pmev} gives the distribution function,
-\code{qmev} gives the quantile function and \code{rmev} provides random realizations of
-the SMEV and MEVD.
+\code{dmev} gives the density function, \code{pmev} gives the
+distribution function, \code{qmev} gives the quantile function and
+\code{rmev} provides random realizations of the SMEV and MEVD.
 }
 \description{
-Density, distribution function, quantile function and random generation for the
-MEV distribution with shape parameter 'w', scale parameter 'c'.
+Density, distribution function, quantile function and random generation for
+the MEV distribution with shape parameter 'w', scale parameter 'c'.
 Parameter 'n' refers either to the mean number of wet days per year in case
 of the simplified MEV, or to the number of wet days for each year.
 }

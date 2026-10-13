@@ -5,18 +5,20 @@
 \alias{dailyrainfall}
 \title{Daily rainfall data}
 \format{
-The dataset contains real world daily rainfall observations from a station
-in the northern Alps. The series contains values from 1971 to 1985 and are assumed to be
-Weibull distributed. This data series is intended to be used as is as input data
-for the package \code{mevr} to fit the metastatistical extreme value
-distribution and its variants with different estimation methods.
+The dataset contains real world daily rainfall observations from
+a station in the northern Alps. The series contains values from 1971 to 1985
+and are assumed to be Weibull distributed. This data series is intended
+to be used as is as input data for the package \code{mevr} to fit
+the metastatistical extreme value distribution and its variants
+with different estimation methods.
 
 The dataset is a dataframe with two columns, dates and val:
 
 \describe{
 \item{dates}{ Days of class \code{Date} in the format YYYY-MM-DD}
 \item{val}{ Rainfall observations corresponding to the date in the row.
-The value is the 24 hour sum from the morning hours of day-1 to the morning hours of day. }
+The value is the 24 hour sum from the morning hours of day-1 to the
+morning hours of day. }
 }
 }
 \usage{

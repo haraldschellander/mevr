@@ -13,24 +13,32 @@
 )
 }
 \arguments{
-\item{x}{An object of class\code{mevr}, whose \code{type} argument is one of MEVD, SMEV or TMEV}
+\item{x}{An object of class\code{mevr}, whose \code{type} argument is
+one of MEVD, SMEV or TMEV}
 
 \item{q}{vector of return periods, \eqn{q > 1}.}
 
-\item{ci}{if \code{ci=TRUE}, confidence intervals will be computed.}
+\item{ci}{if \code{ci=TRUE},
+confidence intervals will be computed.}
 
-\item{type}{if omitted a panel with a return level plot (\code{type='rl'},
-a density plot (\code{type='hist'}), a qq-plot (\code{type='qq'}) and a
-probability plot (\code{tpe='pp'}) are shown.}
+\item{type}{character. Specifies the type of plot to display:
+\itemize{
+  \item \code{"rl"}: return level plot.
+  \item \code{"hist"}: density plot.
+  \item \code{"qq"}: Q-Q plot.
+  \item \code{"pp"}: probability plot.
+}
+If omitted, a panel showing all four plots is displayed.}
 
 \item{...}{Further parameters may also be supplied as arguments.
-See e.g. \link[base]{plot}.}
+See e.g. \code{plot}.}
 }
 \value{
 No return value, only a plot is produced.
 }
 \description{
-A return level plot, qq-plot, pp-plot and a histogram with the fitted density is produced
+A return level plot, qq-plot, pp-plot and a histogram with the fitted
+density is produced
 }
 \examples{
 data(dailyrainfall)

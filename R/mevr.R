@@ -28,18 +28,20 @@ NULL
 #' @name dailyrainfall
 #' @usage data(dailyrainfall)
 #'
-#' @format The dataset contains real world daily rainfall observations from a station
-#' in the northern Alps. The series contains values from 1971 to 1985 and are assumed to be
-#' Weibull distributed. This data series is intended to be used as is as input data
-#' for the package \code{mevr} to fit the metastatistical extreme value
-#' distribution and its variants with different estimation methods.
+#' @format The dataset contains real world daily rainfall observations from
+#' a station in the northern Alps. The series contains values from 1971 to 1985
+#' and are assumed to be Weibull distributed. This data series is intended
+#' to be used as is as input data for the package \code{mevr} to fit
+#' the metastatistical extreme value distribution and its variants
+#' with different estimation methods.
 #'
 #' The dataset is a dataframe with two columns, dates and val:
 #'
 #' \describe{
 #' \item{dates}{ Days of class \code{Date} in the format YYYY-MM-DD}
 #' \item{val}{ Rainfall observations corresponding to the date in the row.
-#' The value is the 24 hour sum from the morning hours of day-1 to the morning hours of day. }
+#' The value is the 24 hour sum from the morning hours of day-1 to the
+#' morning hours of day. }
 #' }
 #'
 #' @examples
@@ -55,89 +57,133 @@ NULL
 
 #' Fitting the simplified Metastatistical Extreme Value Distribution (SMEV)
 #'
-#' Fit the SMEV distribution to rainfall observations with different estimation methods.
+#' Fit the SMEV distribution to rainfall observations with different
+#' estimation methods.
 #'
-#' The SMEV was introduced by (Marra et al., 2019) as a simplified version of the MEVD
-#' (Marani and Ignaccolo, 2015) with the assumption of a stationary parent Weibull distribution
-#' as
+#' The SMEV was introduced by (Marra et al., 2019) as a simplified version of
+#' the MEVD (Marani and Ignaccolo, 2015) with the assumption of a stationary
+#' parent Weibull distribution as
 #' \deqn{F = [1 - exp(-x/C)^w]^n}
-#' for \eqn{w > 0} and \eqn{C > 0} being the Weibull shape and scale parameter and
-#' \eqn{n > 0} being the mean number of wet days over all years.
+#' for \eqn{w > 0} and \eqn{C > 0} being the Weibull shape and scale parameter
+#' and \eqn{n > 0} being the mean number of wet days over all years.
 #' Wet days are defined as rainfall events > threshold. As it was shown by
-#' e.g. Schellander et al., 2019, probability weighted moments should be preferred over
-#' maximum likelihood for the estimation of the Weibull parameters w and C. Therefore
-#' \code{method = 'pwm'} is the default.
+#' e.g. Schellander et al., 2019, probability weighted moments should be
+#' preferred over maximum likelihood for the estimation of the Weibull
+#' parameters w and C. Therefore \code{method = 'pwm'} is the default.
 #'
-#' Confidence intervals of the SMEV distribution can be calculated using a non parametric
-#' bootstrap technique. Note that this very slow.
+#' Confidence intervals of the SMEV distribution can be calculated using
+#' a non parametric bootstrap technique. Note that this very slow.
 #'
-#' The estimators above assume that all ordinary events are Weibull distributed. This is
-#' usually acceptable for daily rainfall, but not for sub-daily durations, where the
-#' lower part of the sample is affected by the gauge resolution and by weak events that
-#' do not share the tail of the intense ones. Fitted to the complete sample, the shape
-#' parameter is then overestimated and return levels are strongly underestimated.
-#' Following Marra et al. (2019, 2020) the Weibull distribution can be fitted to the
-#' tail only by left-censoring: with \code{left_cens = 0.9} the smallest 90 percent of the
-#' ordinary events are censored, i.e. their magnitudes are ignored but they keep their
-#' non-exceedance probability, and \code{n} is still the mean number of all ordinary
-#' events per year. With \code{method = 'ls'} this is the least squares regression in
-#' Weibull-transformed coordinates used by Marra et al. (2020), \code{method = 'mle'}
-#' maximizes the likelihood of the left-censored sample and \code{method = 'pwm'} uses
-#' partial probability weighted moments (Wang, 1990). For sub-daily data, ordinary events
-#' should be defined with \code{\link{event_separation}} and \code{\link{ordinary_events}}.
+#' The estimators above assume that all ordinary events are Weibull distributed.
+#' This is usually acceptable for daily rainfall, but not for sub-daily
+#' durations, where the lower part of the sample is affected by the gauge
+#' resolution and by weak events that do not share the tail of the intense
+#' ones. Fitted to the complete sample, the shape parameter is then
+#' overestimated and return levels are strongly underestimated.
+#' Following Marra et al. (2019, 2020) the Weibull distribution can be fitted
+#' to the tail only by left-censoring: with \code{left_cens = 0.9} the
+#' smallest 90 percent of the ordinary events are censored, i.e. their
+#' magnitudes are ignored but they keep their non-exceedance probability,
+#' and \code{n} is still the mean number of all ordinary events per year.
+#' With \code{method = 'ls'} this is the least squares regression in
+#' Weibull-transformed coordinates used by Marra et al. (2020),
+#' \code{method = 'mle'} maximizes the likelihood of the left-censored sample
+#' and \code{method = 'pwm'} uses partial probability weighted moments
+#' (Wang, 1990). For sub-daily data, ordinary events should be defined with
+#' \code{\link{event_separation}}
+#' and \code{\link{ordinary_events}}.
 #'
-#' This function returns the parameters of the fitted SMEV distribution as well as some
-#' additional fitting results and input parameters useful for further analysis.
+#' This function returns the parameters of the fitted SMEV distribution as well
+#' as some additional fitting results and input parameters useful for further
+#' analysis.
 #'
-#' @param data The data to which the SMEV should be fitted to. \code{data} must be either a data.frame with two columns.
-#' The first column must contain dates of class \code{Date}, the second or last column must contain the rainfall
-#' values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning.
-#' \code{data} can also be a numeric vector of rainfall values. Internally a date column beginning at '1970-01-01' is added,
-#' assuming daily data.
-#' @param threshold A numeric that is used to define wet days as values > threshold.
-#' \eqn{data <= threshold} is set to NA.
-#' @param method Character string describing the method that is used to estimate the
-#' Weibull parameters c and w. Possible options are probability weighted moments (\code{method='pwm'}),
-#' maximum likelihood (\code{method='mle'}) or least squares (\code{method='ls'}).
-#' The \code{default} is \code{pwm}. (see details).
-#' @param censor If \code{censor=TRUE}, the data series will be left-censored to assure that the observed maxima
-#' are samples from a weibull tail. Defaults to \code{censor=FALSE}.
-#' @param censor_opts An empty list which can be populated with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}.
-#' They give the range of quantiles used as left-censoring threshold, the month with which the block starts,
-#' the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples
-#' used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.
-#' @param warn If \code{TRUE} which is the default, warnings about censoring are given.
-#' @param sd If \code{sd=TRUE}, confidence intervals of the SMEV distribution are calculated (see details).
-#' @param sd.method Currently only a non parametric bootstrap technique can be used to calculate SMEV confidence intervals with \code{sd.method='boot'}. The default is \code{sd=FALSE}.
-#' @param R The number of samples drawn from the SMEV distribution to calculate the confidence intervals with \code{sd.method='boot'}
-#' @param left_cens A single numeric in [0, 1) giving the fraction of the smallest ordinary events
-#' that is left-censored for the estimation of c and w (see details). The default \code{left_cens = 0}
-#' uses the complete sample. Values around 0.9 are common for sub-daily rainfall.
-#' Cannot be combined with \code{censor = TRUE}, which selects the censoring quantile with a Weibull tail test.
+#' @param data A data frame or numeric vector.
+#' If a data.frame, column one must contain
+#' dates of class \code{Date}, and the last
+#' column must contain rainfall values.
+#' If a vector, daily data starting from
+#' '1970-01-01' is assumed.
+#' Negative values are disallowed, and NA
+#' values are removed with a warning.
+#' @param threshold Numeric threshold defining
+#' wet days. Values below or equal to
+#' the threshold are set to NA.
+#' @param method Character string for estimating
+#' Weibull parameters \code{c} and \code{w}.
+#' Options are probability weighted moments
+#' (\code{"pwm"}), maximum likelihood
+#' (\code{"mle"}), or least squares
+#' (\code{"ls"}). Default is \code{"pwm"}
+#' (see details).
+#' @param censor Logical. If \code{TRUE},
+#' data is left-censored to ensure maxima
+#' follow a Weibull tail. Default is
+#' \code{FALSE}.
+#' @param censor_opts A list of censoring options:
+#' \itemize{
+#'   \item \code{thresholds}: range of quantiles.
+#'   \item \code{mon}: start month of the block.
+#'   \item \code{nrtrials}: number of trials.
+#'   \item \code{R}: number of synthetic samples.
+#' }
+#' See \code{\link{weibull_tail_test}}.
+#' @param warn Logical. If \code{TRUE} (default),
+#' censoring warnings are displayed.
+#' @param sd Logical. If \code{TRUE}, confidence
+#' intervals are calculated (see details).
+#' Default is \code{FALSE}.
+#' @param sd.method Character string for
+#' confidence interval methods. Currently
+#' only nonparametric bootstrap
+#' (\code{"boot"}) is supported.
+#' @param R Integer. Number of bootstrap
+#' samples for confidence intervals.
+#' @param left_cens Numeric in [0, 1).
+#' Fraction of smallest ordinary events
+#' left-censored (see details). Default
+#' is \code{0}. Cannot be combined with
+#' \code{censor = TRUE}.
 #'
 #' @return A list of class \code{mevr} with components:
-#' \item{c}{ Single value of the Weibull scale parameter of the SMEV.}
-#' \item{w}{ Single value of the Weibull shape parameter of the SMEV.}
-#' \item{n}{ Mean number of wet events, averaged over all years. Wet events are defined as rainfall > \code{threshold}.}
-#' \item{params}{ A named vector of the fitted parameters. }
-#' \item{maxima}{ Maximum values corresponding to each year.}
-#' \item{std}{ Standard error of fitted parameters (if \code{sd=TRUE}).}
-#' \item{varcov}{ Covariance matrix of fitted parameters (if \code{sd=TRUE}).}
-#' \item{data}{ \eqn{data >= threshold} used to fit the SMEV and additional components which may be useful for further analysis.}
-#' \item{years}{ Vector of years as YYYY.}
-#' \item{threshold}{ The chosen threshold.}
-#' \item{method}{ Method used to fit the MEVD. }
-#' \item{censor}{ \code{TRUE} when the data-series was left-censored and \code{FALSE} otherwise.}
-#' \item{left_cens}{ The fixed left-censoring quantile used for the estimation of c and w.}
-#' \item{type}{ The type of distribution ("SMEV")}
-#' \item{rejected}{ If \code{censor=TRUE}, \code{rejected=TRUE} when the Weibull tail assumption is rejected and \code{rejected=FALSE} otherwise.
-#' If \code{censor=FALSE} this value is not returned.}
+#' \describe{
+#'   \item{\code{c}}{Single value of the Weibull scale parameter of the SMEV.}
+#'   \item{\code{w}}{Single value of the Weibull shape parameter of the SMEV.}
+#'   \item{\code{n}}{Mean number of wet events, averaged over all years.
+#'     Wet events are defined as rainfall > \code{threshold}.}
+#'   \item{\code{params}}{A named vector of the fitted parameters.}
+#'   \item{\code{maxima}}{Maximum values corresponding to each year.}
+#'   \item{\code{std}}{Standard error of fitted parameters
+#'     (if \code{sd = TRUE}).}
+#'   \item{\code{varcov}}{Covariance matrix of fitted parameters
+#'     (if \code{sd = TRUE}).}
+#'   \item{\code{data}}{Filtered data used to fit the SMEV and additional
+#'     components useful for further analysis.}
+#'   \item{\code{years}}{Vector of years as YYYY.}
+#'   \item{\code{threshold}}{The chosen threshold.}
+#'   \item{\code{method}}{Method used to fit the MEVD.}
+#'   \item{\code{censor}}{\code{TRUE} when the data series was left-censored
+#'     and \code{FALSE} otherwise.}
+#'   \item{\code{left_cens}}{The fixed left-censoring quantile used for
+#'     estimating \code{c} and \code{w}.}
+#'   \item{\code{type}}{The type of distribution ("SMEV").}
+#'   \item{\code{rejected}}{If \code{censor = TRUE}, \code{TRUE} when the
+#'     Weibull tail assumption is rejected, and \code{FALSE} otherwise.
+#'     Omitted if \code{censor = FALSE}.}
+#' }
 #'
 #' @export
 #'
-#' @references 	Marra, F. et al. (2019) 'A simplified MEV formulation to model extremes emerging from multiple nonstationary underlying processes', Advances in Water Resources. Elsevier Ltd, 127(April), pp. 280-290. doi: 10.1016/j.advwatres.2019.04.002.
-#' @references Marra, F. et al. (2020) 'A unified framework for extreme subdaily precipitation frequency analyses based on ordinary events', Geophysical Research Letters, 47, e2020GL090209. doi: 10.1029/2020GL090209.
-#' @references Wang, Q. J. (1990) 'Estimation of the GEV distribution from censored samples by method of partial probability weighted moments', Journal of Hydrology, 120, pp. 103-114.
+#' @references 	Marra, F. et al. (2019) 'A simplified MEV formulation to
+#' model extremes emerging from multiple nonstationary underlying processes',
+#' Advances in Water Resources. Elsevier Ltd, 127(April), pp. 280-290.
+#' \doi{10.1016/j.advwatres.2019.04.002}.
+#' @references Marra, F. et al. (2020) 'A unified framework for extreme
+#' subdaily precipitation frequency analyses based on ordinary events',
+#' Geophysical Research Letters, 47, e2020GL090209.
+#' \doi{10.1029/2020GL090209}.
+#' @references Wang, Q. J. (1990) 'Estimation of the GEV distribution from
+#' censored samples by method of partial probability weighted moments',
+#' Journal of Hydrology, 120, pp. 103-114.
 #' @examples
 #' data(dailyrainfall)
 #'
@@ -151,8 +197,11 @@ NULL
 #'
 #' # left censor data prior to fitting
 #' set.seed(123)
-#' sample_dates <- seq.Date(from = as.Date("2000-01-01"), to = as.Date("2020-12-31"), by = 1)
-#' sample_data <- data.frame(dates = sample_dates, val = sample(rnorm(length(sample_dates))))
+#' sample_dates <- seq.Date(from = as.Date("2000-01-01"),
+#'                          to = as.Date("2020-12-31"),
+#'                          by = 1)
+#' sample_data <- data.frame(dates = sample_dates,
+#'                           val = sample(rnorm(length(sample_dates))))
 #' d <- sample_data |>
 #'   filter(val >= 0 & !is.na(val))
 #'
@@ -384,79 +433,120 @@ fsmev <- function(
 
 #' Fitting the Metastatistical Extreme Value Distribution (MEVD)
 #'
-#' Fit the MEVD distribution to rainfall observations with different estimation methods.
+#' Fit the MEVD distribution to rainfall observations with different
+#' estimation methods.
 #'
-#' With the aim of weakening the requirement of an asymptotic assumption for the GEV distribution,
-#' a metastatistical approach was proposed by Marani and Ignaccolo (2015). The MEVD is defined
-#' in terms of the distribution of the statistical parameters describing "ordinary" daily rainfall
-#' occurrence and intensity. The MEVD accounts for the random process of event occurrence in each
-#' block and the possibly changing probability distribution of event magnitudes across different blocks,
-#' by recognizing the number of events in each block, n, and the values of the shape and scale
-#' parameters w and C of the parent Weibull distribution to be realisations of stochastic variables.
+#' With the aim of weakening the requirement of an asymptotic assumption
+#' for the GEV distribution, a metastatistical approach was proposed by
+#' Marani and Ignaccolo (2015). The MEVD is defined in terms of the
+#' distribution of the statistical parameters describing "ordinary"
+#' daily rainfall occurrence and intensity. The MEVD accounts for
+#' the random process of event occurrence in each block and the possibly
+#' changing probability distribution of event magnitudes across different
+#' blocks, by recognizing the number of events in each block, n, and the
+#' values of the shape and scale parameters w and C of the parent Weibull
+#' distribution to be realisations of stochastic variables.
 #' The MEVD can then be written as
 #'
-#' \deqn{F = \frac{1}{T} \sum_{j=1}^T \prod_{k \in A_j} \left( 1-e^{-\left(\frac{x}{C(j,k)}\right)^{w(j,k)}} \right)}
+#' \deqn{\begin{aligned}
+#' F = \frac{1}{T} \sum_{j=1}^T \prod_{k \in A_j}
+#' &\left( 1 - \exp\left( -\left(\frac{x}{C(j,k)}\right)^{w(j,k)} \right) \right)
+#' \end{aligned}}
 #'
-#' for \eqn{w > 0} and \eqn{C > 0}. With T fully recorded years, yearly C and w can be estimated
-#' by fitting a Weibull distribution to the values x of this year, and n is the number of ordinary
+#' for \eqn{w > 0} and \eqn{C > 0}.
+#' With T fully recorded years,
+#' yearly C and w can be estimated by fitting a Weibull distribution
+#' to the values x of this year, and n is the number of ordinary
 #' events per year, i.e. all rainfall events larger than a threshold.
 #'
-#' If the probability distribution of daily rainfall is assumed to be time-invariant, the MEVD can be simplified to
+#' If the probability distribution of daily rainfall is assumed to be
+#' time-invariant, the MEVD can be simplified to
 #'
 #' \deqn{F = [1 - exp(-x/C)^w]^n}
 #'
-#'with single values for the shape and scale parameters w and C. n is then the mean number of wet
-#'days at this location (Marra et al., 2019; Schellander et al., 2019).
+#' with single values for the shape and scale parameters w and C.
+#' n is then the mean number of wet days at this location
+#' (Marra et al., 2019; Schellander et al., 2019).
 #'
-#' As is shown e.g. Schellander et al., 2019, probability weighted moments should be preferred
-#' over maximum likelihood for the estimation of the Weibull parameters w and C.
-#' Therefore \code{method = 'pwm'} is the default.
+#' As is shown e.g. Schellander et al., 2019, probability weighted moments
+#' should be preferred over maximum likelihood for the estimation of
+#' the Weibull parameters w and C.
+#' Therefore \code{method = 'pwm'}
+#' is the default.
 #'
-#'The MEVD can also be used for sub-daily precipitation (Marra et al., 2019).
-#'In that case n has to be adapted accordingly to the 'mean number of wet events' per year.
+#' The MEVD can also be used for sub-daily precipitation
+#' (Marra et al., 2019).
+#' In that case n has to be adapted accordingly to the 'mean number
+#' of wet events' per year.
 #'
-#' This function returns the parameters of the fitted MEVD distribution as well as some
-#' additional fitting results and input parameters useful for further analysis.
+#' This function returns the parameters of the fitted MEVD distribution
+#' as well as some additional fitting results and input parameters useful
+#' for further analysis.
 #'
-#' @param data The data to which the MEVD should be fitted to. \code{data} must be a data.frame with two columns.
-#' The first column must contain dates of class  \code{Date}, the second or last column must contain the rainfall
-#' values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning.
-#' @param threshold A numeric that is used to define wet days as values > threshold.
-#' \eqn{data <= threshold} is set to NA.
-#' @param method Character string describing the method that is used to estimate the
-#' Weibull parameters c and w. Possible options are probability weighted moments (\code{method='pwm'}),
-#' maximum likelihood (\code{method='mle'}) or least squares (\code{method='ls'}).
-#' The \code{default} is \code{pwm}. (see details).
-#' @param censor If \code{censor=TRUE}, the data series will be left-censored to assure that the observed maxima
-#' are samples from a weibull tail. Defaults to \code{censor=FALSE}.
-#' @param censor_opts An empty list which can be populated with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}.
-#' They give the range of quantiles used as left-censoring threshold, the month with which the block starts,
-#' the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples
-#' used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.
-#' @param warn If \code{TRUE} which is the default, warnings about censoring are given.
-#' @param left_cens A single numeric in [0, 1) giving the fraction of the smallest ordinary events
-#' of each year that is left-censored for the estimation of c and w (see \code{\link{fsmev}}).
-#' The default \code{left_cens = 0} uses the complete sample. Note that only
-#' \code{(1 - left_cens) * n} values per year remain for the estimation, so that
-#' \code{\link{fsmev}} is usually the better choice for left-censored fits.
-#' Cannot be combined with \code{censor = TRUE}.
+#' @param data A data frame with two columns.
+#' The first column must contain dates of class
+#' \code{Date}, and the last must contain
+#' rainfall values. Negative values are disallowed,
+#' and NA values are removed with a warning.
+#' @param threshold Numeric threshold defining
+#' wet days. Values below or equal to the
+#' threshold are set to NA.
+#' @param method Character string for estimating
+#' Weibull parameters \code{c} and \code{w}.
+#' Options are probability weighted moments
+#' (\code{"pwm"}), maximum likelihood
+#' (\code{"mle"}), or least squares
+#' (\code{"ls"}). Default is \code{"pwm"}
+#' (see details).
+#' @param censor Logical. If \code{TRUE}, data
+#' is left-censored to ensure maxima follow
+#' a Weibull tail. Default is \code{FALSE}.
+#' @param censor_opts A list of censoring options:
+#' \itemize{
+#'   \item \code{thresholds}: range of quantiles.
+#'   \item \code{mon}: start month of the block.
+#'   \item \code{nrtrials}: number of trials.
+#'   \item \code{R}: number of synthetic samples.
+#' }
+#' See \code{\link{weibull_tail_test}}.
+#' @param warn Logical. If \code{TRUE} (default),
+#' censoring warnings are displayed.
+#' @param left_cens Numeric in [0, 1).
+#' Fraction of smallest ordinary events
+#' left-censored (see details). Default
+#' is \code{0}. Cannot be combined with
+#' \code{censor = TRUE}.
 #'
-#' @return A list of class \code{mevr} with the fitted Weibull parameters and other helpful ingredients.
-#' \item{c}{ vector of Weibull scale parameters of the MEVD, each component refers to one year.}
-#' \item{w}{ vector of Weibull shape parameters of the MEVD, each component refers to one year.}
-#' \item{n}{ Number of wet events per year. Wet events are defined as rainfall > \code{threshold}.}
-#' \item{params}{ A named vector of the fitted parameters. }
-#' \item{maxima}{ Maximum values corresponding to each year.}
-#' \item{data}{ \eqn{data >= threshold} used to fit the MEVD and additional components which may be useful for further analysis.}
-#' \item{years}{ Vector of years as YYYY.}
-#' \item{threshold}{ The chosen threshold.}
-#' \item{method}{ Method used to fit the MEVD.}
-#' \item{type}{ The type of distribution ("MEVD")}
+#' @return A list of class \code{mevr} with components:
+#' \describe{
+#'   \item{\code{c}}{Vector of Weibull scale parameters of the MEVD,
+#'     where each component refers to one year.}
+#'   \item{\code{w}}{Vector of Weibull shape parameters of the MEVD,
+#'     where each component refers to one year.}
+#'   \item{\code{n}}{Number of wet events per year. Wet events are defined
+#'     as rainfall > \code{threshold}.}
+#'   \item{\code{params}}{A named vector of the fitted parameters.}
+#'   \item{\code{maxima}}{Maximum values corresponding to each year.}
+#'   \item{\code{data}}{Filtered data used to fit the MEVD along with
+#'     additional components useful for further analysis.}
+#'   \item{\code{years}}{Vector of years as YYYY.}
+#'   \item{\code{threshold}}{The chosen threshold.}
+#'   \item{\code{method}}{Method used to fit the MEVD.}
+#'   \item{\code{type}}{The type of distribution ("MEVD").}
+#' }
 #'
 #' @export
 #'
-#' @references Marani, M. and Ignaccolo, M. (2015) 'A metastatistical approach to rainfall extremes', Advances in Water Resources. Elsevier Ltd, 79(Supplement C), pp. 121-126. doi: 10.1016/j.advwatres.2015.03.001.
-#' @references Schellander, H., Lieb, A. and Hell, T. (2019) 'Error Structure of Metastatistical and Generalized Extreme Value Distributions for Modeling Extreme Rainfall in Austria', Earth and Space Science, 6, pp. 1616-1632. doi: 10.1029/2019ea000557.
+#' @references Marani, M. and Ignaccolo, M. (2015)
+#' 'A metastatistical
+#' approach to rainfall extremes', Advances in Water Resources.
+#' Elsevier Ltd, 79(Supplement C), pp. 121-126.
+#' \doi{10.1016/j.advwatres.2015.03.001}.
+#' @references Schellander, H., Lieb, A. and Hell, T. (2019)
+#' 'Error Structure of Metastatistical and Generalized Extreme
+#' Value Distributions for Modeling Extreme Rainfall in Austria',
+#' Earth and Space Science, 6, pp. 1616-1632.
+#' \doi{10.1029/2019ea000557}.
 #'
 #' @examples
 #' data(dailyrainfall)
@@ -628,92 +718,147 @@ fmev <- function(
 
 #' Fitting the temporal Metastatistical Extreme Value Distribution (TMEV)
 #'
-#' Fit the temporal MEVD distribution TMEV to rainfall observations with a cyclic spline to account for seasonality.
+#' Fit the temporal MEVD distribution TMEV to rainfall observations with a
+#' cyclic spline to account for seasonality.
 #'
-#' With the aim of exploiting the full temporal information for parameter estimation,
-#' Falkensteiner et al., (2023) introduced the TMEV, which is an explicitly
-#' non-stationary formulation of the MEVD (Marani and Ignaccolo, 2015). Adopting a
-#' Weibull distribution for ordinary rainfall events, the assumption of yearly
+#' With the aim of exploiting the full temporal information for parameter
+#' estimation, Falkensteiner et al., (2023) introduced the TMEV, which is
+#' an explicitly non-stationary formulation of the MEVD
+#' (Marani and Ignaccolo, 2015). Adopting a Weibull distribution for
+#' ordinary rainfall events, the assumption of yearly
 #' constant coefficients is relaxed by allowing the Weibull
 #' parameters to fluctuate with time. The TMEV can then be written as
 #'
-#'  \deqn{F = \frac{1}{T} \sum_{j=1}^T \prod_{k \in A_j} \left( 1-e^{-\left(\frac{x}{C(j,k)}\right)^{w(j,k)}} \right)}
+#' \deqn{\begin{aligned}
+#' F = \frac{1}{T} \sum_{j=1}^T &\prod_{k \in A_j}
+#' \left( 1 - \exp\left( -\left(\frac{x}{C(j,k)}\right)^{w(j,k)} \right) \right)
+#' \end{aligned}}
 #'
-#' with \eqn{w > 0} and \eqn{C > 0} being the Weibull shape and scale parameters, and
-#' $A_j \\subseteq (1, ..., 366)$ being the wet days in year j. The temporal and
-#' the superimposed seasonal dependence on w and c is modeled with a cyclic seasonal
-#' effect on the day of the year.
+#' with \eqn{w > 0} and \eqn{C > 0} being the Weibull shape and scale
+#' parameters, and $A_j \\subseteq (1, ..., 366)$ being the wet days in year j.
+#' The temporal and the superimposed seasonal dependence on w and c is modeled
+#' with a cyclic seasonal effect on the day of the year.
 #'
-#' Technically this is accomplished by fitting a cyclic spline to the daily rainfall
-#' values. The following formula is used for the fitting procedure of both the Weibull scale and
-#' shape parameter with the function \code{\link[bamlss]{bamlss}} from package \code{bamlss}:
+#' Technically this is accomplished by fitting a cyclic spline to
+#' the daily rainfall values. The following formula is used for the fitting
+#' procedure of both the Weibull scale and shape parameter with the function
+#' \code{bamlss} from package \code{bamlss}:
 #'
 #' \deqn{parameter = x \sim s(year) + ti(yday, bs = "cc", k = 10)}
 #'
-#' The first effect models the long-term temporal trend of the parameter with a thin-plate spline.
-#' The second effect models the superimposed seasonal fluctuations of the parameter
-#' with the 'day of the year' with a cyclic cubic regression spline and 10 knots,
-#' to ensure a smooth transition between December and January. The number of knots (k)
-#' in the above equation can be set separately for the year and yday effect as well as
-#' separately for the shape and scale parameter of the Weibull distribution. This can be done
+#' The first effect models the long-term temporal trend of the parameter
+#' with a thin-plate spline. The second effect models the superimposed seasonal
+#' fluctuations of the parameter with the 'day of the year' with a cyclic cubic
+#' regression spline and 10 knots, to ensure a smooth transition between
+#' December and January. The number of knots (k) in the above equation can be
+#' set separately for the year and yday effect as well as separately for the
+#' shape and scale parameter of the Weibull distribution. This can be done
 #' by overwriting the parameters \code{yday_ti_shape_k}, \code{yday_ti_scale_k},
-#' \code{year_ti_shape_k}, \code{year_ti_scale_k} in the call to \code{ftmev}. Note that
-#' these values depend on many factors, such as the structure of the data, the TMEV is fitted to.
-#' Please refer to the documentation of the packages \code{\link[bamlss]{bamlss}} and,
-#' in particular \code{\link[mgcv]{mgcv}}.
+#' \code{year_ti_shape_k}, \code{year_ti_scale_k} in the call to \code{ftmev}.
+#' Note that these values depend on many factors, such as the structure of
+#' the data, the TMEV is fitted to.
+#' Please refer to the documentation of the packages
+#' \code{bamlss} and,
+#' in particular, \code{mgcv}.
 #'
-#' For data series with lengths < 10 years, the first temporal effect is changed to
-#' a simple linear time trend.
+#' For data series with lengths < 10 years, the first temporal effect
+#' is changed to a simple linear time trend.
 #'
-#' For trend analysis, an additional interaction term can be added to the model formula.
-#' The following term models the relationship between the seasonality as day of the year
-#' and the year itself with a combination of a thin plate and a cyclic cubic spline:
+#' For trend analysis, an additional interaction term can be added to the
+#' model formula. The following term models the relationship between the
+#' seasonality as day of the year and the year itself with a combination of
+#' a thin plate and a cyclic cubic spline:
 #'
-#'  \deqn{ti(year, yday, bs = c("tp", "cc"), d = c(1, 1), k = c(year_ti_k, yday_ti_k))}
+#' \deqn{\begin{aligned}
+#' ti(&year, yday, bs = c("tp", "cc"), \\
+#' &d = c(1, 1), k = c(year\_ti\_k, yday\_ti\_k))
+#' \end{aligned}}
 #'
-#' This function returns the parameters of the fitted TMEV distribution as well as some
-#' additional fitting results and input parameters useful for further analysis.
+#' This function returns the parameters of the fitted TMEV distribution
+#' as well as some additional fitting results and input parameters useful
+#' for further analysis.
 #'
-#' @param data The data to which the TMEV should be fitted to. \code{data} must be a data.frame with two columns.
-#' The first column must contain dates of class  \code{Date}, the second or last column must contain the rainfall
-#' values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning.
-#' @param threshold A numeric that is used to define wet days as values > threshold.
-#' \eqn{data <= threshold} is set to NA.
-#' @param minyears Minimum number of available years for fitting a cyclic spline to the non-stationary data series (see details).
-#' @param day_year_interaction Logical. Should an additional year vs day of the year
-#' interaction be used for the calculation of the temporal trend in seasonality?  (see details). Default is \code{FALSE}.
-#' @param verbose Logical. If \code{TRUE}, verbose output of the temporal fitting process is shown during runtime.
-#' @param yday_ti_shape_k A numeric that is used to set the dimension of the bases used to represent the smooth term ti() for yday in the formula for shape.
-#' @param yday_ti_scale_k A numeric that is used to set the dimension of the bases used to represent the smooth term ti() for yday in the formula for scale.
-#' @param year_ti_shape_k A numeric that is used to set the dimension of the bases used to represent the smooth term ti() for year in the formula for shape (only used when day_year_interaction == TRUE).
-#' @param year_ti_scale_k A numeric that is used to set the dimension of the bases used to represent the smooth term ti() for year in the formula for scale (only used when day_year_interaction == TRUE).
+#' @param data The data to which the TMEV should be fitted to.
+#' \code{data} must
+#' be a data.frame with two columns. The first column must contain dates
+#' of class \code{Date}, the second or last column must contain the rainfall
+#' values corresponding to datums in the rows. No negative values are allowed.
+#' NA values are removed with a warning.
+#' @param threshold A numeric value used
+#' to define wet days as values exceeding
+#' the threshold. Values below are set to NA.
+#' @param minyears Minimum number of years
+#' required for fitting a cyclic spline
+#' to non-stationary data (see details).
+#' @param day_year_interaction Logical.
+#' Should a year-by-day interaction be used
+#' for the temporal trend in seasonality?
+#' Default is \code{FALSE}.
+#' @param verbose Logical. If \code{TRUE}, verbose output of the temporal
+#' fitting process is shown during runtime.
+#' @param yday_ti_shape_k A numeric used
+#' to set the basis dimension for the smooth term ti()
+#' for yday in the formula for shape.
+#' @param yday_ti_scale_k A numeric used
+#' to set the basis dimension for the smooth term ti()
+#' for yday in the formula for scale.
+#' @param year_ti_shape_k A numeric used
+#' to set the basis dimension for the smooth term ti()
+#' for year in the formula for shape
+#' (only used when day_year_interaction == TRUE).
+#' @param year_ti_scale_k A numeric used
+#' to set the basis dimension for the smooth term ti()
+#' for year in the formula for scale
+#' (only used when day_year_interaction == TRUE).
 #'
 #' @return A list of class \code{mevr} with components:
-#' \item{c}{ Vector of Weibull scale parameters of the TMEV, each row refers to one event, which is a day for daiyl rainfall.}
-#' \item{w}{ Vector of Weibull shape parameters of the TMEV, each row refers to one event, which is a day for daiyl rainfall.}
-#' \item{n}{ Number of wet events per year. Wet events are defined as rainfall > \code{threshold}.}
-#' \item{maxima}{ Maximum values corresponding to each year.}
-#' \item{data}{ A data frame with the data used to fit the TMEV and the fitted Weibull parameters \code{c} and \code{w}. }
-#' \item{years}{ Vector of years as YYYY.}
-#' \item{threshold}{ The chosen threshold.}
-#' \item{x}{ The fitted \code{bamlss} object.}
-#' \item{type}{ The type of distribution ("TMEV").}
-#' \item{minyears}{ The minimum number of years used to fit the TMEV as provided.}
+#' \describe{
+#'   \item{\code{c}}{Vector of Weibull scale parameters of the TMEV,
+#'     where each row refers to an event (daily rainfall).}
+#'   \item{\code{w}}{Vector of Weibull shape parameters of the TMEV,
+#'     where each row refers to an event (daily rainfall).}
+#'   \item{\code{n}}{Number of wet events per year. Wet events are defined
+#'     as rainfall > \code{threshold}.}
+#'   \item{\code{maxima}}{Maximum values corresponding to each year.}
+#'   \item{\code{data}}{A data frame with the data used to fit the TMEV
+#'     and the fitted Weibull parameters \code{c} and \code{w}.}
+#'   \item{\code{years}}{Vector of years as YYYY.}
+#'   \item{\code{threshold}}{The chosen threshold.}
+#'   \item{\code{x}}{The fitted \code{bamlss} object.}
+#'   \item{\code{type}}{The type of distribution ("TMEV").}
+#'   \item{\code{minyears}}{The minimum number of years used to fit
+#'     the TMEV as provided.}
+#' }
 #'
 #' @export
-#' @references Marani, M. and Ignaccolo, M. (2015) 'A metastatistical approach to rainfall extremes', Advances in Water Resources. Elsevier Ltd, 79(Supplement C), pp. 121-126. doi: 10.1016/j.advwatres.2015.03.001.
-#' @references Falkensteiner, M., Schellander, H., Hell, T. (2023) 'Accounting for seasonality in the metastatistical extreme value distribution', (Weather and Climate Extremes, 42, 2023, https://doi.org/10.1016/j.wace.2023.100601).
+#' @references Marani, M. and Ignaccolo, M. (2015)
+#' 'A metastatistical approach to rainfall extremes',
+#' Advances in Water Resources. Elsevier Ltd, 79(Supplement C),
+#' pp. 121-126. \doi{10.1016/j.advwatres.2015.03.001}.
+#' @references Falkensteiner, M., Schellander, H., Hell, T. (2023)
+#' 'Accounting for seasonality in the metastatistical extreme value
+#' distribution', (Weather and Climate Extremes, 42, 2023,
+#' \doi{10.1016/j.wace.2023.100601}).
 #'
 #' @examples
 #' data(dailyrainfall)
-#' fit <- ftmev(dailyrainfall)
+#' filtered_data <- subset(
+#'   dailyrainfall,
+#'   as.numeric(format(dates, "%Y")) >= 1971 &
+#'   as.numeric(format(dates, "%Y")) <= 1978
+#' )
+#' fit <- ftmev(filtered_data, minyears = 5)
 #' plot(fit, type = "rl")
 #'
 #' # temporal trend of the Weibull parameters
 #' pred <- predict(fit)
 #' pred_year <- predict(fit, term = "year")
 #' boxplot(c.pred ~ year, data = pred)
-#' with(pred_year, lines(year - 1970, c.pred.year, type = "b", pch = 20, col = "red"))
+#' with(pred_year, lines(year - 1970,
+#'                       c.pred.year,
+#'                       type = "b",
+#'                       pch = 20,
+#'                       col = "red"))
 #'
 #' @author Marc-Andre Falkensteiner, Harald Schellander
 #'
@@ -864,7 +1009,8 @@ check.left.cens <- function(left_cens, censor) {
   }
   if (left_cens > 0 && isTRUE(censor)) {
     stop(
-      "use either 'left_cens' (fixed left-censoring quantile) or 'censor = TRUE' (quantile from the Weibull tail test), not both"
+      "use either 'left_cens' (fixed left-censoring quantile) or
+      'censor = TRUE' (quantile from the Weibull tail test), not both"
     )
   }
   invisible(TRUE)
@@ -912,7 +1058,8 @@ fit.mev <- function(data, method, left_cens = 0) {
     n <- length(x)
 
     # derivative of the log likelihood function with respect to w
-    # like <- function(w) n * (1 / w - sum((x^w) * log(x)) / sum(x^w)) + sum(log(x))
+    #like <- function(w) n * (1 / w - sum((x^w) * log(x)) / sum(x^w))
+    #+sum(log(x))
     # w <- uniroot(like, lower = 0, upper = 100)$root
     # c <- (sum(x^w_hat) / n )^(1.0 / w_hat)
 
@@ -961,7 +1108,8 @@ fit.mev <- function(data, method, left_cens = 0) {
 #   pwm: partial probability weighted moments (Wang, 1990). For a Weibull
 #        parent and a censored fraction F0 = k / N, with u0 = -log(1 - F0),
 #          M0' = int_F0^1 x(F) dF         = c * Gamma(1 + 1/w, u0)
-#          M1' = int_F0^1 x(F) (1 - F) dF = c * Gamma(1 + 1/w, 2 * u0) / 2^(1 + 1/w)
+#          M1' = int_F0^1 x(F) (1 - F) dF =
+#                          c * Gamma(1 + 1/w, 2 * u0) / 2^(1 + 1/w)
 #        (Gamma(a, u): upper incomplete gamma function). For F0 = 0 these are
 #        the equations solved in closed form in fit.mev().
 fit.mev.leftcens <- function(data, method, left_cens) {
@@ -974,7 +1122,8 @@ fit.mev.leftcens <- function(data, method, left_cens) {
   idx <- (k + 1):N
   xu <- x[idx]
 
-  # least squares in Weibull coordinates: log(x) = log(c) + 1/w * log(-log(1 - F))
+  # least squares in Weibull coordinates:
+  # log(x) = log(c) + 1/w * log(-log(1 - F))
   X <- log(-log(1 - idx / (N + 1)))
   Y <- log(xu)
   slope <- stats::cov(X, Y) / stats::var(X)
@@ -1060,8 +1209,8 @@ smev.boot <- function(
 
 #' The Metastatistical Extreme Value Distribution
 #'
-#' Density, distribution function, quantile function and random generation for the
-#' MEV distribution with shape parameter 'w', scale parameter 'c'.
+#' Density, distribution function, quantile function and random generation for
+#' the MEV distribution with shape parameter 'w', scale parameter 'c'.
 #' Parameter 'n' refers either to the mean number of wet days per year in case
 #' of the simplified MEV, or to the number of wet days for each year.
 #'
@@ -1074,12 +1223,12 @@ smev.boot <- function(
 #' @param w,c vector or single values of shape and scale parameter of the
 #' MEV distribution. If a vector, w and c must have the same length as n.
 #' @param n Either mean number of wet events per year for the SMEV,
-#' or a vector for yearly MEVD calculations, i.e. one value per year (see details).
-#' If a vector, n must have the same length as w and c.
+#' or a vector for yearly MEVD calculations, i.e. one value per year
+#' (see details). If a vector, n must have the same length as w and c.
 #'
-#' @return \code{dmev} gives the density function, \code{pmev} gives the distribution function,
-#' \code{qmev} gives the quantile function and \code{rmev} provides random realizations of
-#' the SMEV and MEVD.
+#' @return \code{dmev} gives the density function, \code{pmev} gives the
+#' distribution function, \code{qmev} gives the quantile function and
+#' \code{rmev} provides random realizations of the SMEV and MEVD.
 #'
 #' @export
 #'
@@ -1195,17 +1344,20 @@ rlmev <- function(q, w, c, n) {
 
 #' The non-stationary Metastatistical Extreme Value Distribution
 #'
-#' Quantile function for the TMEV distribution with a Weibull parent distribution.
+#' Quantile function for the TMEV distribution with a Weibull parent
+#' distribution.
 #'
 #' @aliases dtmev ptmev qtmev
 #'
 #' @param x,q Numeric vector or single value of probabilities for \code{dtmev}.
 #' @param p Numeric vector or single value of probabilities for \code{qtmev}.
-#' @param data A data frame with at least columns \code{c}, \code{w} and \code{year}.
-#' Can be taken from the output of the fitted TMEV object, i.e. \code{x$data} (see \code{\link{ftmev}}).
+#' @param data A data frame with at least columns \code{c}, \code{w}
+#' and \code{year}. Can be taken from the output of the fitted
+#' TMEV object, i.e. \code{x$data} (see \code{\link{ftmev}}).
 #'
-#' @return \code{dtmev} gives the density function, \code{ptmev} gives the distribution function,
-#' and \code{qtmev} gives the quantile function of the TMEV.
+#' @return \code{dtmev} gives the density function, \code{ptmev} gives
+#' the distribution function, and \code{qtmev} gives the quantile function
+#' of the TMEV.
 #' @export
 #'
 #' @examples
@@ -1213,7 +1365,11 @@ rlmev <- function(q, w, c, n) {
 #' fit <- ftmev(dailyrainfall)
 #' rp <- pp.weibull(fit$maxima)
 #' rl <- qtmev(1 - 1 / rp, fit$data)
-#' plot(rp, sort(fit$maxima), main = "TMEV", ylab = "return level", xlab = "return period (years)")
+#' plot(rp,
+#'      sort(fit$maxima),
+#'      main = "TMEV",
+#'      ylab = "return level",
+#'      xlab = "return period (years)")
 #' lines(rp, rl, type = "l")
 #'
 #'
@@ -1294,18 +1450,25 @@ qtmev <- function(p, data) {
 #'
 #' Note that bootstraping the confidence intervals is very slow.
 #'
-#' @param x An object of class \code{mevr}, either fitted with the MEVD, SMEV or TMEV
+#' @param x An object of class \code{mevr}, either fitted with the
+#' MEVD, SMEV or TMEV
 #' @param return.periods A vector of return periods in years, excluding 1.
-#' @param ci  If \code{ci=TRUE}, confidence intervals are calculated depending on the type of distribution (only for MEVD or SMEV).
-#' @param alpha Number between zero and one giving the \code{1 - alpha} confidence level. Defaults to \code{alpha=0.05}.
-#' @param method Character string giving the method for confidence interval calculation. Option \code{method='boot'} employs a
-#' parametric bootstrap that simulates data from the fitted model, and then fits the chosen MEVD type to each simulated data set
-#' to obtain a sample of parameters or return levels (very slow).
+#' @param ci  If \code{ci=TRUE}, confidence intervals are calculated depending
+#' on the type of distribution (only for MEVD or SMEV).
+#' @param alpha Number between zero and one giving the \code{1 - alpha}
+#' confidence level. Defaults to \code{alpha=0.05}.
+#' @param method Character string giving the method for confidence
+#' interval calculation. Option \code{method='boot'} employs a parametric
+#' bootstrap that simulates data from the fitted model, and then fits the
+#' chosen MEVD type to each simulated data set to obtain a sample of parameters
+#' or return levels (very slow).
 #' @param R The number of bootstrap iterations.
-#' @param ncores Number of cores used for parallel computing of confidence intervals. Defaults to 2.
+#' @param ncores Number of cores used for parallel computing of
+#' confidence intervals. Defaults to 2.
 #'
-#' @return A list with return levels, chosen return periods and, if \code{ci=TRUE},
-#' \code{alpha/2} and \code{1 - alpha/2} confidence intervals.
+#' @return A list with return levels, chosen return periods and,
+#' if \code{ci=TRUE}, \code{alpha/2} and \code{1 - alpha/2}
+#' confidence intervals.
 #' @export
 #'
 #' @examples
@@ -1398,9 +1561,6 @@ ci.mev <- function(
     stop("x must be object of class 'mevr'")
   }
 
-  #if(x$method == "mle")
-  #  stop("ci caculation does not support 'mle' as parameter estimation method")
-
   if (x$type != "MEVD") {
     stop("x must be of type MEVD")
   }
@@ -1476,15 +1636,6 @@ ci.mev <- function(
     if (subsize > length(x$years)) {
       subsize <- floor(length(x$years) * 0.75)
     }
-    #ncores <- detectCores() - floor(detectCores() / 2)
-    # chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
-    # #if (nzchar(chk) && chk == "TRUE") {
-    # if (chk == "TRUE") {
-    #   ncores <- 2L # use 2 cores in CRAN
-    # } else {
-    #   ncores <- detectCores() - floor(detectCores() / 2) # use all cores in devtools::test()
-    # }
-    # ncores <- 2L
     runsWindows <- (Sys.info()['sysname'] == "Windows")
     if (runsWindows) {
       cl <- makeCluster(ncores, type = "PSOCK")
@@ -1561,14 +1712,6 @@ ci.tmev <- function(
       subsize <- floor(length(x$years) * 0.75)
     }
 
-    # chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
-    # #if (nzchar(chk) && chk == "TRUE") {
-    # if (chk == "TRUE") {
-    #   ncores <- 2L # use 2 cores in CRAN
-    # } else {
-    #   ncores <- detectCores() - floor(detectCores() / 2) # use all cores in devtools::test()
-    # }
-    # ncores <- 2L
     runsWindows <- (Sys.info()['sysname'] == "Windows")
     if (runsWindows) {
       cl <- makeCluster(ncores, type = "PSOCK")
@@ -1703,15 +1846,6 @@ ci.smev <- function(
     if (subsize > length(x$years)) {
       subsize <- floor(length(x$years) * 0.75)
     }
-    # #ncores <- detectCores() - floor(detectCores() / 2)
-    # chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
-    # #if (nzchar(chk) && chk == "TRUE") {
-    # if (chk == "TRUE") {
-    #   ncores <- 2L # use 2 cores in CRAN
-    # } else {
-    #   ncores <- detectCores() - floor(detectCores() / 2) # use all cores in devtools::test()
-    # }
-    # ncores <- 2L
     runsWindows <- (Sys.info()['sysname'] == "Windows")
     if (runsWindows) {
       cl <- makeCluster(ncores, type = "PSOCK")
@@ -1766,10 +1900,12 @@ ci.smev <- function(
   #   z.alpha <- qnorm(alpha/2, lower.tail = FALSE)
   #   cov.theta <- x$varcov
   #   if (is.null(cov.theta))
-  #     stop("ci: Sorry, unable to calculate the parameter covariance matrix.  Maybe try a different method.")
+  #     stop("ci: Sorry, unable to calculate the parameter covariance matrix.
+  # Maybe try a different method.")
   #   var.theta <- diag(cov.theta)
   #   if (any(var.theta < 0))
-  #     stop("ci: negative Std. Err. estimates obtained.  Not trusting any of them.")
+  #     stop("ci: negative Std. Err. estimates obtained.
+  # Not trusting any of them.")
   #   ###
   #   #grads <- rlgrad.fevd(x, period = return.periods)
   #   rlgrad <- function(x, period = 100){
@@ -1798,7 +1934,8 @@ ci.smev <- function(
 #'
 #' @param x Numeric vector of block maxima
 #'
-#' @return A numeric vector of Weibull plotting positions corresponding to the given maxima \code{x}
+#' @return A numeric vector of Weibull plotting positions
+#' corresponding to the given maxima \code{x}
 #' @export
 #'
 #' @examples
@@ -1806,7 +1943,11 @@ ci.smev <- function(
 #' fit <- fsmev(dailyrainfall)
 #' rp <- pp.weibull(fit$maxima)
 #' rl <- return.levels.mev(fit, return.periods = rp)
-#' plot(rp, sort(fit$maxima), xlab = "Return period (years)", ylab = "Return level", main = fit$type)
+#' plot(rp,
+#'      sort(fit$maxima),
+#'      xlab = "Return period (years)",
+#'      ylab = "Return level",
+#'      main = fit$type)
 #' lines(rp, rl$rl)
 pp.weibull <- function(x) {
   x <- na.omit(x)
@@ -1821,16 +1962,24 @@ pp.weibull <- function(x) {
 
 #' Plot graphs of MEVD, SMEV or TMEV fit
 #'
-#' A return level plot, qq-plot, pp-plot and a histogram with the fitted density is produced
+#' A return level plot, qq-plot, pp-plot and a histogram with the fitted
+#' density is produced
 #'
-#' @param x An object of class\code{mevr}, whose \code{type} argument is one of MEVD, SMEV or TMEV
+#' @param x An object of class\code{mevr}, whose \code{type} argument is
+#' one of MEVD, SMEV or TMEV
 #' @param q vector of return periods, \eqn{q > 1}.
-#' @param ci if \code{ci=TRUE}, confidence intervals will be computed.
-#' @param type if omitted a panel with a return level plot (\code{type='rl'},
-#' a density plot (\code{type='hist'}), a qq-plot (\code{type='qq'}) and a
-#' probability plot (\code{tpe='pp'}) are shown.
+#' @param ci if \code{ci=TRUE},
+#' confidence intervals will be computed.
+#' @param type character. Specifies the type of plot to display:
+#' \itemize{
+#'   \item \code{"rl"}: return level plot.
+#'   \item \code{"hist"}: density plot.
+#'   \item \code{"qq"}: Q-Q plot.
+#'   \item \code{"pp"}: probability plot.
+#' }
+#' If omitted, a panel showing all four plots is displayed.
 #' @param ... Further parameters may also be supplied as arguments.
-#' See e.g. \link[base]{plot}.
+#' See e.g. \code{plot}.
 #'
 #' @method plot mevr
 #' @return No return value, only a plot is produced.
@@ -1934,21 +2083,12 @@ plot.mevr <- function(
     xd <- seq(min(yd$x, na.rm = TRUE), max(yd$x, na.rm = TRUE), length.out = N)
     if (tolower(x$type) != "tmev") {
       if (is.vector(x$data)) {
-        # #dens.y <- dmev(dens.x, x$w, x$c, lambda) # daily
-        # yd <- density(obs.y)
-        # dens.x <- seq(min(yd$x, na.rm = TRUE), max(yd$x, na.rm = TRUE), , 100)
-        # #yd2 <- devd(xd, loc = mu, scale = sig, shape = xi, threshold = u2, type = mod2)
-        # dens.y <- dmev(dens.x, x$w, x$c, x$n)
         dens.y <- dmev(xd, x$w, x$c, x$n)
       } else {
-        #dens.y <- dmev(dens.x, x$w, x$c, x$n)
         dens.y <- dmev(xd, x$w, x$c, x$n)
       }
     } else {
       dens.y <- c()
-      # for (i in 1:length(dens.x)) {
-      #   dens.y <- c(dens.y, dtmev(dens.x[i], x$data))
-      # }
       for (i in 1:length(xd)) {
         dens.y <- c(dens.y, dtmev(xd[i], x$data))
       }
@@ -1973,8 +2113,10 @@ plot.mevr <- function(
     #   if (is.vector(x$data)) {
     #      #dens.y <- dmev(dens.x, x$w, x$c, lambda) # daily
     #      yd <- density(obs.y)
-    #      dens.x <- seq(min(yd$x, na.rm = TRUE), max(yd$x, na.rm = TRUE), , 100)
-    #      #yd2 <- devd(xd, loc = mu, scale = sig, shape = xi, threshold = u2, type = mod2)
+    #      dens.x <- seq(min(yd$x, na.rm = TRUE),
+    # max(yd$x, na.rm = TRUE), , 100)
+    #      #yd2 <- devd(xd, loc = mu, scale = sig, shape = xi,
+    # threshold = u2, type = mod2)
     #      dens.y <- dmev(dens.x, x$w, x$c, x$n)
     #   } else {
     #     dens.y <- dmev(dens.x, x$w, x$c, x$n)
@@ -2045,24 +2187,32 @@ plot.mevr <- function(
 
 #' TMEV prediction
 #'
-#' Takes a \code{mevr} object where the TMEV has been fitted to rainfall data and calculates
-#' \code{bamlss} predictions for the distributional parameters and the model terms. Basically
-#' a wrapper to the corresponding function \code{predict.bamlss}
+#' Takes a \code{mevr} object where the TMEV has been fitted to
+#' rainfall data and calculates \code{bamlss} predictions for the
+#' distributional parameters and the model terms. Basically a wrapper
+#' to the corresponding function \code{predict.bamlss}
 #'
-#' See also the details of \code{\link{ftmev}} for an explanation of the model terms used to fit the temporal trend
-#' of the Weibull parameters. The basis dimensions yday_ti_shape_k,
-#' yday_ti_scale_k, year_ti_shape_k, year_ti_scale_k are taken from
+#' See also the details of \code{\link{ftmev}} for an explanation of the
+#' model terms used to fit the temporal trend of the Weibull parameters.
+#' The basis dimensions yday_ti_shape_k, yday_ti_scale_k,
+#' year_ti_shape_k, year_ti_scale_k are taken from
 #' the fitting process, i.e. the call to \code{\link{ftmev}}.
 #'
 #' @param object Object of class \code{mevr}, fitted with the TMEV.
-#' @param newdata A data frame with the model covariates (year, yday) at which predictions are required.
-#' Note that depending on argument term, only covariates that are needed by the corresponding model terms need to be supplied.
-#' If not supplied, predictions are made on the data supplied by the fitted object \code{x}.
-#' @param term Character of the model terms for which predictions shall be calculated.
-#' Can only be \code{"year"} or \code{"yday"}. If not specified, predictions for all terms are calculated.
-#' @param ... Arguments passed to prediction functions that are part of a bamlss.family object, i.e., the objects has a $predict() function that should be used instead.
+#' @param newdata A data frame with the model covariates (year, yday)
+#' at which predictions are required. Note that depending on argument term,
+#' only covariates that are needed by the corresponding model terms
+#' need to be supplied. If not supplied, predictions are made on the data
+#' supplied by the fitted object \code{x}.
+#' @param term Character of the model terms for which predictions shall
+#' be calculated. Can only be \code{"year"} or \code{"yday"}. If not
+#' specified, predictions for all terms are calculated.
+#' @param ... Arguments passed to prediction functions that are part
+#' of a bamlss.family object, i.e., the objects has a $predict()
+#' function that should be used instead.
 #'
-#' @return A data.frame with the supplied covariables and the predicted parameters.
+#' @return A data.frame with the supplied covariables and
+#' the predicted parameters.
 #' @export
 #'
 #' @examples
@@ -2075,7 +2225,7 @@ plot.mevr <- function(
 #' f <- ftmev(data, minyears = 5)
 #' predict(f, term = "year")
 #'
-#' @seealso \code{\link{ftmev}}, \code{\link[bamlss]{predict.bamlss}}
+#' @seealso \code{\link{ftmev}}
 predict.mevr <- function(object, newdata, term, ...) {
   # if(!inherits(object, "mevr"))
   #   stop("object must be object of class 'mevr'")
@@ -2290,30 +2440,35 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...) {
 #   x4[:] = x[:]
 #   x4[i] = x4[i] - eps[i]
 #   x4[j] = x4[j] - eps[j]
-#   m[i,j] = (fun(x1, data) -fun(x2, data) - fun(x3, data) + fun(x4, data))/(4*eps[i]*eps[j])
+#   m[i,j] = (fun(x1, data) -fun(x2, data) -
+# fun(x3, data) + fun(x4, data))/(4*eps[i]*eps[j])
 #   M = np.asmatrix(m)
 #   return inv(M)
 # }
 
-#' Detect Rainfall Events with Specified Separation Time (Dry Time) and Minimum Rain Threshold
+#' Detect Rainfall Events with Specified Separation Time (Dry Time)
+#' and Minimum Rain Threshold
 #'
 #' This function identifies rainfall events in time-series
 #' data based on a minimum rainfall threshold and a separation time between
 #' events. It uses morphological operations to detect and separate events,
 #' and it can ignore short events that do not meet a minimum duration criterion.
-#' Based on Marra et al. 2024: "Predicting Extreme Sub-Hourly Precipitation Intensification Based on Temperature Shifts“.
-#' Hydrology and Earth System Sciences 28, Nr. 2: 375–89. https://doi.org/10.5194/hess-28-375-2024.
+#' Based on Marra et al. 2024: "Predicting Extreme Sub-Hourly Precipitation
+#' Intensification Based on Temperature Shifts“.
+#' Hydrology and Earth System Sciences 28, Nr. 2: 375–89.
+#' \doi{10.5194/hess-28-375-2024}.
 #'
-#' @details The function works by first dilating the rainfall data using a structuring
-#' element defined by the separation time, followed by erosion to remove noise.
-#' It then detects events based on the separation time and the minimum rainfall
-#' threshold, returning the time intervals where events occurred.
-#' Events that span more than two years or are shorter than
+#' @details The function works by first dilating the rainfall data using a
+#' structuring element defined by the separation time, followed by erosion
+#' to remove noise. It then detects events based on the separation time
+#' and the minimum rainfall threshold, returning the time intervals where
+#' events occurred. Events that span more than two years or are shorter than
 #' the `ignore_event_duration` are ignored.
 #'
 #' @param data A data frame with two columns, observation date and values.
 #'   \itemize{
-#'     \item `groupvar`: A time variable (e.g., POSIXct or Date) indicating the timestamp of each observation.
+#'     \item `groupvar`: A time variable (e.g., POSIXct or Date) indicating
+#' the timestamp of each observation.
 #'     \item `val`: A numeric of the observed rainfall values.
 #'   }
 #' @param separation_period Numeric. The minimum dry period (in minutes)
@@ -2345,12 +2500,18 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...) {
 #' \dontrun{
 #' # Example data
 #' mock_data <- data.frame(
-#'   groupvar = seq.POSIXt(Sys.time(), by = "10 min", length.out = 100),
+#'   groupvar = seq.POSIXt(Sys.time(),
+#'                         by = "10 min",
+#'                         length.out = 100),
 #'   val = c(rep(0, 10), runif(20, 0, 1), rep(0, 70))
 #' )
 #'
-#' # Detect rainfall events with a separation of 6 hours and a minimum rain threshold of 0.1
-#' result <- event_separation(mock_data, separation_period = 360, time_resolution = 10, min_rain = 0.1)
+#' # Detect rainfall events with a separation of 6 hours
+#' # and a minimum rain threshold of 0.1
+#' result <- event_separation(mock_data,
+#'                            separation_period = 360,
+#'                            time_resolution = 10,
+#'                            min_rain = 0.1)
 #' print(result$fromto)  # View detected events
 #' }
 #' @export
@@ -2417,8 +2578,8 @@ event_separation <- function(
 }
 
 
-#' Identifies ordinary rainfall events by calculating the maximum within rainfall events
-#' defined with \code{\link{event_separation}}
+#' Identifies ordinary rainfall events by calculating the maximum within
+#' rainfall events defined with \code{\link{event_separation}}
 #'
 #' This function calculates the rolling sum of values in the
 #' provided data over a specified duration and identifies the events with the
@@ -2436,13 +2597,15 @@ event_separation <- function(
 #'     \item `fromto`: A data frame with two columns: `from` and `to`,
 #'     representing the start and end indices of the time intervals to analyze.
 #'   }
-#' @param duration Numeric. The duration in minutes for which maxima shall be calculated.
-#' @param na.rm Logical. If \code{na.rm = TRUE} (default), missing values within an event are
-#' ignored in the rolling sum. If \code{na.rm = FALSE}, windows that contain missing values
-#' are not considered for the event maximum.
+#' @param duration Numeric. The duration in minutes for which maxima shall
+#' be calculated.
+#' @param na.rm Logical. If \code{na.rm = TRUE} (default), missing values
+#' within an event are ignored in the rolling sum. If \code{na.rm = FALSE},
+#' windows that contain missing values are not considered for the event maximum.
 #'
 #' @return Returns a tibble with individual rainfall events that can be
-#' used as input for functions \code{\link{fsmev}}, \code{\link{fmev}}, \code{\link{ftmev}}.
+#' used as input for functions
+#' \code{\link{fsmev}}, \code{\link{fmev}}, \code{\link{ftmev}}.
 #' @export
 #'
 #' @examples

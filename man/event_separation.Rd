@@ -2,7 +2,8 @@
 % Please edit documentation in R/mevr.R
 \name{event_separation}
 \alias{event_separation}
-\title{Detect Rainfall Events with Specified Separation Time (Dry Time) and Minimum Rain Threshold}
+\title{Detect Rainfall Events with Specified Separation Time (Dry Time)
+and Minimum Rain Threshold}
 \usage{
 event_separation(
   data,
@@ -14,10 +15,11 @@ event_separation(
 }
 \arguments{
 \item{data}{A data frame with two columns, observation date and values.
-\itemize{
-  \item `groupvar`: A time variable (e.g., POSIXct or Date) indicating the timestamp of each observation.
-  \item `val`: A numeric of the observed rainfall values.
-}}
+  \itemize{
+    \item `groupvar`: A time variable (e.g., POSIXct or Date) indicating
+the timestamp of each observation.
+    \item `val`: A numeric of the observed rainfall values.
+  }}
 
 \item{separation_period}{Numeric. The minimum dry period (in minutes)
 that separates two distinct rainfall events. Default is 360 minutes (6 hours).
@@ -53,27 +55,35 @@ This function identifies rainfall events in time-series
 data based on a minimum rainfall threshold and a separation time between
 events. It uses morphological operations to detect and separate events,
 and it can ignore short events that do not meet a minimum duration criterion.
-Based on Marra et al. 2024: "Predicting Extreme Sub-Hourly Precipitation Intensification Based on Temperature Shifts“.
-Hydrology and Earth System Sciences 28, Nr. 2: 375–89. https://doi.org/10.5194/hess-28-375-2024.
+Based on Marra et al. 2024: "Predicting Extreme Sub-Hourly Precipitation
+Intensification Based on Temperature Shifts“.
+Hydrology and Earth System Sciences 28, Nr. 2: 375–89.
+\doi{10.5194/hess-28-375-2024}.
 }
 \details{
-The function works by first dilating the rainfall data using a structuring
-element defined by the separation time, followed by erosion to remove noise.
-It then detects events based on the separation time and the minimum rainfall
-threshold, returning the time intervals where events occurred.
-Events that span more than two years or are shorter than
+The function works by first dilating the rainfall data using a
+structuring element defined by the separation time, followed by erosion
+to remove noise. It then detects events based on the separation time
+and the minimum rainfall threshold, returning the time intervals where
+events occurred. Events that span more than two years or are shorter than
 the `ignore_event_duration` are ignored.
 }
 \examples{
 \dontrun{
 # Example data
 mock_data <- data.frame(
-  groupvar = seq.POSIXt(Sys.time(), by = "10 min", length.out = 100),
+  groupvar = seq.POSIXt(Sys.time(),
+                        by = "10 min",
+                        length.out = 100),
   val = c(rep(0, 10), runif(20, 0, 1), rep(0, 70))
 )
 
-# Detect rainfall events with a separation of 6 hours and a minimum rain threshold of 0.1
-result <- event_separation(mock_data, separation_period = 360, time_resolution = 10, min_rain = 0.1)
+# Detect rainfall events with a separation of 6 hours
+# and a minimum rain threshold of 0.1
+result <- event_separation(mock_data,
+                           separation_period = 360,
+                           time_resolution = 10,
+                           min_rain = 0.1)
 print(result$fromto)  # View detected events
 }
 }

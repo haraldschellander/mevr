@@ -18,95 +18,131 @@ fsmev(
 )
 }
 \arguments{
-\item{data}{The data to which the SMEV should be fitted to. \code{data} must be either a data.frame with two columns.
-The first column must contain dates of class \code{Date}, the second or last column must contain the rainfall
-values corresponding to datums in the rows. No negative values are allowed. NA values are removed with a warning.
-\code{data} can also be a numeric vector of rainfall values. Internally a date column beginning at '1970-01-01' is added,
-assuming daily data.}
+\item{data}{A data frame or numeric vector.
+If a data.frame, column one must contain
+dates of class \code{Date}, and the last
+column must contain rainfall values.
+If a vector, daily data starting from
+'1970-01-01' is assumed.
+Negative values are disallowed, and NA
+values are removed with a warning.}
 
-\item{threshold}{A numeric that is used to define wet days as values > threshold.
-\eqn{data <= threshold} is set to NA.}
+\item{threshold}{Numeric threshold defining
+wet days. Values below or equal to
+the threshold are set to NA.}
 
-\item{method}{Character string describing the method that is used to estimate the
-Weibull parameters c and w. Possible options are probability weighted moments (\code{method='pwm'}),
-maximum likelihood (\code{method='mle'}) or least squares (\code{method='ls'}).
-The \code{default} is \code{pwm}. (see details).}
+\item{method}{Character string for estimating
+Weibull parameters \code{c} and \code{w}.
+Options are probability weighted moments
+(\code{"pwm"}), maximum likelihood
+(\code{"mle"}), or least squares
+(\code{"ls"}). Default is \code{"pwm"}
+(see details).}
 
-\item{censor}{If \code{censor=TRUE}, the data series will be left-censored to assure that the observed maxima
-are samples from a weibull tail. Defaults to \code{censor=FALSE}.}
+\item{censor}{Logical. If \code{TRUE},
+data is left-censored to ensure maxima
+follow a Weibull tail. Default is
+\code{FALSE}.}
 
-\item{censor_opts}{An empty list which can be populated with components \code{thresholds}, \code{mon}, \code{nrtrials} and \code{R}.
-They give the range of quantiles used as left-censoring threshold, the month with which the block starts,
-the number of trials used to achieve a weibull fit to the left-censored sample, and the number of synthetic samples
-used for the test statistics, respectively. See also \code{\link{weibull_tail_test}}.}
+\item{censor_opts}{A list of censoring options:
+\itemize{
+  \item \code{thresholds}: range of quantiles.
+  \item \code{mon}: start month of the block.
+  \item \code{nrtrials}: number of trials.
+  \item \code{R}: number of synthetic samples.
+}
+See \code{\link{weibull_tail_test}}.}
 
-\item{warn}{If \code{TRUE} which is the default, warnings about censoring are given.}
+\item{warn}{Logical. If \code{TRUE} (default),
+censoring warnings are displayed.}
 
-\item{sd}{If \code{sd=TRUE}, confidence intervals of the SMEV distribution are calculated (see details).}
+\item{sd}{Logical. If \code{TRUE}, confidence
+intervals are calculated (see details).
+Default is \code{FALSE}.}
 
-\item{sd.method}{Currently only a non parametric bootstrap technique can be used to calculate SMEV confidence intervals with \code{sd.method='boot'}. The default is \code{sd=FALSE}.}
+\item{sd.method}{Character string for
+confidence interval methods. Currently
+only nonparametric bootstrap
+(\code{"boot"}) is supported.}
 
-\item{R}{The number of samples drawn from the SMEV distribution to calculate the confidence intervals with \code{sd.method='boot'}}
+\item{R}{Integer. Number of bootstrap
+samples for confidence intervals.}
 
-\item{left_cens}{A single numeric in [0, 1) giving the fraction of the smallest ordinary events
-that is left-censored for the estimation of c and w (see details). The default \code{left_cens = 0}
-uses the complete sample. Values around 0.9 are common for sub-daily rainfall.
-Cannot be combined with \code{censor = TRUE}, which selects the censoring quantile with a Weibull tail test.}
+\item{left_cens}{Numeric in [0, 1).
+Fraction of smallest ordinary events
+left-censored (see details). Default
+is \code{0}. Cannot be combined with
+\code{censor = TRUE}.}
 }
 \value{
 A list of class \code{mevr} with components:
-\item{c}{ Single value of the Weibull scale parameter of the SMEV.}
-\item{w}{ Single value of the Weibull shape parameter of the SMEV.}
-\item{n}{ Mean number of wet events, averaged over all years. Wet events are defined as rainfall > \code{threshold}.}
-\item{params}{ A named vector of the fitted parameters. }
-\item{maxima}{ Maximum values corresponding to each year.}
-\item{std}{ Standard error of fitted parameters (if \code{sd=TRUE}).}
-\item{varcov}{ Covariance matrix of fitted parameters (if \code{sd=TRUE}).}
-\item{data}{ \eqn{data >= threshold} used to fit the SMEV and additional components which may be useful for further analysis.}
-\item{years}{ Vector of years as YYYY.}
-\item{threshold}{ The chosen threshold.}
-\item{method}{ Method used to fit the MEVD. }
-\item{censor}{ \code{TRUE} when the data-series was left-censored and \code{FALSE} otherwise.}
-\item{left_cens}{ The fixed left-censoring quantile used for the estimation of c and w.}
-\item{type}{ The type of distribution ("SMEV")}
-\item{rejected}{ If \code{censor=TRUE}, \code{rejected=TRUE} when the Weibull tail assumption is rejected and \code{rejected=FALSE} otherwise.
-If \code{censor=FALSE} this value is not returned.}
+\describe{
+  \item{\code{c}}{Single value of the Weibull scale parameter of the SMEV.}
+  \item{\code{w}}{Single value of the Weibull shape parameter of the SMEV.}
+  \item{\code{n}}{Mean number of wet events, averaged over all years.
+    Wet events are defined as rainfall > \code{threshold}.}
+  \item{\code{params}}{A named vector of the fitted parameters.}
+  \item{\code{maxima}}{Maximum values corresponding to each year.}
+  \item{\code{std}}{Standard error of fitted parameters
+    (if \code{sd = TRUE}).}
+  \item{\code{varcov}}{Covariance matrix of fitted parameters
+    (if \code{sd = TRUE}).}
+  \item{\code{data}}{Filtered data used to fit the SMEV and additional
+    components useful for further analysis.}
+  \item{\code{years}}{Vector of years as YYYY.}
+  \item{\code{threshold}}{The chosen threshold.}
+  \item{\code{method}}{Method used to fit the MEVD.}
+  \item{\code{censor}}{\code{TRUE} when the data series was left-censored
+    and \code{FALSE} otherwise.}
+  \item{\code{left_cens}}{The fixed left-censoring quantile used for
+    estimating \code{c} and \code{w}.}
+  \item{\code{type}}{The type of distribution ("SMEV").}
+  \item{\code{rejected}}{If \code{censor = TRUE}, \code{TRUE} when the
+    Weibull tail assumption is rejected, and \code{FALSE} otherwise.
+    Omitted if \code{censor = FALSE}.}
+}
 }
 \description{
-Fit the SMEV distribution to rainfall observations with different estimation methods.
+Fit the SMEV distribution to rainfall observations with different
+estimation methods.
 }
 \details{
-The SMEV was introduced by (Marra et al., 2019) as a simplified version of the MEVD
-(Marani and Ignaccolo, 2015) with the assumption of a stationary parent Weibull distribution
-as
+The SMEV was introduced by (Marra et al., 2019) as a simplified version of
+the MEVD (Marani and Ignaccolo, 2015) with the assumption of a stationary
+parent Weibull distribution as
 \deqn{F = [1 - exp(-x/C)^w]^n}
-for \eqn{w > 0} and \eqn{C > 0} being the Weibull shape and scale parameter and
-\eqn{n > 0} being the mean number of wet days over all years.
+for \eqn{w > 0} and \eqn{C > 0} being the Weibull shape and scale parameter
+and \eqn{n > 0} being the mean number of wet days over all years.
 Wet days are defined as rainfall events > threshold. As it was shown by
-e.g. Schellander et al., 2019, probability weighted moments should be preferred over
-maximum likelihood for the estimation of the Weibull parameters w and C. Therefore
-\code{method = 'pwm'} is the default.
+e.g. Schellander et al., 2019, probability weighted moments should be
+preferred over maximum likelihood for the estimation of the Weibull
+parameters w and C. Therefore \code{method = 'pwm'} is the default.
 
-Confidence intervals of the SMEV distribution can be calculated using a non parametric
-bootstrap technique. Note that this very slow.
+Confidence intervals of the SMEV distribution can be calculated using
+a non parametric bootstrap technique. Note that this very slow.
 
-The estimators above assume that all ordinary events are Weibull distributed. This is
-usually acceptable for daily rainfall, but not for sub-daily durations, where the
-lower part of the sample is affected by the gauge resolution and by weak events that
-do not share the tail of the intense ones. Fitted to the complete sample, the shape
-parameter is then overestimated and return levels are strongly underestimated.
-Following Marra et al. (2019, 2020) the Weibull distribution can be fitted to the
-tail only by left-censoring: with \code{left_cens = 0.9} the smallest 90 percent of the
-ordinary events are censored, i.e. their magnitudes are ignored but they keep their
-non-exceedance probability, and \code{n} is still the mean number of all ordinary
-events per year. With \code{method = 'ls'} this is the least squares regression in
-Weibull-transformed coordinates used by Marra et al. (2020), \code{method = 'mle'}
-maximizes the likelihood of the left-censored sample and \code{method = 'pwm'} uses
-partial probability weighted moments (Wang, 1990). For sub-daily data, ordinary events
-should be defined with \code{\link{event_separation}} and \code{\link{ordinary_events}}.
+The estimators above assume that all ordinary events are Weibull distributed.
+This is usually acceptable for daily rainfall, but not for sub-daily
+durations, where the lower part of the sample is affected by the gauge
+resolution and by weak events that do not share the tail of the intense
+ones. Fitted to the complete sample, the shape parameter is then
+overestimated and return levels are strongly underestimated.
+Following Marra et al. (2019, 2020) the Weibull distribution can be fitted
+to the tail only by left-censoring: with \code{left_cens = 0.9} the
+smallest 90 percent of the ordinary events are censored, i.e. their
+magnitudes are ignored but they keep their non-exceedance probability,
+and \code{n} is still the mean number of all ordinary events per year.
+With \code{method = 'ls'} this is the least squares regression in
+Weibull-transformed coordinates used by Marra et al. (2020),
+\code{method = 'mle'} maximizes the likelihood of the left-censored sample
+and \code{method = 'pwm'} uses partial probability weighted moments
+(Wang, 1990). For sub-daily data, ordinary events should be defined with
+\code{\link{event_separation}}
+and \code{\link{ordinary_events}}.
 
-This function returns the parameters of the fitted SMEV distribution as well as some
-additional fitting results and input parameters useful for further analysis.
+This function returns the parameters of the fitted SMEV distribution as well
+as some additional fitting results and input parameters useful for further
+analysis.
 }
 \examples{
 data(dailyrainfall)
@@ -121,8 +157,11 @@ fit_lc
 
 # left censor data prior to fitting
 set.seed(123)
-sample_dates <- seq.Date(from = as.Date("2000-01-01"), to = as.Date("2020-12-31"), by = 1)
-sample_data <- data.frame(dates = sample_dates, val = sample(rnorm(length(sample_dates))))
+sample_dates <- seq.Date(from = as.Date("2000-01-01"),
+                         to = as.Date("2020-12-31"),
+                         by = 1)
+sample_data <- data.frame(dates = sample_dates,
+                          val = sample(rnorm(length(sample_dates))))
 d <- sample_data |>
   filter(val >= 0 & !is.na(val))
 
@@ -147,11 +186,19 @@ legend("bottomright", legend = c("std", "censored"),
 
 }
 \references{
-Marra, F. et al. (2019) 'A simplified MEV formulation to model extremes emerging from multiple nonstationary underlying processes', Advances in Water Resources. Elsevier Ltd, 127(April), pp. 280-290. doi: 10.1016/j.advwatres.2019.04.002.
+Marra, F. et al. (2019) 'A simplified MEV formulation to
+model extremes emerging from multiple nonstationary underlying processes',
+Advances in Water Resources. Elsevier Ltd, 127(April), pp. 280-290.
+\doi{10.1016/j.advwatres.2019.04.002}.
 
-Marra, F. et al. (2020) 'A unified framework for extreme subdaily precipitation frequency analyses based on ordinary events', Geophysical Research Letters, 47, e2020GL090209. doi: 10.1029/2020GL090209.
+Marra, F. et al. (2020) 'A unified framework for extreme
+subdaily precipitation frequency analyses based on ordinary events',
+Geophysical Research Letters, 47, e2020GL090209.
+\doi{10.1029/2020GL090209}.
 
-Wang, Q. J. (1990) 'Estimation of the GEV distribution from censored samples by method of partial probability weighted moments', Journal of Hydrology, 120, pp. 103-114.
+Wang, Q. J. (1990) 'Estimation of the GEV distribution from
+censored samples by method of partial probability weighted moments',
+Journal of Hydrology, 120, pp. 103-114.
 }
 \seealso{
 \code{\link{fmev}}, \code{\link{ftmev}}

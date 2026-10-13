@@ -4,3 +4,5 @@
 ^docs$
 ^pkgdown$
 ^\.github$
+^codecov\.yml$
+mevr-manual.tex

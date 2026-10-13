@@ -13,7 +13,8 @@ censored_weibull_fit(x, thresholds, warn)
 \item{thresholds}{A numeric or vector of quantiles which shall be tested
 as optimal threshold for left-censoring.}
 
-\item{warn}{If \code{TRUE} which is the default, warnings about censoring are given.}
+\item{warn}{If \code{TRUE} which is the default, warnings about censoring
+are given.}
 }
 \value{
 A tibble with the optimal threshold itself and
