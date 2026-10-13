@@ -60,3 +60,33 @@ test_that("print should correctly print arguments for TMEV fit", {
   expect_true("type" %in% names(fit))
   expect_true("minyears" %in% names(fit))
 })
+
+
+test_that("print.mevr handles errors, different model types, and formatting options", {
+  data(dailyrainfall)
+
+  # 1. Error handling: object must be of class 'mevr'
+  expect_error(
+    print.mevr(list(type = "SMEV", c = 1, w = 1, n = 1)),
+    "x must be object of class 'mevr'"
+  )
+
+  # 2. Print SMEV fit (single parameter case: length(w) == 1)
+  fit_smev <- fsmev(dailyrainfall)
+  output_smev <- capture.output(print(fit_smev))
+  expect_true(any(grepl("Type: SMEV", output_smev)))
+  expect_true(any(grepl("Scale C:", output_smev)))
+  expect_true(any(grepl("Mean number of wet events n:", output_smev)))
+
+  # 3. Print MEVD fit (multi-year case: length(w) > 1)
+  fit_mev <- fmev(dailyrainfall[1:1000, ], method = "pwm")
+  output_mev <- capture.output(print(fit_mev, digits = 4))
+  expect_true(any(grepl("Type: MEVD", output_mev)))
+  expect_true(any(grepl("Years:", output_mev)))
+  expect_true(any(grepl("Wet events n:", output_mev)))
+
+  # 4. Print fit with left-censoring parameter displayed
+  fit_lc <- fsmev(dailyrainfall, left_cens = 0.8)
+  output_lc <- capture.output(print(fit_lc))
+  expect_true(any(grepl("Left-censoring quantile:", output_lc)))
+})

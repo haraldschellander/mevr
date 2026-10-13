@@ -28,3 +28,25 @@ test_that("predict-mevr should correctly predict TMEV parameters for valid input
   expect_true("w.pred" %in% names(result))
   # Add more assertions based on what you expect the output to be
 })
+
+
+test_that("predict and plot methods work for TMEV and SMEV", {
+  data(dailyrainfall)
+  small_df <- dailyrainfall[1:1500, ]
+
+  fit_tmev <- ftmev(small_df, minyears = 3, verbose = FALSE)
+
+  # Predictions for specific terms
+  pred_yr <- predict(fit_tmev, term = "year")
+  expect_true(is.data.frame(pred_yr))
+
+  pred_yday <- predict(fit_tmev, term = "yday")
+  expect_true(is.data.frame(pred_yday))
+
+  # Plot methods execution
+  fit_smev <- fsmev(small_df)
+  expect_invisible(plot(fit_smev, type = "rl"))
+  expect_invisible(plot(fit_smev, type = "hist"))
+  expect_invisible(plot(fit_smev, type = "qq"))
+  expect_invisible(plot(fit_smev, type = "pp"))
+})

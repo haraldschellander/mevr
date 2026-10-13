@@ -179,3 +179,30 @@ test_that("fsmev should correctly calculate SMEV parameters for censored input",
   expect_true("n" %in% names(result))
   #expect_true("method" == "censored lsreg")
 })
+
+test_that("fsmev handles numeric vector input and input validation errors", {
+  set.seed(42)
+  vec_data <- rnorm(400, mean = 2, sd = 1)
+  vec_data[vec_data < 0] <- 0
+
+  # Vector input branch (vec = TRUE)
+  fit_vec <- fsmev(vec_data, threshold = 0.1, method = "pwm")
+  expect_s3_class(fit_vec, "mevr")
+  expect_equal(fit_vec$type, "SMEV")
+
+  # Error handling: invalid data class
+  expect_error(
+    fsmev("not-data"),
+    "data must be of class 'data.frame' or 'numeric'"
+  )
+
+  # Error handling: negative values
+  expect_error(fsmev(c(-1, 2, 3)), "data must not contain values < 0")
+
+  # Warning on NA values
+  df_na <- data.frame(
+    dates = seq.Date(as.Date("2020-01-01"), by = "day", length.out = 10),
+    val = c(1, 2, NA, 4, 5, 6, 7, 8, 9, 10)
+  )
+  expect_warning(fsmev(df_na), "data contains 1 NA values which are ignored.")
+})

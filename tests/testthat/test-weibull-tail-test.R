@@ -49,3 +49,35 @@ test_that("weibull-tail-test should correctly perform a weibull tail test for va
   expect_true("shape" %in% names(result))
   expect_true("p_out" %in% names(result))
 })
+
+test_that("weibull_tail_test and censored_weibull_fit handle edge cases", {
+  data(dailyrainfall)
+
+  # Error checks
+  expect_error(
+    weibull_tail_test("not-a-df"),
+    "data must be of class 'data.frame'"
+  )
+  expect_error(
+    weibull_tail_test(dailyrainfall, cens_quant = c(0.8, 0.9)),
+    "cens_quant must be a single numeric"
+  )
+
+  # Test fitting when all tails are rejected (threshold index out of bounds)
+  mock_res <- tibble(
+    is_rejected = c(TRUE, TRUE, TRUE),
+    p_out = c(0.2, 0.3, 0.4),
+    p_hi = c(0.1, 0.15, 0.2),
+    p_lo = c(0.1, 0.15, 0.2),
+    scale = c(1, 1, 1),
+    shape = c(1, 1, 1),
+    thresh = c(10, 20, 30),
+    quant = c(0.5, 0.6, 0.7)
+  )
+  fit_cens <- censored_weibull_fit(
+    mock_res,
+    thresholds = c(0.5, 0.6, 0.7),
+    warn = FALSE
+  )
+  expect_true(all(is.na(fit_cens$shape)))
+})

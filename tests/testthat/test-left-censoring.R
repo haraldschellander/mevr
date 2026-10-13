@@ -63,7 +63,10 @@ test_that("fsmev and fmev accept a fixed left-censoring quantile", {
 
   expect_error(fsmev(dailyrainfall, left_cens = 1), "left_cens must be")
   expect_error(fsmev(dailyrainfall, left_cens = -0.1), "left_cens must be")
-  expect_error(fmev(dailyrainfall, left_cens = c(0.1, 0.2)), "left_cens must be")
+  expect_error(
+    fmev(dailyrainfall, left_cens = c(0.1, 0.2)),
+    "left_cens must be"
+  )
   expect_error(
     fsmev(dailyrainfall, left_cens = 0.9, censor = TRUE),
     "not both"
@@ -83,4 +86,25 @@ test_that("ordinary_events keeps events aligned when the series contains NA", {
   expect_equal(res$val, 9)
   expect_equal(res$v_date, ref$v_date)
   expect_equal(ordinary_events(event_separation(d), duration = 30)$val, 16)
+})
+
+test_that("left-censoring and alternative estimation methods work correctly", {
+  data(dailyrainfall)
+
+  # Check invalid left_cens parameters
+  expect_error(
+    fsmev(dailyrainfall, left_cens = 1.5),
+    "left_cens must be a single numeric"
+  )
+  expect_error(
+    fsmev(dailyrainfall, censor = TRUE, left_cens = 0.5),
+    "use either 'left_cens'"
+  )
+
+  # Test left-censored fits with different methods
+  fit_mle <- fsmev(dailyrainfall, method = "mle", left_cens = 0.8)
+  expect_s3_class(fit_mle, "mevr")
+
+  fit_ls <- fsmev(dailyrainfall, method = "ls", left_cens = 0.8)
+  expect_s3_class(fit_ls, "mevr")
 })
