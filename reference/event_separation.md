@@ -6,7 +6,9 @@ morphological operations to detect and separate events, and it can
 ignore short events that do not meet a minimum duration criterion. Based
 on Marra et al. 2024: "Predicting Extreme Sub-Hourly Precipitation
 Intensification Based on Temperature Shifts“. Hydrology and Earth System
-Sciences 28, Nr. 2: 375–89. https://doi.org/10.5194/hess-28-375-2024.
+Sciences 28, Nr. 2: 375–89.
+[doi:10.5194/hess-28-375-2024](https://doi.org/10.5194/hess-28-375-2024)
+.
 
 ## Usage
 
@@ -86,12 +88,18 @@ than the \`ignore_event_duration\` are ignored.
 if (FALSE) { # \dontrun{
 # Example data
 mock_data <- data.frame(
-  groupvar = seq.POSIXt(Sys.time(), by = "10 min", length.out = 100),
+  groupvar = seq.POSIXt(Sys.time(),
+                        by = "10 min",
+                        length.out = 100),
   val = c(rep(0, 10), runif(20, 0, 1), rep(0, 70))
 )
 
-# Detect rainfall events with a separation of 6 hours and a minimum rain threshold of 0.1
-result <- event_separation(mock_data, separation_period = 360, time_resolution = 10, min_rain = 0.1)
+# Detect rainfall events with a separation of 6 hours
+# and a minimum rain threshold of 0.1
+result <- event_separation(mock_data,
+                           separation_period = 360,
+                           time_resolution = 10,
+                           min_rain = 0.1)
 print(result$fromto)  # View detected events
 } # }
 ```

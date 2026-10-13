@@ -24,138 +24,134 @@ fsmev(
 
 - data:
 
-  The data to which the SMEV should be fitted to. `data` must be either
-  a data.frame with two columns. The first column must contain dates of
-  class `Date`, the second or last column must contain the rainfall
-  values corresponding to datums in the rows. No negative values are
-  allowed. NA values are removed with a warning. `data` can also be a
-  numeric vector of rainfall values. Internally a date column beginning
-  at '1970-01-01' is added, assuming daily data.
+  A data frame or numeric vector. If a data.frame, column one must
+  contain dates of class `Date`, and the last column must contain
+  rainfall values. If a vector, daily data starting from '1970-01-01' is
+  assumed. Negative values are disallowed, and NA values are removed
+  with a warning.
 
 - threshold:
 
-  A numeric that is used to define wet days as values \> threshold.
-  \\data \<= threshold\\ is set to NA.
+  Numeric threshold defining wet days. Values below or equal to the
+  threshold are set to NA.
 
 - method:
 
-  Character string describing the method that is used to estimate the
-  Weibull parameters c and w. Possible options are probability weighted
-  moments (`method='pwm'`), maximum likelihood (`method='mle'`) or least
-  squares (`method='ls'`). The `default` is `pwm`. (see details).
+  Character string for estimating Weibull parameters `c` and `w`.
+  Options are probability weighted moments (`"pwm"`), maximum likelihood
+  (`"mle"`), or least squares (`"ls"`). Default is `"pwm"` (see
+  details).
 
 - censor:
 
-  If `censor=TRUE`, the data series will be left-censored to assure that
-  the observed maxima are samples from a weibull tail. Defaults to
-  `censor=FALSE`.
+  Logical. If `TRUE`, data is left-censored to ensure maxima follow a
+  Weibull tail. Default is `FALSE`.
 
 - censor_opts:
 
-  An empty list which can be populated with components `thresholds`,
-  `mon`, `nrtrials` and `R`. They give the range of quantiles used as
-  left-censoring threshold, the month with which the block starts, the
-  number of trials used to achieve a weibull fit to the left-censored
-  sample, and the number of synthetic samples used for the test
-  statistics, respectively. See also
+  A list of censoring options:
+
+  - `thresholds`: range of quantiles.
+
+  - `mon`: start month of the block.
+
+  - `nrtrials`: number of trials.
+
+  - `R`: number of synthetic samples.
+
+  See
   [`weibull_tail_test`](https://haraldschellander.github.io/mevr/reference/weibull_tail_test.md).
 
 - warn:
 
-  If `TRUE` which is the default, warnings about censoring are given.
+  Logical. If `TRUE` (default), censoring warnings are displayed.
 
 - sd:
 
-  If `sd=TRUE`, confidence intervals of the SMEV distribution are
-  calculated (see details).
+  Logical. If `TRUE`, confidence intervals are calculated (see details).
+  Default is `FALSE`.
 
 - sd.method:
 
-  Currently only a non parametric bootstrap technique can be used to
-  calculate SMEV confidence intervals with `sd.method='boot'`. The
-  default is `sd=FALSE`.
+  Character string for confidence interval methods. Currently only
+  nonparametric bootstrap (`"boot"`) is supported.
 
 - R:
 
-  The number of samples drawn from the SMEV distribution to calculate
-  the confidence intervals with `sd.method='boot'`
+  Integer. Number of bootstrap samples for confidence intervals.
 
 - left_cens:
 
-  A single numeric in \[0, 1) giving the fraction of the smallest
-  ordinary events that is left-censored for the estimation of c and w
-  (see details). The default `left_cens = 0` uses the complete sample.
-  Values around 0.9 are common for sub-daily rainfall. Cannot be
-  combined with `censor = TRUE`, which selects the censoring quantile
-  with a Weibull tail test.
+  Numeric in \[0, 1). Fraction of smallest ordinary events left-censored
+  (see details). Default is `0`. Cannot be combined with
+  `censor = TRUE`.
 
 ## Value
 
 A list of class `mevr` with components:
 
-- c:
+- `c`:
 
   Single value of the Weibull scale parameter of the SMEV.
 
-- w:
+- `w`:
 
   Single value of the Weibull shape parameter of the SMEV.
 
-- n:
+- `n`:
 
   Mean number of wet events, averaged over all years. Wet events are
   defined as rainfall \> `threshold`.
 
-- params:
+- `params`:
 
   A named vector of the fitted parameters.
 
-- maxima:
+- `maxima`:
 
   Maximum values corresponding to each year.
 
-- std:
+- `std`:
 
-  Standard error of fitted parameters (if `sd=TRUE`).
+  Standard error of fitted parameters (if `sd = TRUE`).
 
-- varcov:
+- `varcov`:
 
-  Covariance matrix of fitted parameters (if `sd=TRUE`).
+  Covariance matrix of fitted parameters (if `sd = TRUE`).
 
-- data:
+- `data`:
 
-  \\data \>= threshold\\ used to fit the SMEV and additional components
-  which may be useful for further analysis.
+  Filtered data used to fit the SMEV and additional components useful
+  for further analysis.
 
-- years:
+- `years`:
 
   Vector of years as YYYY.
 
-- threshold:
+- `threshold`:
 
   The chosen threshold.
 
-- method:
+- `method`:
 
   Method used to fit the MEVD.
 
-- censor:
+- `censor`:
 
-  `TRUE` when the data-series was left-censored and `FALSE` otherwise.
+  `TRUE` when the data series was left-censored and `FALSE` otherwise.
 
-- left_cens:
+- `left_cens`:
 
-  The fixed left-censoring quantile used for the estimation of c and w.
+  The fixed left-censoring quantile used for estimating `c` and `w`.
 
-- type:
+- `type`:
 
-  The type of distribution ("SMEV")
+  The type of distribution ("SMEV").
 
-- rejected:
+- `rejected`:
 
-  If `censor=TRUE`, `rejected=TRUE` when the Weibull tail assumption is
-  rejected and `rejected=FALSE` otherwise. If `censor=FALSE` this value
-  is not returned.
+  If `censor = TRUE`, `TRUE` when the Weibull tail assumption is
+  rejected, and `FALSE` otherwise. Omitted if `censor = FALSE`.
 
 ## Details
 
@@ -201,12 +197,14 @@ further analysis.
 
 Marra, F. et al. (2019) 'A simplified MEV formulation to model extremes
 emerging from multiple nonstationary underlying processes', Advances in
-Water Resources. Elsevier Ltd, 127(April), pp. 280-290. doi:
-10.1016/j.advwatres.2019.04.002.
+Water Resources. Elsevier Ltd, 127(April), pp. 280-290.
+[doi:10.1016/j.advwatres.2019.04.002](https://doi.org/10.1016/j.advwatres.2019.04.002)
+.
 
 Marra, F. et al. (2020) 'A unified framework for extreme subdaily
 precipitation frequency analyses based on ordinary events', Geophysical
-Research Letters, 47, e2020GL090209. doi: 10.1029/2020GL090209.
+Research Letters, 47, e2020GL090209.
+[doi:10.1029/2020GL090209](https://doi.org/10.1029/2020GL090209) .
 
 Wang, Q. J. (1990) 'Estimation of the GEV distribution from censored
 samples by method of partial probability weighted moments', Journal of
@@ -274,8 +272,11 @@ fit_lc
 
 # left censor data prior to fitting
 set.seed(123)
-sample_dates <- seq.Date(from = as.Date("2000-01-01"), to = as.Date("2020-12-31"), by = 1)
-sample_data <- data.frame(dates = sample_dates, val = sample(rnorm(length(sample_dates))))
+sample_dates <- seq.Date(from = as.Date("2000-01-01"),
+                         to = as.Date("2020-12-31"),
+                         by = 1)
+sample_data <- data.frame(dates = sample_dates,
+                          val = sample(rnorm(length(sample_dates))))
 d <- sample_data |>
   filter(val >= 0 & !is.na(val))
 

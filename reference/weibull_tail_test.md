@@ -2,12 +2,13 @@
 
 This functions provides a way to test if observed rainfall maxima from a
 data series are likely samples from a parent distribution with a Weibull
-tail. The concept and the code is based on the paper Marra F, W
+tail. The concept and the code is based on the paper 'Marra F, W
 Amponsah, SM Papalexiou, 2023. Non-asymptotic Weibull tails explain the
 statistics of extreme daily precipitation. Adv. Water Resour., 173,
-104388, https://doi.org/10.1016/j.advwatres.2023.104388. They also
-provide the corresponding Matlab code
-(https://zenodo.org/records/7234708).
+104388,
+[doi:10.1016/j.advwatres.2023.104388](https://doi.org/10.1016/j.advwatres.2023.104388)
+. They also provide the corresponding Matlab code
+(<https://zenodo.org/records/7234708>).
 
 ## Usage
 
@@ -107,8 +108,11 @@ weibull_tail_test(dailyrainfall)
 
 # generate data
 set.seed(123)
-sample_dates <- seq.Date(from = as.Date("2000-01-01"), to = as.Date("2010-12-31"), by = 1)
-sample_data <- data.frame(dates = sample_dates, val = sample(rnorm(length(sample_dates))))
+sample_dates <- seq.Date(from = as.Date("2000-01-01"),
+                         to = as.Date("2010-12-31"),
+                         by = 1)
+sample_data <- data.frame(dates = sample_dates,
+                          val = sample(rnorm(length(sample_dates))))
 d <- sample_data |>
   filter(val >= 0 & !is.na(val))
 fit_uncensored <- fsmev(d)
@@ -132,8 +136,13 @@ cens$quantile
 rp <- c(2:100)
 rl_uncensored <- return.levels.mev(fit_uncensored, return.periods = rp)$rl
 rl_censored <- qmev(1 - 1/rp, cens$shape, cens$scale, fit_uncensored$n)
-plot(rp, rl_uncensored, type = "l", log = "x", ylim = c(0, max(rl_censored, rl_uncensored)),
-     ylab = "return level", xlab = "return period (a)")
+plot(rp,
+     rl_uncensored,
+     type = "l",
+     log = "x",
+     ylim = c(0, max(rl_censored, rl_uncensored)),
+     ylab = "return level",
+     xlab = "return period (a)")
 points(pp.weibull(fit_uncensored$maxima), sort(fit_uncensored$maxima))
 lines(rp, rl_censored, type = "l", col = "red")
 legend("bottomright", legend = c("uncensored",

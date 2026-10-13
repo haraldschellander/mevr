@@ -33,14 +33,21 @@ plot(
 
 - type:
 
-  if omitted a panel with a return level plot (`type='rl'`, a density
-  plot (`type='hist'`), a qq-plot (`type='qq'`) and a probability plot
-  (`tpe='pp'`) are shown.
+  character. Specifies the type of plot to display:
+
+  - `"rl"`: return level plot.
+
+  - `"hist"`: density plot.
+
+  - `"qq"`: Q-Q plot.
+
+  - `"pp"`: probability plot.
+
+  If omitted, a panel showing all four plots is displayed.
 
 - ...:
 
-  Further parameters may also be supplied as arguments. See e.g.
-  [plot](https://rdrr.io/r/base/plot.html).
+  Further parameters may also be supplied as arguments. See e.g. `plot`.
 
 ## Value
 

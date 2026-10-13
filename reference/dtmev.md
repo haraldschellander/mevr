@@ -47,7 +47,11 @@ data(dailyrainfall)
 fit <- ftmev(dailyrainfall)
 rp <- pp.weibull(fit$maxima)
 rl <- qtmev(1 - 1 / rp, fit$data)
-plot(rp, sort(fit$maxima), main = "TMEV", ylab = "return level", xlab = "return period (years)")
+plot(rp,
+     sort(fit$maxima),
+     main = "TMEV",
+     ylab = "return level",
+     xlab = "return period (years)")
 lines(rp, rl, type = "l")
 
 

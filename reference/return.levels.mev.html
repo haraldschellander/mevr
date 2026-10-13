@@ -56,7 +56,8 @@ from an object of class <code>mevr</code>.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>An object of class <code>mevr</code>, either fitted with the MEVD, SMEV or TMEV</p></dd>
+<dd><p>An object of class <code>mevr</code>, either fitted with the
+MEVD, SMEV or TMEV</p></dd>
 
 
 <dt id="arg-return-periods">return.periods<a class="anchor" aria-label="anchor" href="#arg-return-periods"></a></dt>
@@ -64,17 +65,21 @@ from an object of class <code>mevr</code>.</p>
 
 
 <dt id="arg-ci">ci<a class="anchor" aria-label="anchor" href="#arg-ci"></a></dt>
-<dd><p>If <code>ci=TRUE</code>, confidence intervals are calculated depending on the type of distribution (only for MEVD or SMEV).</p></dd>
+<dd><p>If <code>ci=TRUE</code>, confidence intervals are calculated depending
+on the type of distribution (only for MEVD or SMEV).</p></dd>
 
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
-<dd><p>Number between zero and one giving the <code>1 - alpha</code> confidence level. Defaults to <code>alpha=0.05</code>.</p></dd>
+<dd><p>Number between zero and one giving the <code>1 - alpha</code>
+confidence level. Defaults to <code>alpha=0.05</code>.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>Character string giving the method for confidence interval calculation. Option <code>method='boot'</code> employs a
-parametric bootstrap that simulates data from the fitted model, and then fits the chosen MEVD type to each simulated data set
-to obtain a sample of parameters or return levels (very slow).</p></dd>
+<dd><p>Character string giving the method for confidence
+interval calculation. Option <code>method='boot'</code> employs a parametric
+bootstrap that simulates data from the fitted model, and then fits the
+chosen MEVD type to each simulated data set to obtain a sample of parameters
+or return levels (very slow).</p></dd>
 
 
 <dt id="arg-r">R<a class="anchor" aria-label="anchor" href="#arg-r"></a></dt>
@@ -82,13 +87,15 @@ to obtain a sample of parameters or return levels (very slow).</p></dd>
 
 
 <dt id="arg-ncores">ncores<a class="anchor" aria-label="anchor" href="#arg-ncores"></a></dt>
-<dd><p>Number of cores used for parallel computing of confidence intervals. Defaults to 2.</p></dd>
+<dd><p>Number of cores used for parallel computing of
+confidence intervals. Defaults to 2.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with return levels, chosen return periods and, if <code>ci=TRUE</code>,
-<code>alpha/2</code> and <code>1 - alpha/2</code> confidence intervals.</p>
+    <p>A list with return levels, chosen return periods and,
+if <code>ci=TRUE</code>, <code>alpha/2</code> and <code>1 - alpha/2</code>
+confidence intervals.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

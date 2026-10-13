@@ -54,8 +54,7 @@ fitting process, i.e. the call to
 
 ## See also
 
-[`ftmev`](https://haraldschellander.github.io/mevr/reference/ftmev.md),
-[`predict.bamlss`](http://www.bamlss.org/reference/predict.bamlss.md)
+[`ftmev`](https://haraldschellander.github.io/mevr/reference/ftmev.md)
 
 ## Examples
 

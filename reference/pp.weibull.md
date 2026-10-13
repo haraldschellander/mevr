@@ -26,6 +26,10 @@ data(dailyrainfall)
 fit <- fsmev(dailyrainfall)
 rp <- pp.weibull(fit$maxima)
 rl <- return.levels.mev(fit, return.periods = rp)
-plot(rp, sort(fit$maxima), xlab = "Return period (years)", ylab = "Return level", main = fit$type)
+plot(rp,
+     sort(fit$maxima),
+     xlab = "Return period (years)",
+     ylab = "Return level",
+     main = fit$type)
 lines(rp, rl$rl)
 ```

@@ -21,105 +21,99 @@ fmev(
 
 - data:
 
-  The data to which the MEVD should be fitted to. `data` must be a
-  data.frame with two columns. The first column must contain dates of
-  class `Date`, the second or last column must contain the rainfall
-  values corresponding to datums in the rows. No negative values are
-  allowed. NA values are removed with a warning.
+  A data frame with two columns. The first column must contain dates of
+  class `Date`, and the last must contain rainfall values. Negative
+  values are disallowed, and NA values are removed with a warning.
 
 - threshold:
 
-  A numeric that is used to define wet days as values \> threshold.
-  \\data \<= threshold\\ is set to NA.
+  Numeric threshold defining wet days. Values below or equal to the
+  threshold are set to NA.
 
 - method:
 
-  Character string describing the method that is used to estimate the
-  Weibull parameters c and w. Possible options are probability weighted
-  moments (`method='pwm'`), maximum likelihood (`method='mle'`) or least
-  squares (`method='ls'`). The `default` is `pwm`. (see details).
+  Character string for estimating Weibull parameters `c` and `w`.
+  Options are probability weighted moments (`"pwm"`), maximum likelihood
+  (`"mle"`), or least squares (`"ls"`). Default is `"pwm"` (see
+  details).
 
 - censor:
 
-  If `censor=TRUE`, the data series will be left-censored to assure that
-  the observed maxima are samples from a weibull tail. Defaults to
-  `censor=FALSE`.
+  Logical. If `TRUE`, data is left-censored to ensure maxima follow a
+  Weibull tail. Default is `FALSE`.
 
 - censor_opts:
 
-  An empty list which can be populated with components `thresholds`,
-  `mon`, `nrtrials` and `R`. They give the range of quantiles used as
-  left-censoring threshold, the month with which the block starts, the
-  number of trials used to achieve a weibull fit to the left-censored
-  sample, and the number of synthetic samples used for the test
-  statistics, respectively. See also
+  A list of censoring options:
+
+  - `thresholds`: range of quantiles.
+
+  - `mon`: start month of the block.
+
+  - `nrtrials`: number of trials.
+
+  - `R`: number of synthetic samples.
+
+  See
   [`weibull_tail_test`](https://haraldschellander.github.io/mevr/reference/weibull_tail_test.md).
 
 - warn:
 
-  If `TRUE` which is the default, warnings about censoring are given.
+  Logical. If `TRUE` (default), censoring warnings are displayed.
 
 - left_cens:
 
-  A single numeric in \[0, 1) giving the fraction of the smallest
-  ordinary events of each year that is left-censored for the estimation
-  of c and w (see
-  [`fsmev`](https://haraldschellander.github.io/mevr/reference/fsmev.md)).
-  The default `left_cens = 0` uses the complete sample. Note that only
-  `(1 - left_cens) * n` values per year remain for the estimation, so
-  that
-  [`fsmev`](https://haraldschellander.github.io/mevr/reference/fsmev.md)
-  is usually the better choice for left-censored fits. Cannot be
-  combined with `censor = TRUE`.
+  Numeric in \[0, 1). Fraction of smallest ordinary events left-censored
+  (see details). Default is `0`. Cannot be combined with
+  `censor = TRUE`.
 
 ## Value
 
-A list of class `mevr` with the fitted Weibull parameters and other
-helpful ingredients.
+A list of class `mevr` with components:
 
-- c:
+- `c`:
 
-  vector of Weibull scale parameters of the MEVD, each component refers
-  to one year.
+  Vector of Weibull scale parameters of the MEVD, where each component
+  refers to one year.
 
-- w:
+- `w`:
 
-  vector of Weibull shape parameters of the MEVD, each component refers
-  to one year.
+  Vector of Weibull shape parameters of the MEVD, where each component
+  refers to one year.
 
-- n:
+- `n`:
 
   Number of wet events per year. Wet events are defined as rainfall \>
   `threshold`.
 
-- params:
+- `params`:
 
   A named vector of the fitted parameters.
 
-- maxima:
+- `maxima`:
 
   Maximum values corresponding to each year.
 
-- data:
+- `data`:
 
-  \\data \>= threshold\\ used to fit the MEVD and additional components
-  which may be useful for further analysis.
+  Filtered data used to fit the MEVD along with additional components
+  useful for further analysis.
 
-- years:
+- `years`:
 
   Vector of years as YYYY.
 
-- threshold:
+- `threshold`:
 
   The chosen threshold.
 
-- method:
+- `method`:
 
   Method used to fit the MEVD.
 
-- type:
+- `type`:
 
-  The type of distribution ("MEVD")
+  The type of distribution ("MEVD").
 
 ## Details
 
@@ -134,8 +128,9 @@ recognizing the number of events in each block, n, and the values of the
 shape and scale parameters w and C of the parent Weibull distribution to
 be realisations of stochastic variables. The MEVD can then be written as
 
-\$\$F = \frac{1}{T} \sum\_{j=1}^T \prod\_{k \in A_j} \left(
-1-e^{-\left(\frac{x}{C(j,k)}\right)^{w(j,k)}} \right)\$\$
+\$\$\begin{aligned} F = \frac{1}{T} \sum\_{j=1}^T \prod\_{k \in A_j}
+&\left( 1 - \exp\left( -\left(\frac{x}{C(j,k)}\right)^{w(j,k)} \right)
+\right) \end{aligned}\$\$
 
 for \\w \> 0\\ and \\C \> 0\\. With T fully recorded years, yearly C and
 w can be estimated by fitting a Weibull distribution to the values x of
@@ -167,12 +162,14 @@ further analysis.
 
 Marani, M. and Ignaccolo, M. (2015) 'A metastatistical approach to
 rainfall extremes', Advances in Water Resources. Elsevier Ltd,
-79(Supplement C), pp. 121-126. doi: 10.1016/j.advwatres.2015.03.001.
+79(Supplement C), pp. 121-126.
+[doi:10.1016/j.advwatres.2015.03.001](https://doi.org/10.1016/j.advwatres.2015.03.001)
+.
 
 Schellander, H., Lieb, A. and Hell, T. (2019) 'Error Structure of
 Metastatistical and Generalized Extreme Value Distributions for Modeling
 Extreme Rainfall in Austria', Earth and Space Science, 6, pp. 1616-1632.
-doi: 10.1029/2019ea000557.
+[doi:10.1029/2019ea000557](https://doi.org/10.1029/2019ea000557) .
 
 ## See also
 
