@@ -10,3 +10,5 @@ mevr_1.0.0.tar.gz
 .Rproj.user
 docs
 *.patch
+cran-comments.md
+CRAN-SUBMISSION
