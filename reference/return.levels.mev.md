@@ -11,7 +11,7 @@ return.levels.mev(
   return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
   ci = FALSE,
   alpha = 0.05,
-  method = "boot",
+  method = c("delta", "boot"),
   R = 502,
   ncores = 2L
 )
@@ -40,10 +40,11 @@ return.levels.mev(
 - method:
 
   Character string giving the method for confidence interval
-  calculation. Option `method='boot'` employs a parametric bootstrap
-  that simulates data from the fitted model, and then fits the chosen
-  MEVD type to each simulated data set to obtain a sample of parameters
-  or return levels (very slow).
+  calculation. `"boot"`: bootstrap (very slow). `"delta"`: delta method
+  (SMEV only, fast), based on the covariance matrix of the Weibull
+  parameters c and w (`x$varcov` if available, otherwise the inverse
+  observed information of the Weibull likelihood). Assumes independent
+  ordinary events and a known n.
 
 - R:
 

@@ -45,7 +45,7 @@ from an object of class <code>mevr</code>.</p>
 <span>  return.periods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">10</span>, <span class="fl">20</span>, <span class="fl">30</span>, <span class="fl">50</span>, <span class="fl">75</span>, <span class="fl">100</span>, <span class="fl">150</span>, <span class="fl">200</span><span class="op">)</span>,</span>
 <span>  ci <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"boot"</span>,</span>
+<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"delta"</span>, <span class="st">"boot"</span><span class="op">)</span>,</span>
 <span>  R <span class="op">=</span> <span class="fl">502</span>,</span>
 <span>  ncores <span class="op">=</span> <span class="fl">2L</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -75,11 +75,12 @@ confidence level. Defaults to <code>alpha=0.05</code>.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>Character string giving the method for confidence
-interval calculation. Option <code>method='boot'</code> employs a parametric
-bootstrap that simulates data from the fitted model, and then fits the
-chosen MEVD type to each simulated data set to obtain a sample of parameters
-or return levels (very slow).</p></dd>
+<dd><p>Character string giving the method for confidence interval
+calculation. <code>"boot"</code>: bootstrap (very slow). <code>"delta"</code>: delta
+method (SMEV only, fast), based on the covariance matrix of the Weibull
+parameters c and w (<code>x$varcov</code> if available, otherwise the inverse
+observed information of the Weibull likelihood). Assumes independent
+ordinary events and a known n.</p></dd>
 
 
 <dt id="arg-r">R<a class="anchor" aria-label="anchor" href="#arg-r"></a></dt>
