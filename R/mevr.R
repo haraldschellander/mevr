@@ -1457,11 +1457,12 @@ qtmev <- function(p, data) {
 #' on the type of distribution (only for MEVD or SMEV).
 #' @param alpha Number between zero and one giving the \code{1 - alpha}
 #' confidence level. Defaults to \code{alpha=0.05}.
-#' @param method Character string giving the method for confidence
-#' interval calculation. Option \code{method='boot'} employs a parametric
-#' bootstrap that simulates data from the fitted model, and then fits the
-#' chosen MEVD type to each simulated data set to obtain a sample of parameters
-#' or return levels (very slow).
+#' @param method Character string giving the method for confidence interval
+#'  calculation. \code{"boot"}: bootstrap (very slow). \code{"delta"}: delta
+#'  method (SMEV only, fast), based on the covariance matrix of the Weibull
+#'  parameters c and w (\code{x$varcov} if available, otherwise the inverse
+#'  observed information of the Weibull likelihood). Assumes independent
+#'  ordinary events and a known n.
 #' @param R The number of bootstrap iterations.
 #' @param ncores Number of cores used for parallel computing of
 #' confidence intervals. Defaults to 2.
@@ -1483,10 +1484,12 @@ return.levels.mev <- function(
   return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
   ci = FALSE,
   alpha = 0.05,
-  method = "boot",
+  method = c("delta", "boot"),
   R = 502,
   ncores = 2L
 ) {
+  method <- match.arg(method)
+
   if (!inherits(x, "mevr")) {
     stop("x must be object of class 'mevr'")
   }
@@ -1507,16 +1510,19 @@ return.levels.mev <- function(
       if (length(w) == 1) {
         cis <- ci.smev(
           x,
-          method = c("boot"),
+          method = method,
           alpha = alpha,
           return.periods = return.periods,
           R = R,
           ncores = ncores
         )
       } else {
+        if (method != "boot") {
+          stop("method = 'delta' is only available for the SMEV.")
+        }
         cis <- ci.mev(
           x,
-          method = c("boot"),
+          method = "boot",
           alpha = alpha,
           return.periods = return.periods,
           R = R,
@@ -1530,10 +1536,13 @@ return.levels.mev <- function(
   } else {
     rls <- qtmev(1 - 1 / return.periods, x$data)
     if (isTRUE(ci)) {
+      if (method != "boot") {
+        stop("method = 'delta' is only available for the SMEV.")
+      }
       cis <- ci.tmev(
         x,
         x$minyears,
-        method = c("boot"),
+        method = "boot",
         alpha = alpha,
         return.periods = return.periods,
         R = R,
@@ -1755,7 +1764,7 @@ ci.tmev <- function(
 
 ci.smev <- function(
   x,
-  method = c("boot"),
+  method = c("delta"),
   alpha = 0.05,
   return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
   R = 502,
@@ -1765,6 +1774,8 @@ ci.smev <- function(
   if (!inherits(x, "mevr")) {
     stop("x must be object of class 'mevr'")
   }
+
+  method <- match.arg(method, c("delta", "boot", "boot_old"))
 
   if (x$type != "SMEV") {
     stop("x must be of type SMEV")
@@ -1818,30 +1829,6 @@ ci.smev <- function(
     rownames(out) <- c(out.names[1], "Estimate", out.names[2])
     colnames(out) <- rownames(sam)
     out <- t(out)
-    # } else if (method == "delta"){
-    #   w.lower <- w - x$std[2]
-    #   w.upper <- w + x$std[2]
-    #   c.lower <- c - x$std[1]
-    #   c.upper <- c + x$std[1]
-    #
-    #   q <- rlmev(q = return.periods, w = w, c = c, n = n)
-    #   q.upper <- rlmev(q = return.periods, w = w.lower, c = c.lower, n = n)
-    #   q.lower <- rlmev(q = return.periods, w = w.upper, c = c.upper, n = n)
-    #   out <- cbind(q.lower, q, q.upper)
-    #   rownames(out) <- paste0(return.periods, "-year")
-    #   colnames(out) <- c("0.05%", "Estimate", "97.5%")
-    #   return(out)
-    #   # Fi <- 1 - 1/return.periods
-    #   # q <- (-log(1 - Fi))^(1 / w) * c
-    #   # for(i in 1:length(Fi)){
-    #   #   yr <- 1 - Fi[i]
-    #   #   DEL <- c((-log(yr))^(1/w),c*(-log(yr))^(1/w)*log(-log(1-Fi[i])))
-    #   #   prod1 = DEL %*% x$varcov
-    #   #   varz = DEL %*% prod1
-    #   #   stdz = sqrt(varz)
-    #   #   ql[ii] = q[ii] - 1.96*stdz
-    #   #   qu[ii] = q[ii] + 1.96*stdz
-    #   # }
   } else if (method == "boot") {
     if (subsize > length(x$years)) {
       subsize <- floor(length(x$years) * 0.75)
@@ -1893,36 +1880,14 @@ ci.smev <- function(
     rownames(out) <- c(out.names[1], "Estimate", out.names[2])
     colnames(out) <- rownames(sam)
     out <- t(out)
+  } else if (method == "delta") {
+    d <- rl.smev.delta(x, return.periods, alpha)
+    out <- cbind(d$lower, d$rl, d$upper)
+    probs <- c(alpha / 2, 1 - alpha / 2)
+    pn <- paste0(format(100 * probs, trim = TRUE, digits = 7), "%")
+    colnames(out) <- c(pn[1], "Estimate", pn[2])
+    rownames(out) <- paste0(return.periods, "-year")
   }
-
-  # if (method == "normal"){
-  #   cat("\n", "Using Normal Approximation Method.\n")
-  #   z.alpha <- qnorm(alpha/2, lower.tail = FALSE)
-  #   cov.theta <- x$varcov
-  #   if (is.null(cov.theta))
-  #     stop("ci: Sorry, unable to calculate the parameter covariance matrix.
-  # Maybe try a different method.")
-  #   var.theta <- diag(cov.theta)
-  #   if (any(var.theta < 0))
-  #     stop("ci: negative Std. Err. estimates obtained.
-  # Not trusting any of them.")
-  #   ###
-  #   #grads <- rlgrad.fevd(x, period = return.periods)
-  #   rlgrad <- function(x, period = 100){
-  #     p <- c(shape = x$w,scale = x$c)
-  #     yp <- -log(1 - 1/period)
-  #     res <- cbind(1, (-1/p["shape"]) * (1 - yp^(-p["shape"])),
-  #                  p["scale"] * (p["shape"])^(-2) *
-  #                    (1 - yp^(-p["shape"])) - (p["scale"]/p["shape"]) *
-  #                    yp^(-p["shape"]) * log(yp))
-  #   }
-  #   grads <- rlgrad(x, period = return.periods)
-  #   grads <- t(grads)
-  #   lam <- 1
-  #   var.theta <- t(grads) %*% cov.theta %*% grads
-  #   ###
-  #
-  # }
 
   return(out)
 }
@@ -2042,11 +2007,11 @@ plot.mevr <- function(
   if (is.element(type, c("all", "rl"))) {
     if (ci == TRUE) {
       if (tolower(x$type) == "smev") {
-        ci <- ci.smev(x, ...)
+        ci <- ci.smev(x, return.periods = q, ...)
       } else if (tolower(x$type) == "mevd") {
-        ci <- ci.mev(x, ...)
+        ci <- ci.mev(x, return.periods = q, ...)
       } else if (tolower(x$type) == "tmev") {
-        ci <- ci.tmev(x, x$minyear, ...)
+        ci <- ci.tmev(x, return.periods = q, x$minyear, ...)
       } else {
         stop(paste0("confidence intervals are not supported with type", x$type))
       }
@@ -2677,4 +2642,136 @@ ordinary_events <- function(x, duration, na.rm = TRUE) {
   res <- res[lengths(res) != 0]
   res <- do.call(rbind, res)
   res
+}
+
+# covariance matrix of (c, w)
+smev.vcov <- function(x) {
+  # (a) fit with sd = TRUE: reuse smev.boot()'s covariance (any estimator)
+  if (!is.null(x$varcov)) {
+    vc <- as.matrix(x$varcov)
+    idx <- match(c("c", "w"), colnames(vc))
+    if (anyNA(idx)) {
+      idx <- 1:2
+    }
+    vc <- vc[idx, idx, drop = FALSE]
+    dimnames(vc) <- list(c("c", "w"), c("c", "w"))
+    return(vc)
+  }
+
+  if (isTRUE(x$censor)) {
+    stop(
+      "method = 'delta' is not available for fits with censor = TRUE ",
+      "without 'varcov'. Refit with sd = TRUE or use method = 'boot'."
+    )
+  }
+
+  # (b) inverse observed information of the (left-censored) Weibull
+  #     likelihood used in fit.mev.leftcens(); left_cens = 0 gives the
+  #     ordinary complete-sample Weibull likelihood
+  v <- if (is.data.frame(x$data)) x$data$val else as.numeric(x$data)
+  v <- sort(v[is.finite(v)])
+  N <- length(v)
+  lc <- if (is.null(x$left_cens)) 0 else x$left_cens
+  k <- floor(N * lc)
+  xu <- v[(k + 1):N]
+  thr <- xu[1]
+
+  nll <- function(p) {
+    if (any(p <= 0)) {
+      return(1e10)
+    }
+    ll <- sum(stats::dweibull(xu, shape = p[2], scale = p[1], log = TRUE))
+    if (k > 0) {
+      ll <- ll +
+        k * stats::pweibull(thr, shape = p[2], scale = p[1], log.p = TRUE)
+    }
+    -ll
+  }
+  p0 <- c(x$c, x$w)
+  H <- stats::optimHess(p0, nll, control = list(parscale = p0))
+  vc <- tryCatch(solve(H), error = function(e) NULL)
+  if (is.null(vc) || any(!is.finite(vc)) || any(diag(vc) <= 0)) {
+    stop("could not invert the information matrix; use method = 'boot'")
+  }
+  dimnames(vc) <- list(c("c", "w"), c("c", "w"))
+  vc
+}
+
+
+# sd of a log-scale function with gradient (dc, dw, dn)
+smev.delta.se <- function(dc, dw, dn, vc, var_n) {
+  sqrt(pmax(
+    dc^2 * vc[1, 1] + 2 * dc * dw * vc[1, 2] + dw^2 * vc[2, 2] + dn^2 * var_n,
+    0
+  ))
+}
+
+# delta-method CI for return levels of the SMEV
+# var_n: optional variance of the estimate of n (default 0 = n known, which
+#        is also what the bootstrap does)
+rl.smev.delta <- function(x, return.periods, alpha = 0.05, var_n = 0) {
+  if (!inherits(x, "mevr") || x$type != "SMEV") {
+    stop("x must be of type SMEV")
+  }
+  cc <- x$c
+  w <- x$w
+  n <- x$n
+  vc <- smev.vcov(x)
+
+  L <- log1p(-1 / return.periods) # log(1 - 1/T)
+  q <- exp(L / n)
+  omq <- -expm1(L / n) # 1 - q
+  u <- -log(omq)
+  rl <- cc * u^(1 / w)
+
+  # gradient of log(rl) w.r.t. c, w, n
+  dc <- rep(1 / cc, length(u))
+  dw <- -log(u) / w^2
+  dn <- (1 / w) * (-q * L / (n^2 * omq)) / u
+
+  se_log <- smev.delta.se(dc, dw, dn, vc, var_n)
+  z <- stats::qnorm(1 - alpha / 2)
+  list(
+    rl = rl,
+    se = rl * se_log,
+    lower = rl * exp(-z * se_log),
+    upper = rl * exp(z * se_log)
+  )
+}
+
+
+# delta-method CI for the return period of given levels (SMEV)
+rp.smev.delta <- function(x, levels, alpha = 0.05, var_n = 0) {
+  if (!inherits(x, "mevr") || x$type != "SMEV") {
+    stop("x must be of type SMEV")
+  }
+  if (any(levels <= 0)) {
+    stop("levels must be > 0")
+  }
+  cc <- x$c
+  w <- x$w
+  n <- x$n
+  vc <- smev.vcov(x)
+
+  s <- (levels / cc)^w
+  logG <- log(-expm1(-s)) # log(1 - exp(-s))
+  a <- n * logG # log F
+  Fx <- exp(a)
+  omF <- -expm1(a) # 1 - F
+  rp <- 1 / omF
+
+  # gradient of log T = -log(1 - F)
+  dlogT_ds <- n * exp(-s - logG) * Fx / omF
+  dc <- dlogT_ds * (-w * s / cc)
+  dw <- dlogT_ds * (s * log(levels / cc))
+  dn <- Fx * logG / omF
+
+  se_log <- smev.delta.se(dc, dw, dn, vc, var_n)
+  z <- stats::qnorm(1 - alpha / 2)
+  list(
+    level = levels,
+    rp = rp,
+    lower = rp * exp(-z * se_log),
+    upper = rp * exp(z * se_log)
+  )
 }
