@@ -9,7 +9,7 @@ return.levels.mev(
   return.periods = c(2, 10, 20, 30, 50, 75, 100, 150, 200),
   ci = FALSE,
   alpha = 0.05,
-  method = "boot",
+  method = c("delta", "boot"),
   R = 502,
   ncores = 2L
 )
@@ -26,11 +26,12 @@ on the type of distribution (only for MEVD or SMEV).}
 \item{alpha}{Number between zero and one giving the \code{1 - alpha}
 confidence level. Defaults to \code{alpha=0.05}.}
 
-\item{method}{Character string giving the method for confidence
-interval calculation. Option \code{method='boot'} employs a parametric
-bootstrap that simulates data from the fitted model, and then fits the
-chosen MEVD type to each simulated data set to obtain a sample of parameters
-or return levels (very slow).}
+\item{method}{Character string giving the method for confidence interval
+calculation. \code{"boot"}: bootstrap (very slow). \code{"delta"}: delta
+method (SMEV only, fast), based on the covariance matrix of the Weibull
+parameters c and w (\code{x$varcov} if available, otherwise the inverse
+observed information of the Weibull likelihood). Assumes independent
+ordinary events and a known n.}
 
 \item{R}{The number of bootstrap iterations.}
 
