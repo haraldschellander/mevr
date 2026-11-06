@@ -102,9 +102,9 @@ p_test is larger than p_test the null hypothesis is rejected.
 data("dailyrainfall")
 weibull_tail_test(dailyrainfall)
 #> # A tibble: 1 × 8
-#>   is_rejected  p_out  p_hi   p_lo scale shape thresh quant
-#>   <lgl>        <dbl> <dbl>  <dbl> <dbl> <dbl>  <dbl> <dbl>
-#> 1 FALSE       0.0667     0 0.0667  96.0 0.912    234   0.9
+#>   is_rejected p_out   p_hi   p_lo scale shape thresh quant
+#>   <lgl>       <dbl>  <dbl>  <dbl> <dbl> <dbl>  <dbl> <dbl>
+#> 1 TRUE        0.133 0.0667 0.0667  96.0 0.912    234   0.9
 
 # generate data
 set.seed(123)
@@ -128,9 +128,9 @@ res <- do.call(rbind, res)
 # find the optimal left-censoring threshold
 cens <- censored_weibull_fit(res, thresholds)
 cens$optimal_threshold
-#> [1] 1.280674
+#> [1] 0.1409037
 cens$quantile
-#> [1] 0.8
+#> [1] 0.1
 
 # plot return levels censored vs uncensored
 rp <- c(2:100)

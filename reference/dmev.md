@@ -107,7 +107,7 @@ w <- rnorm(10, 0.8, 0.1) # shape parameter
 c <- rnorm(10, 200, 30) # scale parameter
 n <- rnorm(10, 200, 50) # number of wet days
 qmev(1 - 1 / 50, w, c, n)
-#> [1] 4917.247
+#> [1] 4328.667
 
 # rl-plot
 rp <- seq(5, 50, 5)
