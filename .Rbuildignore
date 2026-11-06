@@ -8,3 +8,5 @@
 mevr-manual.tex
 ^cran-comments\.md$
 ^CRAN-SUBMISSION$
+Rplots.pdf
+CLAUDE.md

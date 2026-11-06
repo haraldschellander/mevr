@@ -1,4 +1,4 @@
-#' @importFrom stats coef lm qweibull
+#' @importFrom stats qweibull
 NULL
 
 set_season <- function(datum, block_start) {
@@ -29,7 +29,7 @@ set_season <- function(datum, block_start) {
 #' wbtest <- weibull_tail_test(dailyrainfall)
 #' censored_weibull_fit(wbtest, 0.9)
 #'
-censored_weibull_fit <- function(x, thresholds, warn) {
+censored_weibull_fit <- function(x, thresholds, warn = TRUE) {
   # no rejection of weibull tails at all quantiles
   if (length(which(x$is_rejected)) == 0) {
     i_thr <- 1
@@ -189,80 +189,86 @@ weibull_tail_test <- function(
     stop("cens_quant must be a single numeric")
   }
 
-  # only wet days
-  data <- data |>
-    as_tibble() |>
-    dplyr::arrange(.data$val) |> # needed for ecdf
-    dplyr::filter(.data$val >= threshold) |>
-    dplyr::mutate(block = set_season(.data$groupvar, mon), bm = FALSE)
-  data$ecdf <- 1:nrow(data) / (nrow(data) + 1)
-
-  # find block maxima
-  bm_dates <- data |>
-    dplyr::group_by(.data$block) |>
-    dplyr::slice_max(order_by = .data$val) |>
-    dplyr::pull(.data$groupvar)
-  data$bm[which(data$groupvar %in% bm_dates)] <- TRUE
-
-  # censor sample
-  thresh <- as.numeric(quantile(data$val, probs = cens_quant))
-  cens_data <- data |>
-    dplyr::arrange(.data$val) |>
-    dplyr::filter(.data$val > thresh)
-
-  # censor bm
-  cens_bm <- cens_data |>
-    dplyr::filter(.data$bm == TRUE)
-
-  # remove block maxima from censored data
-  # because censored data are used for fitting
-  # and we want to know if observed maxima
-  # could be samples from the censored data
-  cens_data <- cens_data |>
-    dplyr::filter(!.data$groupvar %in% bm_dates)
-
-  # weibull parameters for censored sample
-  # parameter estimation (least square linear regression in
-  # Weibull-transformed coordinates)
-  X <- log(log(1 / (1 - cens_data$ecdf))) # Weibull-transformation for probs
-  Y <- log(cens_data$val) # Weibull-transformation for samples
-  model <- lm(Y ~ X) # linear regression
-  scale <- exp(coef(model)[1]) # Weibull scale parameter
-  shape <- 1 / coef(model)[2] # Weibull shape parameter
-
-  # tail test
-  # R synthetic samples of M x n elements
-  # with Weibull parameters from censored sample
-  syn_sample <- apply(
-    matrix(runif(nrow(data)), nrow = nrow(data), ncol = R),
-    2,
-    function(x) {
-      y <- stats::qweibull(x, shape, scale)
-      sort(y)
-    }
+  weibull_tail_scan(
+    data,
+    cens_quants = cens_quant,
+    threshold = threshold,
+    mon = mon,
+    p_test = p_test,
+    R = R
   )
+}
 
-  # p_test confidence interval
-  # Calculate fractions of block maxima
-  # fraction of block maxima out of the (1 - p_test) ci
-  istest <- which(data$bm == TRUE)
-  p_lo <- mean(cens_bm$val < quantile(syn_sample[istest, ], probs = p_test / 2))
-  p_hi <- mean(
-    cens_bm$val > quantile(syn_sample[istest, ], probs = 1 - p_test / 2)
-  )
-  p_out <- p_lo + p_hi
 
-  # outcome of the test
-  is_rejected <- p_out > p_test
+# Weibull tail test for several left-censoring quantiles at once.
+#
+# data must have the columns groupvar (Date/POSIXct) and val (numeric, no NA).
+# Everything that does not depend on the censoring quantile (sorting, plotting
+# positions, block maxima and the synthetic samples) is computed only once.
+#
+# Synthetic samples: the test only needs the order statistics of R synthetic
+# samples of size N at the ranks of the observed block maxima. The i-th order
+# statistic of N standard uniforms is Beta(i, N - i + 1) distributed, so these
+# are drawn directly instead of sorting R full samples. Because qweibull() is
+# monotone, the Weibull confidence bounds of a censoring quantile follow from
+# the quantiles of the uniform order statistics by a single qweibull() call.
+weibull_tail_scan <- function(
+  data,
+  cens_quants,
+  threshold = 0,
+  mon = 1,
+  p_test = 0.1,
+  R = 500
+) {
+  # only wet days, sorted for the plotting positions
+  data <- data[data$val >= threshold, c("groupvar", "val")]
+  data <- data[order(data$val), ]
+  N <- nrow(data)
+  val <- data$val
+  ecdf <- seq_len(N) / (N + 1)
 
-  tibble(
-    is_rejected = is_rejected,
-    p_out = p_out,
-    p_hi = p_hi,
-    p_lo = p_lo,
-    scale = scale,
-    shape = shape,
-    thresh = thresh,
-    quant = cens_quant
-  )
+  # block maxima (ties within a block are all flagged, as with slice_max)
+  block <- set_season(data$groupvar, mon)
+  is_max <- val == stats::ave(val, block, FUN = max)
+  bm <- data$groupvar %in% data$groupvar[is_max]
+  istest <- which(bm)
+
+  # R synthetic order statistics at the ranks of the block maxima
+  U <- vapply(istest, function(i) stats::rbeta(R, i, N - i + 1), numeric(R))
+  u_lo <- stats::quantile(U, probs = p_test / 2, names = FALSE)
+  u_hi <- stats::quantile(U, probs = 1 - p_test / 2, names = FALSE)
+
+  # Weibull-transformed coordinates for the least squares fit
+  X <- log(log(1 / (1 - ecdf)))
+  Y <- log(val)
+
+  res <- lapply(cens_quants, function(q) {
+    thresh <- as.numeric(stats::quantile(val, probs = q))
+    above <- val > thresh
+
+    # parameters from the censored sample without the block maxima, because
+    # we want to know if the observed maxima could be samples from it
+    fit <- above & !bm
+    slope <- stats::cov(X[fit], Y[fit]) / stats::var(X[fit])
+    shape <- 1 / slope
+    scale <- exp(mean(Y[fit]) - slope * mean(X[fit]))
+
+    # fraction of censored block maxima outside the (1 - p_test) interval
+    cens_bm <- val[above & bm]
+    p_lo <- mean(cens_bm < stats::qweibull(u_lo, shape, scale))
+    p_hi <- mean(cens_bm > stats::qweibull(u_hi, shape, scale))
+    p_out <- p_lo + p_hi
+
+    tibble(
+      is_rejected = p_out > p_test,
+      p_out = p_out,
+      p_hi = p_hi,
+      p_lo = p_lo,
+      scale = scale,
+      shape = shape,
+      thresh = thresh,
+      quant = q
+    )
+  })
+  do.call(rbind, res)
 }

@@ -12,3 +12,5 @@ docs
 *.patch
 cran-comments.md
 CRAN-SUBMISSION
+*.pdf
+CLAUDE.md

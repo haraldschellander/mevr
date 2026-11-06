@@ -4,7 +4,7 @@
 \alias{censored_weibull_fit}
 \title{Fit Weibull distribution to censored data}
 \usage{
-censored_weibull_fit(x, thresholds, warn)
+censored_weibull_fit(x, thresholds, warn = TRUE)
 }
 \arguments{
 \item{x}{A tibble which is most commonly a result of function

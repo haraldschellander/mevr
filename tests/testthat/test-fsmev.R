@@ -164,20 +164,51 @@ test_that("fsmev should throw an error if method of standard error calculation i
 
 test_that("fsmev should correctly calculate SMEV parameters for censored input", {
   data("dailyrainfall")
-  result <- fsmev(
-    dailyrainfall,
-    censor = TRUE,
-    censor_opts = list(
-      thresholds = c(0.1, 0.5, 0.9),
-      mon = 1,
-      nrtrials = 1,
-      R = 100
+  set.seed(1)
+  expect_no_warning(
+    result <- fsmev(
+      dailyrainfall,
+      censor = TRUE,
+      censor_opts = list(
+        thresholds = c(0.1, 0.5, 0.8),
+        mon = 1,
+        nrtrials = 1,
+        R = 100
+      )
     )
   )
   expect_true("c" %in% names(result))
   expect_true("w" %in% names(result))
   expect_true("n" %in% names(result))
-  #expect_true("method" == "censored lsreg")
+  expect_false(result$rejected)
+  expect_true(result$opt_quant %in% c(0.1, 0.5, 0.8))
+  expect_false(is.na(result$c))
+  expect_false(is.na(result$w))
+})
+
+test_that("fsmev falls back to an uncensored fit if the Weibull tail is rejected", {
+  data("dailyrainfall")
+  opts <- list(thresholds = c(0.1, 0.5, 0.9), mon = 1, nrtrials = 1, R = 100)
+  # dailyrainfall: the Weibull tail is rejected at the highest quantile 0.9,
+  # so no censoring threshold is left
+  set.seed(1)
+  expect_warning(
+    expect_warning(
+      result <- fsmev(dailyrainfall, censor = TRUE, censor_opts = opts),
+      "the assumption of Weibull tail is rejected"
+    ),
+    "fitting uncensored SMEV"
+  )
+  expect_true(result$rejected)
+  expect_equal(
+    unname(result$params[c("c", "w")]),
+    unname(fsmev(dailyrainfall)$params[c("c", "w")])
+  )
+
+  set.seed(1)
+  expect_no_warning(
+    fsmev(dailyrainfall, censor = TRUE, censor_opts = opts, warn = FALSE)
+  )
 })
 
 test_that("fsmev handles numeric vector input and input validation errors", {

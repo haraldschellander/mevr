@@ -81,3 +81,67 @@ test_that("weibull_tail_test and censored_weibull_fit handle edge cases", {
   )
   expect_true(all(is.na(fit_cens$shape)))
 })
+
+test_that("weibull_tail_scan equals weibull_tail_test for each quantile", {
+  data("dailyrainfall")
+  d <- setNames(dailyrainfall, c("groupvar", "val"))
+  q <- c(0.1, 0.5, 0.9)
+  set.seed(42)
+  scan <- weibull_tail_scan(d, cens_quants = q, R = 200)
+  single <- do.call(rbind, lapply(q, function(x) {
+    set.seed(42)
+    weibull_tail_test(d, cens_quant = x, R = 200)
+  }))
+  expect_equal(nrow(scan), length(q))
+  expect_equal(scan, single)
+})
+
+test_that("weibull_tail_test parameters equal the lm fit in Weibull coordinates", {
+  data("dailyrainfall")
+  d <- setNames(dailyrainfall, c("groupvar", "val"))
+  res <- weibull_tail_test(d, cens_quant = 0.5, R = 50)
+  bm_dates <- d |>
+    dplyr::group_by(yr = format(.data$groupvar, "%Y")) |>
+    dplyr::slice_max(.data$val) |>
+    dplyr::pull(.data$groupvar)
+  o <- order(d$val)
+  x <- d$val[o]
+  is_bm <- d$groupvar[o] %in% bm_dates
+  N <- length(x)
+  keep <- x > res$thresh & !is_bm
+  X <- log(-log(1 - (seq_len(N) / (N + 1))[keep]))
+  Y <- log(x[keep])
+  cf <- stats::coef(stats::lm(Y ~ X))
+  expect_equal(res$shape, 1 / unname(cf[2]))
+  expect_equal(res$scale, exp(unname(cf[1])))
+})
+
+test_that("weibull_tail_scan outcome is stable across random seeds", {
+  data("dailyrainfall")
+  d <- setNames(dailyrainfall, c("groupvar", "val"))
+  q <- seq(0.05, 0.95, 0.05)
+  rej <- sapply(1:5, function(s) {
+    set.seed(s)
+    weibull_tail_scan(d, cens_quants = q, R = 500)$is_rejected
+  })
+  # with R independent synthetic samples the outcome must not depend on the seed
+  expect_true(all(rej == rej[, 1]))
+})
+
+test_that("censored_weibull_fit warns by default if all tails are rejected", {
+  mock_res <- tibble(
+    is_rejected = TRUE,
+    p_out = 0.3,
+    p_hi = 0.15,
+    p_lo = 0.15,
+    scale = 1,
+    shape = 1,
+    thresh = 10,
+    quant = 0.9
+  )
+  expect_warning(
+    fit_cens <- censored_weibull_fit(mock_res, 0.9),
+    "the assumption of Weibull tail is rejected"
+  )
+  expect_true(is.na(fit_cens$shape))
+})

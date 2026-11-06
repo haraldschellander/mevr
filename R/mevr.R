@@ -650,7 +650,9 @@ fmev <- function(
       theta_yr <- theta |>
         filter(.data$year == yr)
       if (all(is.na(theta_yr$w) & is.na(theta_yr$c))) {
-        warning("fitting uncensored SMEV")
+        if (warn) {
+          warning("fitting uncensored SMEV")
+        }
         theta_tmp <- data_pot |>
           filter(.data$year == yr) |>
           group_modify(~ fit.mev(.x$val, method)) |>
@@ -1018,11 +1020,9 @@ check.left.cens <- function(left_cens, censor) {
 
 
 fit.mev.censor <- function(data, thresholds, mon, R, warn) {
-  #thresholds <- seq(0.05, 0.95, 0.05)
-  wbtest <- lapply(thresholds, function(x) {
-    weibull_tail_test(data, mon = mon, cens_quant = x, R = R)
-  })
-  wbtest <- do.call(rbind, wbtest)
+  data <- data[, 1:2]
+  colnames(data) <- c("groupvar", "val")
+  wbtest <- weibull_tail_scan(data, cens_quants = thresholds, mon = mon, R = R)
   cens_fit <- censored_weibull_fit(wbtest, thresholds, warn)
   return(data.frame(
     w = cens_fit$shape,
@@ -1977,7 +1977,11 @@ plot.mevr <- function(
 
   if (!is.vector(x$data)) {
     if (!is.null(x$opt_thresh)) {
-      obs.y <- x$maxima[x$maxima > x$opt_thresh]
+      # years whose Weibull tail was rejected (fmev) have no censoring
+      # threshold and were fitted uncensored, so their maxima are kept
+      thr <- x$opt_thresh
+      thr[is.na(thr)] <- -Inf
+      obs.y <- x$maxima[x$maxima > thr]
     } else {
       obs.y <- x$maxima
     }

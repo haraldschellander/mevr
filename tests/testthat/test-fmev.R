@@ -105,3 +105,31 @@ test_that("fmev should correctly calculate MEV parameters for method 'ls'", {
   expect_true("w" %in% names(result))
   expect_true("n" %in% names(result))
 })
+
+test_that("fmev with censor = TRUE and warn = FALSE gives no censoring warnings", {
+  data("dailyrainfall")
+  set.seed(1)
+  expect_no_warning(fmev(
+    dailyrainfall,
+    censor = TRUE,
+    censor_opts = list(R = 100),
+    warn = FALSE
+  ))
+})
+
+test_that("plot works for fmev with years whose Weibull tail is rejected", {
+  data("dailyrainfall")
+  set.seed(1)
+  fit <- fmev(
+    dailyrainfall,
+    censor = TRUE,
+    censor_opts = list(R = 100),
+    warn = FALSE
+  )
+  # pretend one year is rejected, as the fallback in fmev() does
+  fit$opt_thresh[1] <- NA
+  fit$rejected[1] <- TRUE
+  pdf(NULL)
+  on.exit(dev.off())
+  expect_no_error(plot(fit))
+})

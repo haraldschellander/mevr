@@ -1,3 +1,25 @@
+mevr 1.3.5 (release date: 2026-11-06)
+=========================================
+
+Changes:
+
+* Dynamic censoring (censor = TRUE in fsmev() and fmev()) and
+  weibull_tail_test() are much faster (about 100x for a full threshold scan):
+  data preparation and synthetic samples are computed once for all censoring
+  quantiles, and the order statistics of the synthetic samples are drawn
+  directly from their Beta distribution instead of sorting R full samples.
+* Bug fix in weibull_tail_test(): the R synthetic samples were all identical
+  (recycled random numbers), so the test effectively used a single sample and
+  its outcome depended strongly on the random seed. The selected censoring
+  quantile can therefore differ from earlier versions.
+* fmev() with censor = TRUE no longer warns "fitting uncensored SMEV" when
+  warn = FALSE.
+* plot() no longer fails for fmev() fits with censor = TRUE in which the
+  Weibull tail of some years was rejected.
+* The argument warn of censored_weibull_fit() now defaults to TRUE, as
+  documented.
+
+
 mevr 1.3.4 (release date: 2026-10-16)
 =========================================
 
