@@ -7,7 +7,7 @@ likely sampled from a Weibull distribution
 ## Usage
 
 ``` r
-censored_weibull_fit(x, thresholds, warn = TRUE)
+censored_weibull_fit(x, thresholds, warn)
 ```
 
 ## Arguments
@@ -37,9 +37,8 @@ shape parameters obtained from the censored sample.
 data("dailyrainfall")
 wbtest <- weibull_tail_test(dailyrainfall)
 censored_weibull_fit(wbtest, 0.9)
-#> Warning: the assumption of Weibull tail is rejected
 #> # A tibble: 1 × 4
 #>   optimal_threshold scale shape quantile
-#>               <dbl> <lgl> <lgl>    <dbl>
-#> 1              0.95 NA    NA          NA
+#>               <dbl> <dbl> <dbl>    <dbl>
+#> 1               234  96.0 0.912      0.9
 ```
