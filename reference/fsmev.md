@@ -153,6 +153,23 @@ A list of class `mevr` with components:
   If `censor = TRUE`, `TRUE` when the Weibull tail assumption is
   rejected, and `FALSE` otherwise. Omitted if `censor = FALSE`.
 
+- `opt_quant`:
+
+  If `censor = TRUE`, the left-censoring quantile found by the Weibull
+  tail test, `NA` if the Weibull tail assumption is rejected. Omitted if
+  `censor = FALSE`.
+
+- `opt_thresh`:
+
+  If `censor = TRUE`, the left-censoring threshold, i.e. the value of
+  the ordinary events at `opt_quant`, `NA` if the Weibull tail
+  assumption is rejected. Omitted if `censor = FALSE`.
+
+If `censor = TRUE` and `sd = TRUE`, the bootstrap refits the censored
+least squares estimator of the Weibull tail test at the fixed quantile
+`opt_quant` to each bootstrap sample, so the uncertainty of the choice
+of the quantile itself is not included.
+
 ## Details
 
 The SMEV was introduced by (Marra et al., 2019) as a simplified version
