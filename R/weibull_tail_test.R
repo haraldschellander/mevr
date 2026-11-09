@@ -220,7 +220,43 @@ weibull_tail_scan <- function(
   p_test = 0.1,
   R = 500
 ) {
-  # only wet days, sorted for the plotting positions
+  prep <- tail_prep(data, threshold = threshold, mon = mon)
+  N <- length(prep$val)
+  istest <- which(prep$bm)
+
+  # R synthetic order statistics at the ranks of the block maxima
+  U <- vapply(istest, function(i) stats::rbeta(R, i, N - i + 1), numeric(R))
+  u_lo <- stats::quantile(U, probs = p_test / 2, names = FALSE)
+  u_hi <- stats::quantile(U, probs = 1 - p_test / 2, names = FALSE)
+
+  res <- lapply(cens_quants, function(q) {
+    fit <- tail_ls_fit(prep, q)
+
+    # fraction of censored block maxima outside the (1 - p_test) interval
+    cens_bm <- prep$val[fit$above & prep$bm]
+    p_lo <- mean(cens_bm < stats::qweibull(u_lo, fit$shape, fit$scale))
+    p_hi <- mean(cens_bm > stats::qweibull(u_hi, fit$shape, fit$scale))
+    p_out <- p_lo + p_hi
+
+    tibble(
+      is_rejected = p_out > p_test,
+      p_out = p_out,
+      p_hi = p_hi,
+      p_lo = p_lo,
+      scale = fit$scale,
+      shape = fit$shape,
+      thresh = fit$thresh,
+      quant = q
+    )
+  })
+  do.call(rbind, res)
+}
+
+
+# Data preparation for the Weibull tail test and the censored fit: wet values
+# sorted increasingly, flags for the block maxima and the Weibull-transformed
+# plotting positions X and values Y.
+tail_prep <- function(data, threshold = 0, mon = 1) {
   data <- data[data$val >= threshold, c("groupvar", "val")]
   data <- data[order(data$val), ]
   N <- nrow(data)
@@ -231,44 +267,31 @@ weibull_tail_scan <- function(
   block <- set_season(data$groupvar, mon)
   is_max <- val == stats::ave(val, block, FUN = max)
   bm <- data$groupvar %in% data$groupvar[is_max]
-  istest <- which(bm)
 
-  # R synthetic order statistics at the ranks of the block maxima
-  U <- vapply(istest, function(i) stats::rbeta(R, i, N - i + 1), numeric(R))
-  u_lo <- stats::quantile(U, probs = p_test / 2, names = FALSE)
-  u_hi <- stats::quantile(U, probs = 1 - p_test / 2, names = FALSE)
+  list(
+    val = val,
+    bm = bm,
+    X = log(log(1 / (1 - ecdf))),
+    Y = log(val)
+  )
+}
 
-  # Weibull-transformed coordinates for the least squares fit
-  X <- log(log(1 / (1 - ecdf)))
-  Y <- log(val)
 
-  res <- lapply(cens_quants, function(q) {
-    thresh <- as.numeric(stats::quantile(val, probs = q))
-    above <- val > thresh
-
-    # parameters from the censored sample without the block maxima, because
-    # we want to know if the observed maxima could be samples from it
-    fit <- above & !bm
-    slope <- stats::cov(X[fit], Y[fit]) / stats::var(X[fit])
-    shape <- 1 / slope
-    scale <- exp(mean(Y[fit]) - slope * mean(X[fit]))
-
-    # fraction of censored block maxima outside the (1 - p_test) interval
-    cens_bm <- val[above & bm]
-    p_lo <- mean(cens_bm < stats::qweibull(u_lo, shape, scale))
-    p_hi <- mean(cens_bm > stats::qweibull(u_hi, shape, scale))
-    p_out <- p_lo + p_hi
-
-    tibble(
-      is_rejected = p_out > p_test,
-      p_out = p_out,
-      p_hi = p_hi,
-      p_lo = p_lo,
-      scale = scale,
-      shape = shape,
-      thresh = thresh,
-      quant = q
-    )
-  })
-  do.call(rbind, res)
+# Weibull parameters of the sample left-censored at quantile q: least squares
+# in Weibull-transformed coordinates on the values above the threshold,
+# without the block maxima, because the tail test checks if the observed
+# maxima could be samples from this fit. prep comes from tail_prep().
+tail_ls_fit <- function(prep, q) {
+  thresh <- as.numeric(stats::quantile(prep$val, probs = q))
+  above <- prep$val > thresh
+  fit <- above & !prep$bm
+  X <- prep$X[fit]
+  Y <- prep$Y[fit]
+  slope <- stats::cov(X, Y) / stats::var(X)
+  list(
+    shape = 1 / slope,
+    scale = exp(mean(Y) - slope * mean(X)),
+    thresh = thresh,
+    above = above
+  )
 }

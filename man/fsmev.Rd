@@ -100,7 +100,19 @@ A list of class \code{mevr} with components:
   \item{\code{rejected}}{If \code{censor = TRUE}, \code{TRUE} when the
     Weibull tail assumption is rejected, and \code{FALSE} otherwise.
     Omitted if \code{censor = FALSE}.}
+  \item{\code{opt_quant}}{If \code{censor = TRUE}, the left-censoring
+    quantile found by the Weibull tail test, \code{NA} if the Weibull tail
+    assumption is rejected. Omitted if \code{censor = FALSE}.}
+  \item{\code{opt_thresh}}{If \code{censor = TRUE}, the left-censoring
+    threshold, i.e. the value of the ordinary events at \code{opt_quant},
+    \code{NA} if the Weibull tail assumption is rejected. Omitted if
+    \code{censor = FALSE}.}
 }
+
+If \code{censor = TRUE} and \code{sd = TRUE}, the bootstrap refits the
+censored least squares estimator of the Weibull tail test at the fixed
+quantile \code{opt_quant} to each bootstrap sample, so the uncertainty of
+the choice of the quantile itself is not included.
 }
 \description{
 Fit the SMEV distribution to rainfall observations with different

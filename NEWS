@@ -1,3 +1,28 @@
+mevr 1.3.6 (release date: 2026-11-09)
+=========================================
+
+Changes:
+
+* fsmev() with censor = TRUE now always returns the left-censoring quantile
+  opt_quant and threshold opt_thresh (NA if the Weibull tail is rejected),
+  and print() shows them.
+* fsmev() with censor = TRUE and sd = TRUE: the bootstrap now refits the
+  censored estimator at the left-censoring quantile found by the Weibull tail
+  test. Before, it refitted the uncensored estimator, so std and varcov (and
+  delta-method confidence intervals) did not belong to the censored c and w.
+* Bootstrap confidence intervals of return levels (return.levels.mev() and
+  plot() with ci = TRUE, method "boot") of fsmev() fits with censor = TRUE
+  now refit the censored estimator at the left-censoring quantile.
+* plot() works for fsmev() fits of a numeric vector. As there are no yearly
+  maxima, the ordinary events are shown with the return period of the yearly
+  maximum, 1 / (1 - F^n). The probability plot now has correct axis labels.
+* print() and plot() show the estimator actually used for c and w: with
+  censor = TRUE this is the least squares fit of the Weibull tail test.
+* print() of fmev() fits with censor = TRUE shows the Weibull tail test, the
+  left-censoring quantile and threshold for each year (the table was not
+  printed before).
+
+
 mevr 1.3.5 (release date: 2026-11-06)
 =========================================
 

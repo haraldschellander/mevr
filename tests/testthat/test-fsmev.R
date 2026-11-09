@@ -200,6 +200,9 @@ test_that("fsmev falls back to an uncensored fit if the Weibull tail is rejected
     "fitting uncensored SMEV"
   )
   expect_true(result$rejected)
+  expect_true(all(c("opt_quant", "opt_thresh") %in% names(result)))
+  expect_true(is.na(result$opt_quant))
+  expect_true(is.na(result$opt_thresh))
   expect_equal(
     unname(result$params[c("c", "w")]),
     unname(fsmev(dailyrainfall)$params[c("c", "w")])
@@ -236,4 +239,164 @@ test_that("fsmev handles numeric vector input and input validation errors", {
     val = c(1, 2, NA, 4, 5, 6, 7, 8, 9, 10)
   )
   expect_warning(fsmev(df_na), "data contains 1 NA values which are ignored.")
+})
+
+test_that("fsmev with censor = TRUE returns the censoring quantile, also with sd = TRUE", {
+  data("dailyrainfall")
+  opts <- list(thresholds = c(0.1, 0.5, 0.8), mon = 1, nrtrials = 1, R = 100)
+  set.seed(1)
+  fit <- fsmev(dailyrainfall, censor = TRUE, censor_opts = opts, warn = FALSE)
+  set.seed(1)
+  fit_sd <- fsmev(
+    dailyrainfall,
+    censor = TRUE,
+    censor_opts = opts,
+    warn = FALSE,
+    sd = TRUE,
+    R = 50
+  )
+  for (f in list(fit, fit_sd)) {
+    expect_false(f$rejected)
+    expect_true(f$opt_quant %in% opts$thresholds)
+    d <- setNames(dailyrainfall, c("groupvar", "val"))
+    expect_equal(
+      f$opt_thresh,
+      as.numeric(quantile(d$val[d$val > 0], f$opt_quant))
+    )
+  }
+  expect_equal(fit_sd$opt_quant, fit$opt_quant)
+  expect_equal(fit_sd$c, fit$c)
+  expect_equal(fit_sd$w, fit$w)
+})
+
+test_that("fsmev bootstrap with censor = TRUE refits the censored estimator", {
+  data("dailyrainfall")
+  d <- setNames(dailyrainfall, c("groupvar", "val"))
+  opts <- list(thresholds = c(0.1, 0.5, 0.8), mon = 1, nrtrials = 1, R = 100)
+  set.seed(1)
+  fit <- fsmev(
+    dailyrainfall,
+    censor = TRUE,
+    censor_opts = opts,
+    warn = FALSE,
+    sd = TRUE,
+    R = 100
+  )
+  # the estimator used in the bootstrap reproduces the censored fit
+  cf <- tail_ls_fit(tail_prep(d[d$val > 0, ]), fit$opt_quant)
+  expect_equal(fit$c, cf$scale)
+  expect_equal(fit$w, cf$shape)
+
+  # and the bootstrap is the one of the censored fit, not of the uncensored
+  set.seed(2)
+  boot_cens <- smev.boot(d[d$val > 0, ], R = 100, censor_quant = fit$opt_quant)
+  set.seed(2)
+  boot_unc <- smev.boot(d[d$val > 0, ], R = 100)
+  expect_true(all(is.finite(boot_cens$std) & boot_cens$std > 0))
+  expect_false(isTRUE(all.equal(boot_cens$std, boot_unc$std)))
+  expect_equal(dim(fit$varcov), c(2, 2))
+})
+
+test_that("print and plot of censored fsmev fits show and handle the censoring quantile", {
+  data("dailyrainfall")
+  set.seed(1)
+  fit <- fsmev(
+    dailyrainfall,
+    censor = TRUE,
+    censor_opts = list(thresholds = c(0.1, 0.5, 0.8), R = 100),
+    warn = FALSE
+  )
+  expect_output(print(fit), "Censoring quantile")
+
+  set.seed(1)
+  fit_rej <- fsmev(
+    dailyrainfall,
+    censor = TRUE,
+    censor_opts = list(thresholds = c(0.1, 0.5, 0.9), R = 100),
+    warn = FALSE
+  )
+  expect_true(fit_rej$rejected)
+  out <- capture.output(print(fit_rej))
+  expect_false(any(grepl("Censoring quantile", out)))
+
+  pdf(NULL)
+  on.exit(dev.off())
+  expect_no_error(plot(fit_rej))
+})
+
+test_that("plot works for fsmev fits of a numeric vector", {
+  data("dailyrainfall")
+  fit <- fsmev(dailyrainfall[[2]])
+  set.seed(1)
+  fit_c <- fsmev(
+    dailyrainfall[[2]],
+    censor = TRUE,
+    censor_opts = list(thresholds = c(0.1, 0.5, 0.8), R = 100),
+    warn = FALSE
+  )
+  set.seed(1)
+  fit_rej <- fsmev(
+    dailyrainfall[[2]],
+    censor = TRUE,
+    censor_opts = list(thresholds = c(0.1, 0.5, 0.9), R = 100),
+    warn = FALSE
+  )
+  pdf(NULL)
+  on.exit(dev.off())
+  for (f in list(fit, fit_c, fit_rej)) {
+    for (tp in c("all", "rl", "qq", "pp", "hist")) {
+      expect_no_error(plot(f, type = tp))
+    }
+  }
+})
+
+test_that("print and plot name the estimator of censored fsmev fits", {
+  data("dailyrainfall")
+  expect_output(print(fsmev(dailyrainfall)), "Estimator: pwm")
+  set.seed(1)
+  fit <- fsmev(
+    dailyrainfall,
+    censor = TRUE,
+    censor_opts = list(thresholds = c(0.1, 0.5, 0.8), R = 100),
+    warn = FALSE
+  )
+  expect_output(print(fit), "Estimator: ls \\(left-censored\\)")
+  expect_equal(estimator_label(fit), "ls (left-censored)")
+  set.seed(1)
+  fit_rej <- fsmev(
+    dailyrainfall,
+    censor = TRUE,
+    censor_opts = list(thresholds = c(0.1, 0.5, 0.9), R = 100),
+    warn = FALSE
+  )
+  expect_equal(estimator_label(fit_rej), "pwm")
+})
+
+test_that("bootstrap return level CIs of censored fsmev fits refit censored", {
+  data("dailyrainfall")
+  set.seed(1)
+  fit <- fsmev(
+    dailyrainfall,
+    censor = TRUE,
+    censor_opts = list(thresholds = c(0.1, 0.5, 0.8), R = 100),
+    warn = FALSE
+  )
+  expect_equal(fit$censor_opts$mon, 1)
+  rp <- c(10, 50)
+  set.seed(1)
+  ci_c <- ci.smev(fit, method = "boot", return.periods = rp, R = 30, ncores = 1)
+  fit_unc <- fit
+  fit_unc$censor <- FALSE
+  set.seed(1)
+  ci_u <- ci.smev(
+    fit_unc,
+    method = "boot",
+    return.periods = rp,
+    R = 30,
+    ncores = 1
+  )
+  expect_equal(dim(ci_c), c(2, 3))
+  expect_true(all(is.finite(ci_c)))
+  expect_true(all(ci_c[, 1] <= ci_c[, 3]))
+  expect_false(isTRUE(all.equal(ci_c[, c(1, 3)], ci_u[, c(1, 3)])))
 })

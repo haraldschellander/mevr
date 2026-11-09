@@ -133,3 +133,19 @@ test_that("plot works for fmev with years whose Weibull tail is rejected", {
   on.exit(dev.off())
   expect_no_error(plot(fit))
 })
+
+test_that("print shows the Weibull tail test per year for censored fmev fits", {
+  data("dailyrainfall")
+  set.seed(1)
+  fit <- fmev(
+    dailyrainfall,
+    censor = TRUE,
+    censor_opts = list(R = 100),
+    warn = FALSE
+  )
+  out <- capture.output(print(fit))
+  expect_true(any(grepl("Weibull tail test per year", out)))
+  expect_true(any(grepl("cens_quant", out)))
+  expect_true(any(grepl(as.character(fit$years[1]), out)))
+  expect_true(any(grepl("^Estimator: ls \\(left-censored\\)", out)))
+})

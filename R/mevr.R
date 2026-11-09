@@ -169,7 +169,19 @@ NULL
 #'   \item{\code{rejected}}{If \code{censor = TRUE}, \code{TRUE} when the
 #'     Weibull tail assumption is rejected, and \code{FALSE} otherwise.
 #'     Omitted if \code{censor = FALSE}.}
+#'   \item{\code{opt_quant}}{If \code{censor = TRUE}, the left-censoring
+#'     quantile found by the Weibull tail test, \code{NA} if the Weibull tail
+#'     assumption is rejected. Omitted if \code{censor = FALSE}.}
+#'   \item{\code{opt_thresh}}{If \code{censor = TRUE}, the left-censoring
+#'     threshold, i.e. the value of the ordinary events at \code{opt_quant},
+#'     \code{NA} if the Weibull tail assumption is rejected. Omitted if
+#'     \code{censor = FALSE}.}
 #' }
+#'
+#' If \code{censor = TRUE} and \code{sd = TRUE}, the bootstrap refits the
+#' censored least squares estimator of the Weibull tail test at the fixed
+#' quantile \code{opt_quant} to each bootstrap sample, so the uncertainty of
+#' the choice of the quantile itself is not included.
 #'
 #' @export
 #'
@@ -344,8 +356,9 @@ fsmev <- function(
         warning("fitting uncensored SMEV")
       }
       rejected <- TRUE
+      opt_thresh <- NA_real_
+      opt_quant <- NA_real_
     } else {
-      #method = "censored lsreg"
       rejected <- FALSE
       opt_thresh <- theta$opt_thresh
       opt_quant <- theta$opt_quant
@@ -377,11 +390,19 @@ fsmev <- function(
 
   if (sd) {
     if (sd.method == "boot") {
+      if (censor && !rejected) {
+        # bootstrap the censored fit at the censoring quantile found above
+        censor_quant <- opt_quant
+      } else {
+        censor_quant <- NULL
+      }
       err <- smev.boot(
         data_pot,
         method = method,
         R = R,
-        left_cens = left_cens
+        left_cens = left_cens,
+        censor_quant = censor_quant,
+        mon = cens_opts$mon
       )
       res <- list(
         c = theta$c,
@@ -421,10 +442,9 @@ fsmev <- function(
 
   if (censor) {
     res$rejected <- rejected
-  }
-  if (censor & isFALSE(res$rejected)) {
     res$opt_thresh <- opt_thresh
     res$opt_quant <- opt_quant
+    res$censor_opts <- cens_opts
   }
   class(res) <- "mevr"
   return(res)
@@ -1188,7 +1208,9 @@ smev.boot <- function(
   data,
   method = c("pwm", "mle", "ls"),
   R = 502,
-  left_cens = 0
+  left_cens = 0,
+  censor_quant = NULL,
+  mon = 1
 ) {
   method <- match.arg(method)
   weisample <- data$val
@@ -1196,8 +1218,17 @@ smev.boot <- function(
   theta.hat <- matrix(NA, R, 2)
   colnames(theta.hat) <- c("c", "w")
   for (i in seq_len(R)) {
-    replaced <- sample(weisample, N, replace = TRUE)
-    theta <- fit.mev(replaced, method, left_cens)
+    if (is.null(censor_quant)) {
+      replaced <- sample(weisample, N, replace = TRUE)
+      theta <- fit.mev(replaced, method, left_cens)
+    } else {
+      # dynamic censoring: refit with the censored least squares estimator of
+      # the Weibull tail test at the censoring quantile found for the data.
+      # Whole rows are resampled because the fit needs the block maxima.
+      replaced <- data[sample.int(N, N, replace = TRUE), c("groupvar", "val")]
+      fit <- tail_ls_fit(tail_prep(replaced, mon = mon), censor_quant)
+      theta <- list(c = fit$scale, w = fit$shape)
+    }
     theta.hat[i, "c"] <- theta$c
     theta.hat[i, "w"] <- theta$w
   }
@@ -1833,6 +1864,13 @@ ci.smev <- function(
     if (subsize > length(x$years)) {
       subsize <- floor(length(x$years) * 0.75)
     }
+    # dynamically censored fit: bootstrap the censored estimator at the
+    # fixed censoring quantile opt_quant
+    censored <- isTRUE(x$censor) &&
+      isFALSE(x$rejected) &&
+      !is.null(x$opt_quant) &&
+      !is.na(x$opt_quant)
+    censor_mon <- if (is.null(x$censor_opts$mon)) 1 else x$censor_opts$mon
     runsWindows <- (Sys.info()['sysname'] == "Windows")
     if (runsWindows) {
       cl <- makeCluster(ncores, type = "PSOCK")
@@ -1849,6 +1887,9 @@ ci.smev <- function(
         "fit.mev",
         "fit.mev.leftcens",
         "check.left.cens",
+        "tail_prep",
+        "tail_ls_fit",
+        "set_season",
         "qmev",
         "pmev"
       ),
@@ -1865,6 +1906,12 @@ ci.smev <- function(
           method = x$method,
           left_cens = if (is.null(x$left_cens)) 0 else x$left_cens
         )
+        if (censored) {
+          # refit the censored estimator at the quantile found for x
+          cf <- tail_ls_fit(tail_prep(nd, mon = censor_mon), x$opt_quant)
+          fitdf$w <- cf$shape
+          fitdf$c <- cf$scale
+        }
         qmev(1 - 1 / return.periods, fitdf$w, fitdf$c, fitdf$n)
       }
 
@@ -1987,13 +2034,20 @@ plot.mevr <- function(
     }
     obs.x <- pp.weibull(obs.y)
   } else {
-    if (!is.null(x$opt_thresh)) {
-      obs.y <- x$data[x$data > x$opt_thresh]
-    } else {
-      obs.y <- x$data
-    }
-    lambda <- length(obs.y) / length(x$orig_data) # Exceedance rate
-    obs.x <- 1 / (lambda * (1 - pmev(sort(obs.y), x$w, x$c, x$n)))
+    # no years, hence no observed yearly maxima: the ordinary events are
+    # shown instead. With plotting position F_i of an event, the SMEV gives
+    # the non-exceedance probability F_i^n of the yearly maximum and the
+    # return period 1 / (1 - F_i^n). Events with a negligible F_i^n (return
+    # period numerically 1) are left out of the rl, qq and pp plots.
+    vals <- sort(x$data)
+    Fi <- seq_along(vals) / (length(vals) + 1)
+    censored <- !is.null(x$opt_thresh) && !is.na(x$opt_thresh)
+    keep <- if (censored) vals > x$opt_thresh else rep(TRUE, length(vals))
+    events <- vals[keep]
+    Fn <- Fi^x$n
+    keep <- keep & Fn > 1e-3
+    obs.y <- vals[keep]
+    obs.x <- 1 / (1 - Fn[keep])
   }
 
   if (tolower(x$type) != "tmev") {
@@ -2048,11 +2102,23 @@ plot.mevr <- function(
   if (is.element(type, c("all", "hist"))) {
     # density plot
     N <- 512
-    yd <- density(obs.y, n = N)
+    # ordinary events (vector data) or yearly maxima
+    hist.y <- if (is.vector(x$data)) events else obs.y
+    yd <- density(hist.y, n = N)
     xd <- seq(min(yd$x, na.rm = TRUE), max(yd$x, na.rm = TRUE), length.out = N)
     if (tolower(x$type) != "tmev") {
       if (is.vector(x$data)) {
-        dens.y <- dmev(xd, x$w, x$c, x$n)
+        # ordinary events: Weibull density, truncated at the censoring
+        # threshold if the fit is left-censored
+        dens.y <- stats::dweibull(xd, x$w, x$c)
+        if (censored) {
+          dens.y <- ifelse(
+            xd > x$opt_thresh,
+            dens.y /
+              stats::pweibull(x$opt_thresh, x$w, x$c, lower.tail = FALSE),
+            0
+          )
+        }
       } else {
         dens.y <- dmev(xd, x$w, x$c, x$n)
       }
@@ -2062,8 +2128,12 @@ plot.mevr <- function(
         dens.y <- c(dens.y, dtmev(xd[i], x$data))
       }
     }
-    ylab <- ifelse(is.vector(x$data), "Observed", "Observed yearly maxima")
-    hist(obs.y, prob = TRUE, main = ylab, xlab = paste("N =", length(obs.y)))
+    ylab <- ifelse(
+      is.vector(x$data),
+      "Observed ordinary events",
+      "Observed yearly maxima"
+    )
+    hist(hist.y, prob = TRUE, main = ylab, xlab = paste("N =", length(hist.y)))
     lines(xd, yd$y, lty = 2, lwd = 1.5)
     lines(xd, dens.y, lty = 2, col = "red", lwd = 1.5)
     legend(
@@ -2122,8 +2192,8 @@ plot.mevr <- function(
 
   if (is.element(type, c("all", "pp"))) {
     # probability plot
-    N <- length(obs.y)
-    Fi <- (1:N) / (N + 1)
+    # empirical non-exceedance probabilities of the yearly maxima
+    p.emp <- 1 - 1 / obs.x
     if (tolower(x$type) != "tmev") {
       p.m <- pmev(sort(obs.y), x$w, x$c, x$n)
     } else {
@@ -2133,11 +2203,11 @@ plot.mevr <- function(
       }
     }
     plot(
-      Fi,
+      p.emp,
       p.m,
       main = "Probability plot",
-      xlab = "Model Probabilities",
-      ylab = "Empirical Probabilities",
+      xlab = "Empirical Probabilities",
+      ylab = "Model Probabilities",
       xlim = c(0, 1),
       ylim = c(0, 1)
     )
@@ -2145,7 +2215,7 @@ plot.mevr <- function(
   }
 
   if (tolower(x$type) != "tmev") {
-    title_strg <- paste(x$type, "/", x$method)
+    title_strg <- paste(x$type, "/", estimator_label(x))
   } else {
     title_strg <- paste(x$type)
   }
@@ -2288,6 +2358,24 @@ predict.mevr <- function(object, newdata, term, ...) {
 }
 
 
+# Estimator shown by print() and plot(). With dynamic censoring, c and w come
+# from the least squares fit of the Weibull tail test, except for fits (SMEV)
+# or years (MEVD) whose Weibull tail was rejected.
+estimator_label <- function(x) {
+  if (!isTRUE(x$censor) || is.null(x$rejected) || all(x$rejected)) {
+    return(x$method)
+  }
+  if (any(x$rejected)) {
+    return(paste0(
+      "ls (left-censored); ",
+      x$method,
+      " in years with rejected Weibull tail"
+    ))
+  }
+  "ls (left-censored)"
+}
+
+
 #' Print method for object of class mevr
 #'
 #' Print nicely formatted output of the fit to the MEVD and its variants
@@ -2314,19 +2402,34 @@ print.mevr <- function(x, digits = max(3, getOption("digits") - 3), ...) {
   cat("MEVD fitting\n\n")
   cat(paste0("Type: ", x$type, "\n"))
   if (tolower(x$type) != "tmev") {
-    cat(paste0("Estimator: ", x$method, "\n"))
+    cat(paste0("Estimator: ", estimator_label(x), "\n"))
   }
 
   if (tolower(x$type) == "smev") {
     if (x$censor) {
-      #cat(paste0("Weibull tail assumption rejected: ", x$rejected, "\n"))
       cat("probably a Weibull tail? ", ifelse(x$rejected, FALSE, TRUE), "\n")
+      if (!is.null(x$opt_quant) && !is.na(x$opt_quant)) {
+        cat(paste0(
+          "Censoring quantile: ",
+          format(x$opt_quant, digits = digits),
+          " (threshold ",
+          format(x$opt_thresh, digits = digits),
+          ")\n"
+        ))
+      }
     }
   } else if (tolower(x$type) == "mevd") {
     if (x$censor) {
-      tibble(
-        year = x$years,
-        "probably a Weibull tail" = ifelse(x$rejected, FALSE, TRUE)
+      cat("\nWeibull tail test per year:\n")
+      print.data.frame(
+        data.frame(
+          year = x$years,
+          weibull_tail = !x$rejected,
+          cens_quant = x$opt_quant,
+          cens_thresh = x$opt_thresh
+        ),
+        row.names = FALSE,
+        digits = digits
       )
     }
   }
